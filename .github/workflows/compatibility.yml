@@ -1,0 +1,60 @@
+name: Gradle and JDK compatibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compatibility-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compatibility:
+    name: Gradle ${{ matrix.gradle }} / JDK ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      # Keep all results even if one supported runtime regresses.
+      fail-fast: false
+      matrix:
+        gradle: ['9.0.0', '9.1.0', '9.8.1']
+        java: ['17', '21', '25']
+        exclude:
+          # Running Gradle on JDK 25 is supported starting with Gradle 9.1.0.
+          - gradle: '9.0.0'
+            java: '25'
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up the matrix JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Set up Gradle and validate the Wrapper
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
+      - name: Verify the plugin against the consumer runtime
+        # The Wrapper stays fixed; every TestKit consumer uses matrix.gradle and the selected JDK.
+        # Invoke through Bash because Windows checkouts may track gradlew without its executable bit.
+        run: >-
+          bash ./gradlew check assemble
+          -PtestGradleVersion=${{ matrix.gradle }} -PtestJavaVersion=${{ matrix.java }}
+          --stacktrace --console=plain
+      - name: Retain test and validation reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: compatibility-gradle-${{ matrix.gradle }}-jdk-${{ matrix.java }}
+          path: |
+            build/reports/
+            build/test-results/test/
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,12 +1,18 @@
 # Changelog
 
 Notable changes to ShardPilot are recorded here. Changes under **Unreleased** are not a published
-release. The current build version is `0.1.0-SNAPSHOT`; no public release is recorded yet.
+release. The current build version is `0.1.0`; no public release is recorded yet.
 
 ## Unreleased
 
 ### Added
 
+- An eight-cell GitHub Actions compatibility matrix for Gradle 9.0.0, 9.1.0 and 9.8.1 with
+  Temurin JDK 17, 21 and 25, excluding the unsupported Gradle 9.0.0/JDK 25 pair. Every cell runs
+  all Docker-free checks with strict configuration-cache TestKit fixtures and retains reports.
+- A `testGradleVersion` build property selecting the Gradle distribution for all functional
+  consumers and a `testJavaVersion` expectation, with assertions for the actual outer worker,
+  nested Gradle/JDK and consumer test-worker JDK.
 - Gradle plugin `io.github.sjacek.shardpilot` for opt-in, class-level test sharding without a
   coordinator service or a replacement test runner.
 - A per-task `shardPilot` extension on standard `Test` tasks, including lazily registered tasks.
@@ -57,8 +63,9 @@ release. The current build version is `0.1.0-SNAPSHOT`; no public release is rec
 ### Scope and limitations
 
 - This is the initial development version, not a Gradle Plugin Portal release.
-- Initial verification targets Gradle `9.8.1` on Windows with JDK `25`. Java 17 bytecode is not a
-  compatibility claim for untested Gradle/JDK combinations.
+- Initial local verification used Gradle `9.8.1` on Windows with JDK `25`. Broader support requires
+  passing the eight-cell Linux Gradle/JDK matrix for the release revision; Java 17 bytecode alone
+  is not a compatibility claim for untested combinations.
 - Kotlin DSL configuration is exercised; Kotlin-authored tests, Android, Kotlin Multiplatform
   and native-image test execution are not yet verified.
 - JUnit XML history export, remote history retrieval and automatic updates to versioned timing

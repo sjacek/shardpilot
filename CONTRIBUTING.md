@@ -9,6 +9,12 @@ credentials, customer data, private repository addresses or captured application
 Run `./gradlew check assemble` (or `gradlew.bat check assemble` on Windows) before proposing a change.
 Functional tests launch real Gradle TestKit builds and fetch fixture dependencies from Maven Central.
 
+For Gradle integration changes, require all eight jobs in the
+[Gradle/JDK compatibility matrix](docs/testing.md#gradle-and-jdk-matrix). Reproduce a cell with its
+JDK selected and `bash ./gradlew check assemble -PtestGradleVersion=9.0.0 -PtestJavaVersion=21`
+(substitute the target versions).
+Keep the workflow and documented matrix aligned when changing the supported runtime boundaries.
+
 Keep the implementation framework-neutral. Do not introduce a coordinator service, automatic retries,
 runtime test dependencies, implicit subproject configuration, or a CI-provider dependency into the core.
 

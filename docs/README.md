@@ -4,7 +4,7 @@ ShardPilot splits the classes of an opted-in Gradle `Test` task between independ
 Each execution calculates ownership locally from the same inputs. There is no coordinator service
 or replacement test engine.
 
-This documentation describes `0.1.0-SNAPSHOT`, an unpublished development version. Use the
+This documentation describes `0.1.0`, an unpublished release candidate. Use the
 [root README](../README.md#getting-started) for local composite-build installation. Do not assume
 that a matching version is available from the Gradle Plugin Portal.
 
@@ -32,9 +32,10 @@ CI owns launching every shard and deciding whether the complete pipeline has pas
 Timing history is optional UTF-8 TSV. The plugin does not import JUnit XML, export updated timings,
 fetch history remotely or update a versioned history file. A history producer is a separate concern.
 
-The current verification target is Gradle 9.8.1 on Windows with JDK 25. Java 17 plugin bytecode is
-not a claim that every Java 17/Gradle combination is supported. See the
-[verification scope](testing.md#verified-scope) before choosing a different environment.
+The [compatibility matrix](testing.md#gradle-and-jdk-matrix) defines eight Linux CI targets for
+Gradle 9.0.0, 9.1.0 and 9.8.1 with JDK 17, 21 and 25. Local verification also uses Windows.
+Java 17 plugin bytecode alone is not a compatibility claim; support requires passing matrix
+results for the release revision. See the [verification scope](testing.md#verified-scope).
 
 ## Project records
 

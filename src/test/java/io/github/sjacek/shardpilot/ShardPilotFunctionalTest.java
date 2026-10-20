@@ -3,6 +3,7 @@ package io.github.sjacek.shardpilot;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.TaskOutcome;
+import org.gradle.util.GradleVersion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -27,6 +28,30 @@ import static org.junit.jupiter.api.Assertions.*;
 class ShardPilotFunctionalTest {
     @TempDir
     Path directory;
+
+    @Test
+    void consumerBuildAndTestWorkerUseTheRequestedGradleAndJavaRuntime() throws Exception {
+        fixture(false);
+        String javaVersion = System.getProperty("shardpilot.test.javaVersion", Integer.toString(Runtime.version().feature()));
+        assertEquals(javaVersion, Integer.toString(Runtime.version().feature()), "outer test worker must use the matrix JDK");
+        append("""
+                def runtime = "TESTKIT_RUNTIME Gradle ${gradle.gradleVersion} / JDK ${JavaVersion.current().majorVersion}"
+                tasks.register('verifyRuntime') {
+                    doLast { logger.lifecycle(runtime) }
+                }
+                """);
+        write("src/test/java/example/RuntimeTest.java", """
+                package example;
+                class RuntimeTest {
+                    @org.junit.jupiter.api.Test void usesTheMatrixJdk() {
+                        org.junit.jupiter.api.Assertions.assertEquals("%s", System.getProperty("java.specification.version"));
+                    }
+                }
+                """.formatted(javaVersion));
+        BuildResult result = run("verifyRuntime", "test", "--tests", "example.RuntimeTest");
+        assertTrue(result.getOutput().contains("TESTKIT_RUNTIME Gradle " + consumerGradleVersion() + " / JDK " + javaVersion));
+        assertEquals(Set.of("example.RuntimeTest#usesTheMatrixJdk()"), cases("test"));
+    }
 
     @Test
     void applyingThePluginAloneDoesNotShardTests() throws Exception {
@@ -358,7 +383,15 @@ class ShardPilotFunctionalTest {
         var options = new ArrayList<>(List.of(arguments));
         options.add("--stacktrace");
         options.add("--console=plain");
-        return GradleRunner.create().withProjectDir(directory.toFile()).withPluginClasspath().withArguments(options);
+        // Pin the daemon to the test JVM as well as the distribution; an inherited JAVA_HOME must
+        // not silently turn a JDK 17/21 matrix cell into another run on the developer's JDK 25.
+        options.add("-Dorg.gradle.java.home=" + System.getProperty("java.home"));
+        return GradleRunner.create().withProjectDir(directory.toFile()).withPluginClasspath()
+                .withGradleVersion(consumerGradleVersion()).withArguments(options);
+    }
+
+    private static String consumerGradleVersion() {
+        return System.getProperty("shardpilot.test.gradleVersion", GradleVersion.current().getVersion());
     }
 
     private void write(String relative, String contents) throws IOException {

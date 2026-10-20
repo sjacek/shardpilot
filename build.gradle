@@ -1,10 +1,13 @@
+import org.gradle.plugin.compatibility.CompatibilityExtension
+
 plugins {
     id 'java-gradle-plugin'
     id 'maven-publish'
+    id 'com.gradle.plugin-publish' version '2.2.1'
 }
 
 group = 'io.github.sjacek'
-version = '0.1.0-SNAPSHOT'
+version = '0.1.0'
 
 repositories {
     mavenCentral()
@@ -24,12 +27,20 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 gradlePlugin {
+    website = 'https://github.com/sjacek/shardpilot'
+    vcsUrl = 'https://github.com/sjacek/shardpilot.git'
     plugins {
         shardpilot { PluginDeclaration declaration ->
             declaration.setId('io.github.sjacek.shardpilot')
             declaration.setImplementationClass('io.github.sjacek.shardpilot.ShardPilotPlugin')
             declaration.setDisplayName('ShardPilot')
             declaration.setDescription('Duration-balanced class-level test sharding for Gradle, without a coordinator.')
+            declaration.tags.set(['testing', 'sharding', 'testng', 'spock', 'junit', 'ci'])
+            // Use the typed extension API rather than the legacy dynamic Groovy compatibility helper.
+            CompatibilityExtension featureCompatibility = ((ExtensionAware) declaration)
+                    .getExtensions().getByType(CompatibilityExtension)
+            // Strict TestKit fixtures verify this feature; no Isolated Projects claim is made.
+            featureCompatibility.getFeatures().getConfigurationCache().set(true)
         }
     }
 }
@@ -46,6 +57,12 @@ sourceSets.test.java.srcDir('scripts')
 
 test {
     useJUnitPlatform()
+    // The Wrapper builds the plugin; TestKit independently selects the consumer's Gradle runtime.
+    // A system property is also a Test input, so switching matrix cells cannot reuse old results.
+    systemProperty 'shardpilot.test.gradleVersion',
+            providers.gradleProperty('testGradleVersion').orElse(gradle.gradleVersion).get()
+    systemProperty 'shardpilot.test.javaVersion',
+            providers.gradleProperty('testJavaVersion').orElse(JavaVersion.current().majorVersion).get()
     // TestKit launches nested builds; keep their memory budgets independent of test parallelism.
     maxParallelForks = 1
     maxHeapSize = '512m'

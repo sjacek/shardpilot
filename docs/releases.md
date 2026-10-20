@@ -2,17 +2,19 @@
 
 [Documentation index](README.md)
 
-The current version is `0.1.0-SNAPSHOT`. No public release is recorded. The build produces plugin,
-source and Javadoc JARs and Maven publication metadata, but it does **not** yet configure the Gradle
-Plugin Publish plugin, a `publishPlugins` task or a remote publication repository.
+The current version is `0.1.0`, prepared for the first release. No public release is recorded.
+The build uses `com.gradle.plugin-publish` 2.2.1 and produces plugin, source and Javadoc JARs,
+Maven publication metadata and the `publishPlugins` task. Project/SCM URLs, tags and the tested
+configuration-cache feature are configured in `build.gradle`.
 
 This guide is a maintainer checklist, not permission to publish or a claim that publication is
 already automated. The maintainer performs commits, tags, credential setup and publication.
 
 ## Versioning policy
 
-Use `MAJOR.MINOR.PATCH` for immutable releases and `-SNAPSHOT` for development. While the plugin is
-pre-1.0, clearly call out behavior changes even when they occur in a minor release. Keep compatible
+Use `MAJOR.MINOR.PATCH` for immutable releases; the Plugin Portal does not accept `-SNAPSHOT` versions.
+Local development can use an included build without a separately versioned source revision. While
+the plugin is pre-1.0, clearly call out behavior changes even when they occur in a minor release. Keep compatible
 bug fixes in patch releases; never replace the bytes of an existing published version.
 
 Treat assignment changes as externally observable behavior. Changing the hash, family naming,
@@ -24,12 +26,13 @@ also need migration notes and updated Groovy/Kotlin examples.
 
 1. Verify public repository ownership, the `io.github.sjacek.shardpilot` namespace, authorship and
    copyright attribution. Review the [MIT license](../LICENSE) and [third-party notices](../THIRD_PARTY_NOTICES.md).
-2. Add and test Plugin Portal publication tooling and required project/SCM metadata. Keep the
-   publication implementation separate from sharding behavior; do not document a task as available
-   before it exists.
+2. Review the configured Plugin Portal tooling and project/SCM metadata. Keep publication
+   implementation separate from sharding behavior.
 3. Store publication credentials in the host's protected secret mechanism, not in repository files,
    examples, test fixtures, Gradle arguments printed to logs or shared caches.
-4. Run the intended Gradle/JDK/OS verification matrix. Advertise only combinations actually tested.
+4. Require a green [compatibility workflow](../.github/workflows/compatibility.yml) for the release
+   revision. All eight [Gradle/JDK cells](testing.md#gradle-and-jdk-matrix) must pass; a local
+   Wrapper-only run does not replace the Linux matrix.
 5. Review tracked files and publication artifacts for private application configuration, customer
    data, secrets and unintended infrastructure dependencies.
 
@@ -47,14 +50,22 @@ Run `./gradlew clean check assemble` (or `gradlew.bat clean check assemble`). In
 sources and Javadoc JARs under `build/libs/`. Verify the plugin descriptor and MIT license entry;
 the Wrapper's Apache-licensed files belong to the repository and are not bundled as plugin code.
 
-Exercise both Groovy and Kotlin consumer examples with the candidate. Once publication tooling
-exists, verify resolution of the exact candidate through its intended distribution channel as
-part of the release procedure. Running a composite build proves implementation behavior, not
-that remote marker artifacts and metadata are correct.
+Exercise both Groovy and Kotlin consumer examples with the candidate. After publication and Portal
+approval, verify resolution of the exact candidate through the Plugin Portal, without an included
+build or Maven Local. Running TestKit/composite builds proves implementation behavior, not that
+remote marker artifacts and metadata are correct.
 
-After maintainer approval, publish through the configured channel and record the release. Prepare
-the next development snapshot and a fresh `Unreleased` section. The details of signing, Portal
-credentials and remote CI jobs must be added when that publication workflow is implemented.
+The maintainer configures `GRADLE_PUBLISH_KEY` and `GRADLE_PUBLISH_SECRET` in a protected environment,
+or `gradle.publish.key` and `gradle.publish.secret` in the user's private Gradle properties. Never
+commit credentials or provide them as command-line arguments. The compatibility workflow has no
+publication credentials and never publishes artifacts.
+
+Run `bash ./gradlew publishPlugins --validate-only` for Portal validation without uploading; this
+task still requires publisher credentials. After maintainer approval, run `publishPlugins` without
+`--validate-only` to submit the candidate. The first publication requires Portal approval before
+consumers can resolve it. Follow the [official publishing instructions](https://plugins.gradle.org/docs/publish-plugin).
+Only record the release after publication and consumer resolution succeed; then prepare the next
+version and a fresh `Unreleased` section.
 
 ## Upgrade the Gradle Wrapper
 

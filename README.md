@@ -25,8 +25,11 @@ Recorded durations improve balance; a deterministic hash assigns classes without
 
 ## Status
 
-Initial development version (`0.1.0-SNAPSHOT`), not published to the Gradle Plugin Portal.
-The initial verification target is Gradle 9.8.1 on Windows with JDK 25. Plugin bytecode targets
+Version `0.1.0` is prepared for the first release, not published to the Gradle Plugin Portal.
+The [compatibility matrix](docs/testing.md#gradle-and-jdk-matrix) defines eight Linux CI targets across
+Gradle 9.0.0, 9.1.0 and 9.8.1 with JDK 17, 21 and 25, excluding Gradle 9.0.0/JDK 25.
+All eight pairs have passed locally on Windows; release support requires a green Linux matrix
+run for the revision being released. Plugin bytecode targets
 Java 17; that alone is not a claim of compatibility with every Gradle/JDK combination.
 Android, Kotlin Multiplatform and native-image test execution are outside this first version.
 
