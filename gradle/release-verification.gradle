@@ -1,0 +1,21 @@
+// Validate the evaluated project version, not a source-text regex or a version derived from the tag.
+// This task has no credentials and does not contact the Plugin Portal.
+tasks.register('verifyReleaseTag') {
+    group = 'verification'
+    description = 'Checks that releaseTag is a stable vMAJOR.MINOR.PATCH tag matching project.version.'
+    inputs.property('releaseTag', providers.gradleProperty('releaseTag').orElse(''))
+    inputs.property('releaseVersion', project.version.toString())
+
+    // Read only this task's declared inputs at execution time, keeping configuration cache reusable.
+    doLast { Task task ->
+        String tag = task.inputs.properties['releaseTag'] as String
+        String releaseVersion = task.inputs.properties['releaseVersion'] as String
+        if (!(tag ==~ /v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)/)) {
+            throw new GradleException('releaseTag must be a stable vMAJOR.MINOR.PATCH tag without leading zeroes or suffixes.')
+        }
+        if (tag.substring(1) != releaseVersion) {
+            throw new GradleException('releaseTag must equal v followed by project.version; update the build version before tagging.')
+        }
+        task.logger.lifecycle('Release tag matches the stable project version.')
+    }
+}

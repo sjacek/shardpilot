@@ -6,6 +6,10 @@ Treat every shard as an ordinary invocation of the same Gradle task in an isolat
 ShardPilot does not detect a CI vendor, create jobs or coordinate them. Each job independently
 computes the same plan and keeps its own subset of candidate classes.
 
+For publishing ShardPilot itself after its Gradle/JDK matrix, see the
+[tag release workflow](releases.md#publish-from-a-version-tag). That workflow is separate from
+the consumer-suite sharding described here.
+
 For runnable Docker-backed suites, see the [JUnit Jupiter](testcontainers-example.md),
 [Spock](spock-testcontainers-example.md) and [TestNG](testng-testcontainers-example.md)
 PostgreSQL/RabbitMQ examples. All keep one fixture pair

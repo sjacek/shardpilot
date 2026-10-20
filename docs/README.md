@@ -20,7 +20,7 @@ that a matching version is available from the Gradle Plugin Portal.
 | [TestNG with PostgreSQL and RabbitMQ](testng-testcontainers-example.md) | Run class fixtures and data-provider rows with the native TestNG adapter and worker-local containers. |
 | [Testing and compatibility](testing.md) | Verify changes and understand what the existing tests actually cover. |
 | [Troubleshooting](troubleshooting.md) | Diagnose empty shards, unexpected selection, poor balance or cache behavior. |
-| [Releases and upgrades](releases.md) | Prepare a public release and manage plugin, Wrapper and dependency updates. |
+| [Releases and upgrades](releases.md) | Configure protected publication credentials, release from a tested version tag and manage upgrades. |
 | [PlantUML diagrams](diagrams/README.md) | Find editable diagram sources and regenerate the committed previews. |
 
 ## Boundaries of the initial version
