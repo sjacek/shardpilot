@@ -8,6 +8,7 @@ repositories {
 }
 
 java {
+    // Target bytecode is independent of the JDK running Gradle; use a supported runtime for the Wrapper.
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
@@ -26,6 +27,7 @@ sourceSets {
 }
 
 configurations {
+    // Reuse the framework API, but keep database/broker dependencies confined to integration tests.
     integrationTestImplementation.extendsFrom testImplementation
     integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
 }
@@ -37,6 +39,7 @@ dependencies {
     integrationTestImplementation platform('org.testcontainers:testcontainers-bom:2.0.5')
     integrationTestImplementation 'org.testcontainers:testcontainers-postgresql'
     integrationTestImplementation 'org.testcontainers:testcontainers-rabbitmq'
+    // The PostgreSQL container supplies a server, not the JDBC driver used by the test methods.
     integrationTestImplementation 'org.postgresql:postgresql:42.7.14'
     integrationTestImplementation 'com.rabbitmq:amqp-client:5.37.0'
     integrationTestRuntimeOnly 'org.slf4j:slf4j-simple:2.0.20'
@@ -50,6 +53,7 @@ def integrationTests = tasks.register('integrationTest', Test) {
     description = 'Runs sharded TestNG tests against worker-local PostgreSQL and RabbitMQ.'
     group = 'verification'
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    // Filter candidates without removing fixture/helper classes needed for TestNG reflection and loading.
     classpath = sourceSets.integrationTest.runtimeClasspath
     include '**/*IT.class'
     // A fixture alone is not an executable test, including on an otherwise empty shard.
@@ -62,12 +66,14 @@ def integrationTests = tasks.register('integrationTest', Test) {
         // Gradle owns XML/HTML reports; do not add TestNG's overlapping default reporters.
         useDefaultListeners = false
     }
+    // This orders tasks only when both are scheduled; check supplies the actual lifecycle dependencies.
     shouldRunAfter tasks.named('test')
 
     // Keep the lazy service pair alive across every selected class in this worker.
     maxParallelForks = 1
     forkEvery = 0
     maxHeapSize = '384m'
+    // Testcontainers' Docker transport uses JNA; explicitly allow its native access on current JDKs.
     jvmArgs '--enable-native-access=ALL-UNNAMED'
 
     // Configuration cache is reusable; results from live databases/brokers are not.
@@ -80,6 +86,7 @@ def integrationTests = tasks.register('integrationTest', Test) {
         durationsFile = layout.projectDirectory.file('integration-test-durations.tsv')
     }
 
+    // Explicit build properties cross the worker-JVM boundary; all shards must receive identical overrides.
     ['example.postgresImage', 'example.rabbitmqImage'].each { String property ->
         def override = providers.gradleProperty(property)
         if (override.isPresent()) systemProperty property, override.get()

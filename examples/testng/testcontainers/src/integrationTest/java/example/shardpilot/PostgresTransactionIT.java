@@ -9,6 +9,11 @@ import static org.testng.Assert.assertTrue;
 // Tables are created at runtime inside Testcontainers, not in an IDE-managed datasource.
 @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
 public class PostgresTransactionIT extends AbstractInfrastructureIT {
+    /**
+     * Verifies rollback against real database state, leaving schema creation outside the rolled-back work.
+     *
+     * @throws Exception when fixture access or JDBC operations fail
+     */
     @Test
     public void rollsBackUncommittedRows() throws Exception {
         try (var connection = database(); var statement = connection.createStatement()) {
@@ -24,6 +29,11 @@ public class PostgresTransactionIT extends AbstractInfrastructureIT {
         }
     }
 
+    /**
+     * Verifies commit visibility beyond the writing connection's lifetime, not just within its own session.
+     *
+     * @throws Exception when fixture access or JDBC operations fail
+     */
     @Test
     public void exposesCommittedRowsToAnotherConnection() throws Exception {
         try (var connection = database(); var statement = connection.createStatement()) {

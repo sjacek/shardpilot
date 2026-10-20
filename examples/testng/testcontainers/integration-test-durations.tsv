@@ -1,4 +1,6 @@
 # Illustrative weights, NOT measured runtimes. Use the same snapshot in every CI shard.
+# Each binary class name includes all its methods and provider invocations, not one timing per row.
+# With two shards these weights place RoundTrip + Persistence on 1 and Transaction + Routing on 2.
 example.shardpilot.PostgresRoundTripIT	14.0
 example.shardpilot.PostgresTransactionIT	10.0
 example.shardpilot.RabbitRoutingIT	8.0

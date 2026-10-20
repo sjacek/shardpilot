@@ -10,10 +10,18 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.expectThrows;
 
-/** Small persistence/acknowledgment scenarios, not an atomic database/broker transaction or complete inbox. */
+/**
+ * Small persistence/acknowledgment scenarios, not an atomic database/broker transaction or complete inbox.
+ * The unique-key scenario demonstrates rejection of a duplicate, not successful idempotent reprocessing.
+ */
 // Tables are created at runtime inside Testcontainers, not in an IDE-managed datasource.
 @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
 public class MessagePersistenceIT extends AbstractInfrastructureIT {
+    /**
+     * Stores one delivered payload with JDBC autocommit before sending its manual AMQP acknowledgment.
+     *
+     * @throws Exception when fixture access, publishing, persistence or acknowledgment fails
+     */
     @Test
     public void persistsAReceivedEventBeforeAcknowledgingIt() throws Exception {
         try (var brokerConnection = broker(); var channel = brokerConnection.createChannel();
@@ -38,6 +46,12 @@ public class MessagePersistenceIT extends AbstractInfrastructureIT {
         }
     }
 
+    /**
+     * Confirms that PostgreSQL rejects a second insert for the same key without matching localized text.
+     * No broker delivery is acknowledged or recovered by this standalone constraint scenario.
+     *
+     * @throws Exception when fixture access or JDBC setup fails outside the expected duplicate insert
+     */
     @Test
     public void rejectsADuplicateEventIdentifier() throws Exception {
         try (var connection = database(); var statement = connection.createStatement()) {

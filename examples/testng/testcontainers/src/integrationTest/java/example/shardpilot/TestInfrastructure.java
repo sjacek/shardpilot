@@ -15,11 +15,15 @@ import java.util.concurrent.TimeoutException;
 /**
  * A lazy service pair owned by one test worker, not by a single TestNG class or method.
  * Each shard has independent fixtures; Ryuk removes them when the worker exits.
+ * Configuration-cache reuse does not preserve these running containers across Gradle invocations.
  */
 final class TestInfrastructure {
     private TestInfrastructure() { }
 
-    /** JVM initialization starts these services once even when several classes access the holder. */
+    /**
+     * JVM/classloader initialization starts the pair on first access and publishes the ready fixtures.
+     * Loading image settings or compiling test sources alone does not initialize this nested holder.
+     */
     private static final class Worker {
         // Disposable credentials and randomly mapped ports never come from an application datasource.
         static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(DockerImageName.parse(IntegrationTestImages.POSTGRES))
@@ -37,13 +41,20 @@ final class TestInfrastructure {
         }
     }
 
-    /** Allocate an isolated database inside the disposable worker-owned container, never externally. */
+    /**
+     * Allocates a class-local database only inside this worker's disposable PostgreSQL container.
+     * Databases remain until container removal; no cross-class DROP/TRUNCATE cleanup is necessary.
+     *
+     * @return a JDBC URL selecting the generated database while retaining the mapped endpoint and options
+     * @throws SQLException when allocation fails; no fallback to a real application datasource is attempted
+     */
     static String createDatabase() throws SQLException {
         String database = "example_" + UUID.randomUUID().toString().replace("-", "");
         if (!database.matches("example_[0-9a-f]{32}")) {
             throw new IllegalArgumentException("Invalid generated database identifier");
         }
-        // CREATE DATABASE requires autocommit; only the generated, validated identifier enters DDL.
+        // JDBC parameters cannot represent SQL identifiers. Only our generated, validated name enters DDL.
+        // CREATE DATABASE runs on its own autocommit connection, outside any test method's transaction.
         try (var connection = DriverManager.getConnection(Worker.POSTGRES.getJdbcUrl(),
                 Worker.POSTGRES.getUsername(), Worker.POSTGRES.getPassword());
              var statement = connection.createStatement()) {
@@ -57,12 +68,26 @@ final class TestInfrastructure {
         return address.substring(0, address.lastIndexOf('/') + 1) + database + options;
     }
 
-    /** The caller closes this connection; the URL must come from the class fixture's allocation. */
+    /**
+     * Opens a fresh connection using container-owned credentials, without pooling or changing autocommit.
+     *
+     * @param jdbcUrl a URL previously allocated by {@link #createDatabase()}, not operator configuration
+     * @return a connection whose resource and transaction lifetime belongs to the caller
+     * @throws SQLException when the generated database cannot be reached
+     */
     static java.sql.Connection openDatabase(String jdbcUrl) throws SQLException {
         return DriverManager.getConnection(jdbcUrl, Worker.POSTGRES.getUsername(), Worker.POSTGRES.getPassword());
     }
 
-    /** Open a method-owned broker connection; server-named exclusive queues disappear when it closes. */
+    /**
+     * Opens a method-owned connection using the ready container's mapped endpoint and credentials.
+     * Server-named exclusive queues disappear on connection closure; this does not stop the shared broker.
+     * The connection name is a diagnostic label, not a fixed container or queue identity.
+     *
+     * @return a fresh AMQP connection; callers also close the channels they create from it
+     * @throws IOException when the broker cannot be contacted or the connection fails
+     * @throws TimeoutException when the AMQP connection handshake times out
+     */
     static com.rabbitmq.client.Connection openBroker() throws IOException, TimeoutException {
         var factory = new ConnectionFactory();
         factory.setHost(Worker.RABBITMQ.getHost());
