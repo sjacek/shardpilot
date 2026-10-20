@@ -15,7 +15,7 @@ that a matching version is available from the Gradle Plugin Portal.
 | [Configuration](configuration.md) | Opt in tasks, supply history, use Groovy/Kotlin DSL or configure multiple projects. |
 | [Architecture and assignment](architecture.md) | Understand components, class-family ownership, balancing and task inputs. |
 | [CI integration](ci.md) | Run all shards with consistent inputs, isolated workspaces and separate reports. |
-| [PostgreSQL and RabbitMQ example](testcontainers-example.md) | Run an integration suite with shared worker-local Testcontainers fixtures and isolated test data. |
+| [PostgreSQL and RabbitMQ example](testcontainers-example.md) | Run a JUnit Jupiter integration suite with shared worker-local Testcontainers fixtures and isolated test data. |
 | [Testing and compatibility](testing.md) | Verify changes and understand what the existing tests actually cover. |
 | [Troubleshooting](troubleshooting.md) | Diagnose empty shards, unexpected selection, poor balance or cache behavior. |
 | [Releases and upgrades](releases.md) | Prepare a public release and manage plugin, Wrapper and dependency updates. |
@@ -36,6 +36,7 @@ not a claim that every Java 17/Gradle combination is supported. See the
 
 ## Project records
 
+- [Example index](../examples/README.md): runnable scenarios grouped by framework and planned examples.
 - [Changelog](../CHANGELOG.md): unreleased features and limitations.
 - [Contribution guidelines](../CONTRIBUTING.md): implementation and review expectations.
 - [MIT license](../LICENSE) and [third-party notices](../THIRD_PARTY_NOTICES.md): distribution terms.

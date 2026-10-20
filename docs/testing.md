@@ -65,8 +65,8 @@ and remote-build-cache interoperability are not yet covered by this initial veri
 ## Extending coverage
 
 The [PostgreSQL and RabbitMQ example](testcontainers-example.md) is a separate consumer build.
-Compile it without Docker with `./gradlew -p examples/testcontainers integrationTestClasses`;
-execute it with `./gradlew -p examples/testcontainers check` when Docker is available. Its tests
+Compile it without Docker with `./gradlew -p examples/junit-jupiter/testcontainers integrationTestClasses`;
+execute it with `./gradlew -p examples/junit-jupiter/testcontainers check` when Docker is available. Its tests
 are not included in the parent plugin's `check`, and missing Docker is a failure rather than a skip.
 The example has also been verified on the same Windows/Gradle/JDK target using Docker Desktop's
 Linux engine, with a full run, both non-overlapping shards, configuration-cache reuse and an empty shard.

@@ -43,6 +43,11 @@ release. The current build version is `0.1.0-SNAPSHOT`; no public release is rec
 - A standalone PostgreSQL/RabbitMQ Testcontainers example with worker-local parallel startup,
   class-local databases, isolated queues, illustrative shard weights and a lifecycle diagram.
 
+### Changed
+
+- Runnable examples are grouped by framework and scenario. The PostgreSQL/RabbitMQ suite now lives
+  under `examples/junit-jupiter/testcontainers`; the example index records Spock and TestNG as planned.
+
 ### Scope and limitations
 
 - This is the initial development version, not a Gradle Plugin Portal release.

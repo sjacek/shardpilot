@@ -8,7 +8,7 @@ Plugin ID: `io.github.sjacek.shardpilot` · License: [MIT](LICENSE).
 The Gradle Wrapper retains its upstream Apache 2.0 license; see [third-party notices](THIRD_PARTY_NOTICES.md).
 
 [Getting started](#getting-started) · [Configuration](#configuration) ·
-[Timing history](#timing-history-and-assignment) · [Documentation](docs/README.md) · [Changelog](CHANGELOG.md) ·
+[Timing history](#timing-history-and-assignment) · [Examples](examples/README.md) · [Documentation](docs/README.md) · [Changelog](CHANGELOG.md) ·
 [Contributing](CONTRIBUTING.md)
 
 ## Why ShardPilot?
@@ -237,9 +237,10 @@ The [documentation index](docs/README.md) links to configuration, architecture, 
 testing, troubleshooting and release guides. Architecture and CI guides include rendered diagrams
 with editable [PlantUML sources](docs/diagrams/README.md).
 
-The runnable [PostgreSQL and RabbitMQ example](examples/testcontainers/README.md) demonstrates
+The runnable [JUnit Jupiter PostgreSQL and RabbitMQ example](examples/junit-jupiter/testcontainers/README.md) demonstrates
 worker-local Testcontainers startup, isolated data and a two-shard integration suite. Its
 [detailed guide](docs/testcontainers-example.md) explains lifecycle and CI resource boundaries.
+The [example index](examples/README.md) groups scenarios by framework, with Spock and TestNG examples planned separately.
 
 ## Before a public release
 
