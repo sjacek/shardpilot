@@ -1,0 +1,56 @@
+@startuml
+title Testcontainers example: one lifecycle per worker JVM
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam ArrowColor #475569
+skinparam sequenceParticipantBackgroundColor #EFF6FF
+skinparam sequenceParticipantBorderColor #2563EB
+skinparam sequenceLifeLineBorderColor #94A3B8
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+hide footbox
+
+participant "Executing test classes\nin one Gradle worker" as tests
+participant "TestInfrastructure\nlazy static holder" as fixture
+database "Worker-local\nPostgreSQL" as postgres
+queue "Worker-local\nRabbitMQ" as rabbit
+
+note over tests,rabbit
+  ShardPilot has already filtered candidate classes.
+  Each other shard / worker has its own independent fixture pair.
+end note
+
+tests -> fixture : First class: prepare database
+group Initialize holder once; Startables.deepStart(...).join()
+  par Start PostgreSQL
+    fixture -> postgres : Start with random mapped port
+    postgres --> fixture : Ready; JDBC endpoint
+  else Start RabbitMQ
+    fixture -> rabbit : Start with random mapped ports
+    rabbit --> fixture : Ready; AMQP endpoint
+  end
+end
+fixture -> postgres : CREATE DATABASE example_<generated A>
+fixture --> tests : Class A JDBC URL
+tests -> postgres : JDBC assertions; close connections
+tests -> rabbit : Private queue; AMQP assertions; close clients
+
+tests -> fixture : Next class: prepare database
+fixture -> postgres : CREATE DATABASE example_<generated B>
+fixture --> tests : Class B JDBC URL; same live container pair
+tests -> postgres : Independent class data
+tests -> rabbit : New exclusive queues / connections
+
+note over tests,rabbit
+  Nested tests stay with their outer class and database.
+  No per-class container stop; no @Container extension ownership.
+end note
+
+tests -> tests : Worker exits after its selected tests
+note over postgres,rabbit
+  Testcontainers Ryuk removes the disposable containers.
+  No cross-run reusable containers or external application services.
+end note
+@enduml

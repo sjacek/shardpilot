@@ -237,6 +237,10 @@ The [documentation index](docs/README.md) links to configuration, architecture, 
 testing, troubleshooting and release guides. Architecture and CI guides include rendered diagrams
 with editable [PlantUML sources](docs/diagrams/README.md).
 
+The runnable [PostgreSQL and RabbitMQ example](examples/testcontainers/README.md) demonstrates
+worker-local Testcontainers startup, isolated data and a two-shard integration suite. Its
+[detailed guide](docs/testcontainers-example.md) explains lifecycle and CI resource boundaries.
+
 ## Before a public release
 
 - Verify the public repository location, plugin namespace ownership and copyright attribution.

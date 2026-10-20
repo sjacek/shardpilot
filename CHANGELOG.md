@@ -40,6 +40,8 @@ release. The current build version is `0.1.0-SNAPSHOT`; no public release is rec
 - English usage documentation and contribution guidelines.
 - Configuration, architecture, CI, testing, troubleshooting and release guides, with PlantUML
   diagram sources and locally rendered SVG previews.
+- A standalone PostgreSQL/RabbitMQ Testcontainers example with worker-local parallel startup,
+  class-local databases, isolated queues, illustrative shard weights and a lifecycle diagram.
 
 ### Scope and limitations
 

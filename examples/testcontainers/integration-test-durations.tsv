@@ -1,0 +1,6 @@
+# Illustrative weights, NOT measured runtimes. Replace the same snapshot in every CI shard.
+example.shardpilot.PostgresRoundTripIT	12.0
+example.shardpilot.PostgresRoundTripIT$Totals	2.0
+example.shardpilot.PostgresTransactionIT	10.0
+example.shardpilot.RabbitRoutingIT	8.0
+example.shardpilot.MessagePersistenceIT	6.0

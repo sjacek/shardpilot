@@ -1,0 +1,6 @@
+pluginManagement {
+    // Consume the checkout containing this example; no published snapshot is assumed.
+    includeBuild('../..')
+}
+
+rootProject.name = 'shardpilot-testcontainers-example'

@@ -11,6 +11,7 @@ preview together; do not edit an SVG by hand.
 | Components | [components.puml](components.puml) | [components.svg](components.svg) | Gradle integration and responsibilities of the six implementation classes. |
 | Assignment | [shard-assignment.puml](shard-assignment.puml) | [shard-assignment.svg](shard-assignment.svg) | Measured-family packing, hash fallback and candidate exclusion. |
 | CI execution | [ci-execution.puml](ci-execution.puml) | [ci-execution.svg](ci-execution.svg) | Independent jobs, consistent inputs and CI-owned result collection. |
+| Testcontainers lifecycle | [testcontainers-lifecycle.puml](testcontainers-lifecycle.puml) | [testcontainers-lifecycle.svg](testcontainers-lifecycle.svg) | Shared PostgreSQL/RabbitMQ fixtures within a worker, isolated test data and cleanup. |
 
 ## Local rendering
 
@@ -24,7 +25,7 @@ From the repository root, set `PLANTUML_JAR` to your local JAR path. With the cu
 ```shell
 java -Djava.awt.headless=true -jar "$PLANTUML_JAR" --check-syntax "docs/diagrams/*.puml"
 java -Djava.awt.headless=true -jar "$PLANTUML_JAR" --check-before-run --format svg --disable-metadata "docs/diagrams/*.puml"
-java scripts/NormalizeSvg.java docs/diagrams/components.svg docs/diagrams/shard-assignment.svg docs/diagrams/ci-execution.svg
+java scripts/NormalizeSvg.java docs/diagrams/*.svg
 ```
 
 PowerShell, using the equivalent environment variable:
@@ -32,7 +33,8 @@ PowerShell, using the equivalent environment variable:
 ```powershell
 java '-Djava.awt.headless=true' -jar $env:PLANTUML_JAR --check-syntax 'docs/diagrams/*.puml'
 java '-Djava.awt.headless=true' -jar $env:PLANTUML_JAR --check-before-run --format svg --disable-metadata 'docs/diagrams/*.puml'
-java scripts/NormalizeSvg.java docs/diagrams/components.svg docs/diagrams/shard-assignment.svg docs/diagrams/ci-execution.svg
+$previewPaths = (Get-ChildItem docs/diagrams -Filter *.svg -File).FullName
+java scripts/NormalizeSvg.java @previewPaths
 ```
 
 These commands generate and normalize SVGs next to the sources. Check each process exit code and
