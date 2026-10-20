@@ -1,0 +1,82 @@
+name: Publish Gradle plugin
+
+on:
+  push:
+    tags: ['v[0-9]*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  # Never interrupt a publication that may already have uploaded immutable artifacts.
+  cancel-in-progress: false
+
+jobs:
+  validate-tag:
+    name: Verify release tag and build version
+    # Do not publish on deletion or a forced update of an existing tag.
+    if: github.event.created == true && github.event.deleted == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the tagged commit
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Set up Gradle and validate the Wrapper
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+      - name: Validate the stable version tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: bash ./gradlew verifyReleaseTag -PreleaseTag="$RELEASE_TAG" --console=plain
+
+  compatibility:
+    name: Complete compatibility matrix
+    needs: validate-tag
+    # A local reusable workflow runs at the same commit as this caller, without release secrets.
+    uses: ./.github/workflows/compatibility.yml
+
+  publish:
+    name: Publish to Gradle Plugin Portal
+    needs: [validate-tag, compatibility]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: gradle-plugin-portal
+    steps:
+      - name: Check out the tested commit
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Set up Gradle without shared caches
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          # Do not restore untrusted build state or save state from a credentialed build.
+          cache-disabled: true
+      - name: Validate and publish the plugin
+        env:
+          GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
+          GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${GRADLE_PUBLISH_KEY:-}" || -z "${GRADLE_PUBLISH_SECRET:-}" ]]; then
+            echo '::error::Configure GRADLE_PUBLISH_KEY and GRADLE_PUBLISH_SECRET in the gradle-plugin-portal environment.'
+            exit 1
+          fi
+          bash ./gradlew publishPlugins --validate-only --no-configuration-cache --no-daemon --console=plain
+          bash ./gradlew publishPlugins --no-configuration-cache --no-daemon --console=plain

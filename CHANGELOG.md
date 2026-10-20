@@ -7,6 +7,11 @@ release. The current build version is `0.1.0`; no public release is recorded yet
 
 ### Added
 
+- Tag-triggered Plugin Portal publication gated by an offline version check and the complete
+  reusable eight-cell Gradle/JDK matrix at the same commit SHA. Publication uses scoped environment
+  secrets, mandatory Portal validation and no shared Gradle/configuration caches.
+- A configuration-cache-compatible `verifyReleaseTag` task with strict stable-version matching,
+  TestKit guard regressions and structural YAML tests for release dependencies and secret isolation.
 - An eight-cell GitHub Actions compatibility matrix for Gradle 9.0.0, 9.1.0 and 9.8.1 with
   Temurin JDK 17, 21 and 25, excluding the unsupported Gradle 9.0.0/JDK 25 pair. Every cell runs
   all Docker-free checks with strict configuration-cache TestKit fixtures and retains reports.

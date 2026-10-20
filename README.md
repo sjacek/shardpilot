@@ -26,6 +26,9 @@ Recorded durations improve balance; a deterministic hash assigns classes without
 ## Status
 
 Version `0.1.0` is prepared for the first release, not published to the Gradle Plugin Portal.
+The [tag publication workflow](.github/workflows/publish.yml) submits matching stable version tags
+after the complete compatibility matrix succeeds; see [release setup](docs/releases.md#configure-github-publication)
+for the required environment secrets and tag protection.
 The [compatibility matrix](docs/testing.md#gradle-and-jdk-matrix) defines eight Linux CI targets across
 Gradle 9.0.0, 9.1.0 and 9.8.1 with JDK 17, 21 and 25, excluding Gradle 9.0.0/JDK 25.
 All eight pairs have passed locally on Windows; release support requires a green Linux matrix
