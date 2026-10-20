@@ -6,6 +6,8 @@ The [Spock example](../examples/spock/testcontainers/build.gradle) is an indepen
 build with four specifications against real PostgreSQL and RabbitMQ. It mirrors the JDBC/AMQP
 scenarios in the [JUnit Jupiter example](testcontainers-example.md), but uses Spock fixture methods,
 conditions, exception expectations and a two-row data table.
+The [TestNG counterpart](testng-testcontainers-example.md) demonstrates the same scenarios with
+inherited class fixtures and data-provider invocations.
 
 ## Build and fixture structure
 

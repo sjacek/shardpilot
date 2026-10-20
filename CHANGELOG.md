@@ -29,7 +29,7 @@ release. The current build version is `0.1.0-SNAPSHOT`; no public release is rec
   offending line without echoing arbitrary history contents.
 - Unit tests for parsing, validation, deterministic assignment, nested classes, hash fallback,
   floating-point aggregation and overflow handling.
-- Gradle TestKit coverage for JUnit Jupiter and Groovy Spock, nested tests, complete/non-overlapping
+- Gradle TestKit coverage for JUnit Jupiter, Groovy Spock and native TestNG tasks, nested tests, complete/non-overlapping
   weighted and hash-only shards, existing filters, custom tasks, command-line test selection,
   empty-shard report cleanup, failed test propagation, Groovy/Kotlin DSL and configuration-cache reuse.
 - Gradle Wrapper pinned to version `9.8.1`, with distribution checksum verification.
@@ -44,11 +44,15 @@ release. The current build version is `0.1.0-SNAPSHOT`; no public release is rec
   class-local databases, isolated queues, illustrative shard weights and a lifecycle diagram.
 - An analogous Spock/Groovy Testcontainers example with `setupSpec`, specification-local databases,
   a data-driven feature, complete-specification sharding and a separate lifecycle guide/diagram.
+- An analogous TestNG Testcontainers example with inherited `@BeforeClass`, class-local databases,
+  sequential data-provider invocations and a separate lifecycle guide/diagram.
+- TestNG regression fixtures covering complete/non-overlapping weighted and hash-only shards,
+  data-provider ownership, configuration-cache reuse, empty reports and fatal setup failures.
 
 ### Changed
 
 - Runnable examples are grouped by framework and scenario under `examples/junit-jupiter/testcontainers`
-  and `examples/spock/testcontainers`; the example index records TestNG as planned.
+  and `examples/spock/testcontainers`, with TestNG now available under `examples/testng/testcontainers`.
 
 ### Scope and limitations
 

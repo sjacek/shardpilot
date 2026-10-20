@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static org.gradle.testkit.runner.TaskOutcome.*;
@@ -61,6 +62,62 @@ class ShardPilotFunctionalTest {
         assertEquals(baseline, union);
         assertEquals(8, union.size());
         assertEquals(2, union.stream().filter(name -> name.contains("Spec#")).count());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void testNgDataProviderRowsStayWithTheirClassWithoutCoverageGaps(boolean withHistory) throws Exception {
+        testNgFixture();
+        if (withHistory) {
+            write("durations.tsv", "example.AlphaTest\t3\nexample.EchoTest\t1\n");
+        }
+        run("test");
+        Set<String> baseline = cases("test");
+        Set<String> alpha = baseline.stream().filter(name -> name.startsWith("example.AlphaTest#"))
+                .collect(Collectors.toSet());
+        assertEquals(4, baseline.size());
+        assertEquals(3, alpha.size());
+        assertEquals(2, alpha.stream().filter(name -> name.contains("#row")).count());
+
+        var union = new HashSet<String>();
+        for (int shard = 1; shard <= 2; shard++) {
+            run("test", "-Pshardpilot.count=2", "-Pshardpilot.index=" + shard);
+            Set<String> actual = cases("test");
+            assertFalse(actual.isEmpty());
+            assertTrue(actual.stream().noneMatch(union::contains), "a TestNG invocation ran on both shards");
+            if (actual.stream().anyMatch(alpha::contains)) {
+                assertTrue(actual.containsAll(alpha), "data-provider rows and ordinary methods must stay together");
+            }
+            union.addAll(actual);
+        }
+        assertEquals(baseline, union);
+
+        BuildResult reused = run("test", "-Pshardpilot.count=2", "-Pshardpilot.index=2");
+        assertTrue(reused.getOutput().contains("Reusing configuration cache."));
+        assertEquals(UP_TO_DATE, testOutcome(reused));
+        if (withHistory) {
+            // Two positively weighted classes cannot occupy all three shards; no old reports may remain.
+            BuildResult empty = run("test", "-Pshardpilot.count=3", "-Pshardpilot.index=3");
+            assertTrue(Set.of(NO_SOURCE, SUCCESS).contains(testOutcome(empty)));
+            assertTrue(cases("test").isEmpty());
+        }
+    }
+
+    @Test
+    void testNgBeforeClassFailureRemainsFatalInsteadOfBecomingOnlySkippedTests() throws Exception {
+        testNgFixture();
+        write("src/test/java/example/AlphaTest.java", """
+                package example;
+                public class AlphaTest {
+                    @org.testng.annotations.BeforeClass
+                    public void initialize() { throw new IllegalStateException("intentional TestNG setup failure"); }
+                    @org.testng.annotations.Test
+                    public void neverRuns() { throw new AssertionError("setup must prevent execution"); }
+                }
+                """);
+        assertEquals(FAILED, testOutcome(runner("test").buildAndFail()));
+        assertTrue(Files.readString(directory.resolve("build/test-results/test/TEST-example.AlphaTest.xml"))
+                .contains("intentional TestNG setup failure"));
     }
 
     @Test
@@ -170,6 +227,54 @@ class ShardPilotFunctionalTest {
         javaTest("Beta", "beta", "");
         run("test");
         assertEquals(Set.of("example.BetaTest#beta()"), cases("test"));
+    }
+
+    private void testNgFixture() throws IOException {
+        write("settings.gradle", "rootProject.name = 'testng-fixture'\n");
+        write("build.gradle", """
+                plugins {
+                    id 'java'
+                    id 'io.github.sjacek.shardpilot'
+                }
+                repositories { mavenCentral() }
+                dependencies { testImplementation 'org.testng:testng:7.12.0' }
+                test {
+                    useTestNG {
+                        parallel = 'none'
+                        threadCount = 1
+                    }
+                    maxHeapSize = '256m'
+                    shardPilot {
+                        enabled = true
+                        durationsFile = layout.projectDirectory.file('durations.tsv')
+                    }
+                }
+                """);
+        writeProperties();
+        write("src/test/java/example/AlphaTest.java", """
+                package example;
+                import org.testng.annotations.BeforeClass;
+                import org.testng.annotations.DataProvider;
+                import org.testng.annotations.Test;
+                import static org.testng.Assert.*;
+                public class AlphaTest {
+                    private boolean initialized;
+                    @BeforeClass public void initialize() { initialized = true; }
+                    @DataProvider(name = "codes", parallel = false, propagateFailureAsTestFailure = true)
+                    public static Object[][] codes() { return new Object[][] {{"first"}, {"second"}}; }
+                    @Test(dataProvider = "codes") public void row(String code) {
+                        assertTrue(initialized);
+                        assertFalse(code.isBlank());
+                    }
+                    @Test public void ordinary() { assertTrue(initialized); }
+                }
+                """);
+        write("src/test/java/example/EchoTest.java", """
+                package example;
+                public class EchoTest {
+                    @org.testng.annotations.Test public void echo() { }
+                }
+                """);
     }
 
     private void fixture(boolean enabled) throws IOException {

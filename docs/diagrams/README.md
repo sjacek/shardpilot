@@ -13,6 +13,7 @@ preview together; do not edit an SVG by hand.
 | CI execution | [ci-execution.puml](ci-execution.puml) | [ci-execution.svg](ci-execution.svg) | Independent jobs, consistent inputs and CI-owned result collection. |
 | Testcontainers lifecycle | [testcontainers-lifecycle.puml](testcontainers-lifecycle.puml) | [testcontainers-lifecycle.svg](testcontainers-lifecycle.svg) | Shared PostgreSQL/RabbitMQ fixtures within a worker, isolated test data and cleanup. |
 | Spock lifecycle | [spock-testcontainers-lifecycle.puml](spock-testcontainers-lifecycle.puml) | [spock-testcontainers-lifecycle.svg](spock-testcontainers-lifecycle.svg) | `setupSpec`, shared database URLs, feature iteration ownership and worker-scoped containers. |
+| TestNG lifecycle | [testng-testcontainers-lifecycle.puml](testng-testcontainers-lifecycle.puml) | [testng-testcontainers-lifecycle.svg](testng-testcontainers-lifecycle.svg) | Inherited `@BeforeClass`, class database URLs, provider-row ownership and worker-scoped containers. |
 
 ## Local rendering
 

@@ -3,7 +3,8 @@
 [Documentation index](README.md) · [Runnable example](../examples/junit-jupiter/testcontainers/README.md)
 
 This guide covers JUnit Jupiter. For specification lifecycle and data-table iterations, use the
-[Spock counterpart](spock-testcontainers-example.md).
+[Spock counterpart](spock-testcontainers-example.md). For inherited class fixtures and data providers,
+use the [TestNG counterpart](testng-testcontainers-example.md).
 
 The [standalone JUnit Jupiter example build](../examples/junit-jupiter/testcontainers/build.gradle) runs four integration-test
 classes against real PostgreSQL and RabbitMQ containers. ShardPilot distributes the classes;

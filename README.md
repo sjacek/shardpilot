@@ -32,7 +32,8 @@ Android, Kotlin Multiplatform and native-image test execution are outside this f
 
 ShardPilot works on standard Gradle `Test` tasks. It does not create source sets, choose a test
 framework, add test dependencies, start containers, configure retries, or change failure policy.
-Java JUnit Jupiter, nested Jupiter tests and Groovy Spock tests are covered by functional fixtures.
+Java JUnit Jupiter, nested Jupiter tests, Groovy Spock tests and native TestNG tasks are covered by
+functional fixtures, including TestNG data-provider invocations.
 Kotlin DSL build configuration has a separate fixture; Kotlin-authored test classes are not yet verified.
 
 ## Getting started
@@ -214,7 +215,7 @@ Test output is not parsed or uploaded, and the plugin never retries or forgives 
 ```
 
 On Windows, use `gradlew.bat`. Functional tests use Gradle TestKit and temporary projects with
-JUnit/Spock dependencies from Maven Central; the first run requires network access. Keep TestKit
+JUnit/Spock/TestNG dependencies from Maven Central; the first run requires network access. Keep TestKit
 execution sequential because it starts additional Gradle daemons and test workers.
 
 PowerShell:
@@ -224,7 +225,8 @@ PowerShell:
 ```
 
 Verification covers the planner and parser, weighted and hash-only shards, JUnit Jupiter and
-Spock execution, nested classes, pre-existing filters, custom tasks, empty-shard report cleanup,
+Spock and native TestNG execution, data-provider rows, nested classes, pre-existing filters,
+custom tasks, empty-shard report cleanup,
 failure propagation, Groovy/Kotlin DSL and configuration-cache reuse. Sources and Javadoc JARs
 are built alongside the plugin JAR; each contains the MIT license.
 
@@ -242,7 +244,9 @@ worker-local Testcontainers startup, isolated data and a two-shard integration s
 [detailed guide](docs/testcontainers-example.md) explains lifecycle and CI resource boundaries.
 The [Spock counterpart](examples/spock/testcontainers/README.md) adds specification-local database URLs
 and data-table iterations; see its [guide](docs/spock-testcontainers-example.md).
-The [example index](examples/README.md) groups scenarios by framework, with TestNG still planned.
+The [TestNG counterpart](examples/testng/testcontainers/README.md) adds inherited class fixtures
+and data-provider invocations; see its [guide](docs/testng-testcontainers-example.md).
+The [example index](examples/README.md) groups all three scenarios by framework.
 
 ## Before a public release
 

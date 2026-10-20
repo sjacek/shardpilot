@@ -1,0 +1,58 @@
+@startuml
+title TestNG example: worker fixtures and class state
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam ArrowColor #475569
+skinparam sequenceParticipantBackgroundColor #EFF6FF
+skinparam sequenceParticipantBorderColor #2563EB
+skinparam sequenceLifeLineBorderColor #94A3B8
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+hide footbox
+
+participant "TestNG classes\nin one worker JVM" as tests
+participant "TestInfrastructure\nlazy worker holder" as fixture
+database "Worker-local\nPostgreSQL" as postgres
+queue "Worker-local\nRabbitMQ" as rabbit
+
+note over tests,rabbit
+  ShardPilot selects whole class families before TestNG execution.
+  TestNG parallel=none; data-provider rows also use parallel=false.
+end note
+
+tests -> fixture : Class A: inherited @BeforeClass
+group First access only: Startables.deepStart(...).join()
+  par PostgreSQL startup
+    fixture -> postgres : Start with random mapped endpoint
+    postgres --> fixture : Ready
+  else RabbitMQ startup
+    fixture -> rabbit : Start with random mapped endpoints
+    rabbit --> fixture : Ready
+  end
+end
+fixture -> postgres : CREATE DATABASE example_<generated A>
+fixture --> tests : Store URL in Class A instance
+
+loop Class A test methods / data-provider rows
+  tests -> postgres : Fresh JDBC connection; isolated rows/tables
+  tests -> rabbit : AMQP when required: private client / queue
+  tests -> tests : Assert; close method-owned clients
+end
+
+tests -> fixture : Class B: inherited @BeforeClass
+fixture -> postgres : CREATE DATABASE example_<generated B>
+fixture --> tests : Class B URL; reuse the same service pair
+
+note over tests,rabbit
+  No @AfterClass container stop or cross-class test dependencies.
+  Provider invocations stay with their test class's owner shard.
+end note
+
+tests -> tests : Worker exits after all selected classes
+note over postgres,rabbit
+  Ryuk removes the disposable containers on worker exit.
+  Another shard / worker owns an independent fixture pair.
+end note
+@enduml

@@ -42,7 +42,7 @@ fail instead of being reduced to warnings.
 | --- | --- |
 | `DurationHistoryTest` | Comments, blank lines, CRLF, nested names, immutable results, malformed metadata and safe error messages. |
 | `ShardPlanTest` | Deterministic packing/ties, nested aggregation, floating-point order, hash fallback, complete ownership, invalid settings and overflow. |
-| `ShardPilotFunctionalTest` | Real Gradle tasks with Jupiter/Spock, weighted/hash-only partitions, opt-in, filters, custom tasks, empty results, failures, Kotlin DSL and configuration-cache reuse. |
+| `ShardPilotFunctionalTest` | Real Gradle tasks with Jupiter/Spock/native TestNG, weighted/hash-only partitions, provider-row ownership, opt-in, filters, custom tasks, empty results, fatal setup failures, Kotlin DSL and configuration-cache reuse. |
 | `NormalizeSvgTest` | Standalone preview normalization, text/geometry/link preservation, XML input safety, idempotence and committed SVG compatibility checks. |
 
 Functional partition checks compare the union of shard results to an unsharded baseline and check
@@ -53,12 +53,14 @@ another shard's report files when rerunning a task sequentially in a fixture.
 ## Verified scope
 
 The initial local verification uses Gradle 9.8.1 on Windows with JDK 25. Plugin classes target Java
-17 bytecode. The fixtures currently use JUnit Jupiter 6.1.3, Spock 2.5 for Groovy 5.0 and Groovy 5.1.3.
+17 bytecode. The fixtures currently use JUnit Jupiter 6.1.3, Spock 2.5 for Groovy 5.0, Groovy 5.1.3
+and TestNG 7.12.0 through Gradle's native TestNG adapter.
 These fixture versions document the test environment; they are not dependencies injected into
 consuming builds or a promise of exhaustive framework-version coverage.
 
-Groovy DSL, Kotlin DSL, Java Jupiter tests, nested Jupiter tests and Groovy Spock specifications
-have fixtures. Kotlin DSL coverage does not establish coverage of Kotlin-authored test classes.
+Groovy DSL, Kotlin DSL, Java Jupiter tests, nested Jupiter tests, Groovy Spock specifications and
+Java TestNG classes/data-provider invocations have fixtures. Kotlin DSL coverage does not establish
+coverage of Kotlin-authored test classes.
 Other operating systems, Gradle/JDK combinations, Android, Kotlin Multiplatform, native-image tests
 and remote-build-cache interoperability are not yet covered by this initial verification matrix.
 
@@ -78,6 +80,14 @@ boundary is a specification, and data-table iteration reporting does not split s
 It has been checked on the same Docker Desktop/Windows runtime: nine cases in the baseline, five
 and four in the two non-overlapping shards, both data-table iterations together, configuration-cache
 reuse and an empty shard with no stale reports.
+
+The [TestNG counterpart](testng-testcontainers-example.md) runs through
+`./gradlew -p examples/testng/testcontainers check`, with `integrationTestClasses` available without
+Docker. It has been checked on the same Docker Desktop/Windows runtime: nine cases in the baseline,
+five and four in disjoint shards, both provider rows together, one PostgreSQL/RabbitMQ startup per
+worker, configuration-cache reuse and an empty shard with no stale XML. Separate Docker-free
+TestKit fixtures check weighted/hash-only coverage, cache reuse and propagation of `@BeforeClass`
+failures rather than accepting a successful build containing only skipped dependent tests.
 
 ## Extending coverage
 

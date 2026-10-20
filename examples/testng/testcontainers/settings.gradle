@@ -1,0 +1,6 @@
+pluginManagement {
+    // Resolve the enclosing checkout, not an unpublished Portal snapshot.
+    includeBuild('../../..')
+}
+
+rootProject.name = 'shardpilot-testng-testcontainers-example'

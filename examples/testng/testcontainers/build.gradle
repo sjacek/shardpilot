@@ -1,0 +1,97 @@
+plugins {
+    id 'java'
+    id 'io.github.sjacek.shardpilot'
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
+
+// The consumer owns its source set and lifecycle; ShardPilot only filters existing Test tasks.
+sourceSets {
+    integrationTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
+dependencies {
+    // TestNG uses Gradle's native adapter, not a JUnit Platform engine or a Jupiter extension.
+    testImplementation 'org.testng:testng:7.12.0'
+
+    integrationTestImplementation platform('org.testcontainers:testcontainers-bom:2.0.5')
+    integrationTestImplementation 'org.testcontainers:testcontainers-postgresql'
+    integrationTestImplementation 'org.testcontainers:testcontainers-rabbitmq'
+    integrationTestImplementation 'org.postgresql:postgresql:42.7.14'
+    integrationTestImplementation 'com.rabbitmq:amqp-client:5.37.0'
+    integrationTestRuntimeOnly 'org.slf4j:slf4j-simple:2.0.20'
+}
+
+tasks.named('test', Test) {
+    useTestNG()
+}
+
+def integrationTests = tasks.register('integrationTest', Test) {
+    description = 'Runs sharded TestNG tests against worker-local PostgreSQL and RabbitMQ.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    include '**/*IT.class'
+    // A fixture alone is not an executable test, including on an otherwise empty shard.
+    // Keep it on the classpath for inherited @BeforeClass, without weakening failure checks.
+    exclude '**/AbstractInfrastructureIT.class'
+    useTestNG {
+        // Framework threads are separate from Gradle workers; providers also declare parallel=false.
+        parallel = 'none'
+        threadCount = 1
+        // Gradle owns XML/HTML reports; do not add TestNG's overlapping default reporters.
+        useDefaultListeners = false
+    }
+    shouldRunAfter tasks.named('test')
+
+    // Keep the lazy service pair alive across every selected class in this worker.
+    maxParallelForks = 1
+    forkEvery = 0
+    maxHeapSize = '384m'
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
+
+    // Configuration cache is reusable; results from live databases/brokers are not.
+    outputs.upToDateWhen { false }
+    outputs.cacheIf { false }
+
+    shardPilot {
+        enabled = true
+        // Illustrative class weights, not measured performance or a speedup claim.
+        durationsFile = layout.projectDirectory.file('integration-test-durations.tsv')
+    }
+
+    ['example.postgresImage', 'example.rabbitmqImage'].each { String property ->
+        def override = providers.gradleProperty(property)
+        if (override.isPresent()) systemProperty property, override.get()
+    }
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat = 'full'
+    }
+}
+
+// Only this independent consumer's check needs Docker, not the enclosing plugin build.
+tasks.named('check') {
+    dependsOn integrationTests
+}

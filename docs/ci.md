@@ -6,8 +6,9 @@ Treat every shard as an ordinary invocation of the same Gradle task in an isolat
 ShardPilot does not detect a CI vendor, create jobs or coordinate them. Each job independently
 computes the same plan and keeps its own subset of candidate classes.
 
-For runnable Docker-backed suites, see the [JUnit Jupiter](testcontainers-example.md) and
-[Spock](spock-testcontainers-example.md) PostgreSQL/RabbitMQ examples. Both keep one fixture pair
+For runnable Docker-backed suites, see the [JUnit Jupiter](testcontainers-example.md),
+[Spock](spock-testcontainers-example.md) and [TestNG](testng-testcontainers-example.md)
+PostgreSQL/RabbitMQ examples. All keep one fixture pair
 per test worker, rather than sharing a broker/database instance between CI jobs.
 
 ![Independent CI shards using one immutable set of inputs](diagrams/ci-execution.svg)

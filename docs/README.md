@@ -17,6 +17,7 @@ that a matching version is available from the Gradle Plugin Portal.
 | [CI integration](ci.md) | Run all shards with consistent inputs, isolated workspaces and separate reports. |
 | [PostgreSQL and RabbitMQ example](testcontainers-example.md) | Run a JUnit Jupiter integration suite with shared worker-local Testcontainers fixtures and isolated test data. |
 | [Spock with PostgreSQL and RabbitMQ](spock-testcontainers-example.md) | Run specifications and data-table iterations with worker-local containers and specification-local databases. |
+| [TestNG with PostgreSQL and RabbitMQ](testng-testcontainers-example.md) | Run class fixtures and data-provider rows with the native TestNG adapter and worker-local containers. |
 | [Testing and compatibility](testing.md) | Verify changes and understand what the existing tests actually cover. |
 | [Troubleshooting](troubleshooting.md) | Diagnose empty shards, unexpected selection, poor balance or cache behavior. |
 | [Releases and upgrades](releases.md) | Prepare a public release and manage plugin, Wrapper and dependency updates. |
@@ -37,7 +38,7 @@ not a claim that every Java 17/Gradle combination is supported. See the
 
 ## Project records
 
-- [Example index](../examples/README.md): runnable scenarios grouped by framework and planned examples.
+- [Example index](../examples/README.md): runnable scenarios grouped by framework.
 - [Changelog](../CHANGELOG.md): unreleased features and limitations.
 - [Contribution guidelines](../CONTRIBUTING.md): implementation and review expectations.
 - [MIT license](../LICENSE) and [third-party notices](../THIRD_PARTY_NOTICES.md): distribution terms.
