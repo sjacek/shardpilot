@@ -240,7 +240,9 @@ with editable [PlantUML sources](docs/diagrams/README.md).
 The runnable [JUnit Jupiter PostgreSQL and RabbitMQ example](examples/junit-jupiter/testcontainers/README.md) demonstrates
 worker-local Testcontainers startup, isolated data and a two-shard integration suite. Its
 [detailed guide](docs/testcontainers-example.md) explains lifecycle and CI resource boundaries.
-The [example index](examples/README.md) groups scenarios by framework, with Spock and TestNG examples planned separately.
+The [Spock counterpart](examples/spock/testcontainers/README.md) adds specification-local database URLs
+and data-table iterations; see its [guide](docs/spock-testcontainers-example.md).
+The [example index](examples/README.md) groups scenarios by framework, with TestNG still planned.
 
 ## Before a public release
 

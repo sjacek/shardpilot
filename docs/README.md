@@ -16,6 +16,7 @@ that a matching version is available from the Gradle Plugin Portal.
 | [Architecture and assignment](architecture.md) | Understand components, class-family ownership, balancing and task inputs. |
 | [CI integration](ci.md) | Run all shards with consistent inputs, isolated workspaces and separate reports. |
 | [PostgreSQL and RabbitMQ example](testcontainers-example.md) | Run a JUnit Jupiter integration suite with shared worker-local Testcontainers fixtures and isolated test data. |
+| [Spock with PostgreSQL and RabbitMQ](spock-testcontainers-example.md) | Run specifications and data-table iterations with worker-local containers and specification-local databases. |
 | [Testing and compatibility](testing.md) | Verify changes and understand what the existing tests actually cover. |
 | [Troubleshooting](troubleshooting.md) | Diagnose empty shards, unexpected selection, poor balance or cache behavior. |
 | [Releases and upgrades](releases.md) | Prepare a public release and manage plugin, Wrapper and dependency updates. |

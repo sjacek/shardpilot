@@ -62,7 +62,7 @@ have fixtures. Kotlin DSL coverage does not establish coverage of Kotlin-authore
 Other operating systems, Gradle/JDK combinations, Android, Kotlin Multiplatform, native-image tests
 and remote-build-cache interoperability are not yet covered by this initial verification matrix.
 
-## Extending coverage
+## Runnable Testcontainers examples
 
 The [PostgreSQL and RabbitMQ example](testcontainers-example.md) is a separate consumer build.
 Compile it without Docker with `./gradlew -p examples/junit-jupiter/testcontainers integrationTestClasses`;
@@ -70,6 +70,16 @@ execute it with `./gradlew -p examples/junit-jupiter/testcontainers check` when 
 are not included in the parent plugin's `check`, and missing Docker is a failure rather than a skip.
 The example has also been verified on the same Windows/Gradle/JDK target using Docker Desktop's
 Linux engine, with a full run, both non-overlapping shards, configuration-cache reuse and an empty shard.
+
+The [Spock counterpart](spock-testcontainers-example.md) is independently runnable with
+`./gradlew -p examples/spock/testcontainers check`. Use `integrationTestClasses` for compilation
+without Docker, and select count/index as described in its guide. Its `setupSpec()`/`@Shared`
+boundary is a specification, and data-table iteration reporting does not split specification ownership.
+It has been checked on the same Docker Desktop/Windows runtime: nine cases in the baseline, five
+and four in the two non-overlapping shards, both data-table iterations together, configuration-cache
+reuse and an empty shard with no stale reports.
+
+## Extending coverage
 
 For assignment changes, preserve determinism across input orders and prove exactly one owner per
 family across all indices. Include equal weights, missing measurements, nested classes, negative

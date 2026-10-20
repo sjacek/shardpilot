@@ -1,0 +1,58 @@
+@startuml
+title Spock example: worker fixtures and specification state
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam ArrowColor #475569
+skinparam sequenceParticipantBackgroundColor #EFF6FF
+skinparam sequenceParticipantBorderColor #2563EB
+skinparam sequenceLifeLineBorderColor #94A3B8
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+hide footbox
+
+participant "Spock specifications\nin one worker JVM" as specs
+participant "TestInfrastructure\nlazy worker holder" as fixture
+database "Worker-local\nPostgreSQL" as postgres
+queue "Worker-local\nRabbitMQ" as rabbit
+
+note over specs,rabbit
+  ShardPilot selects whole specification families before execution.
+  SpockConfig disables feature/iteration parallelism inside the worker.
+end note
+
+specs -> fixture : Spec A setupSpec(): allocate database
+group First access only: Startables.deepStart(...).join()
+  par PostgreSQL startup
+    fixture -> postgres : Start with random mapped endpoint
+    postgres --> fixture : Ready
+  else RabbitMQ startup
+    fixture -> rabbit : Start with random mapped endpoints
+    rabbit --> fixture : Ready
+  end
+end
+fixture -> postgres : CREATE DATABASE example_<generated A>
+fixture --> specs : Store URL in Spec A @Shared field
+
+loop Spec A features / data-table iterations
+  specs -> postgres : Fresh JDBC connection; isolated rows/tables
+  specs -> rabbit : AMQP when required: private client / queue
+  specs -> specs : Close clients; assert captured results
+end
+
+specs -> fixture : Spec B setupSpec(): allocate database
+fixture -> postgres : CREATE DATABASE example_<generated B>
+fixture --> specs : Spec B @Shared URL; reuse same service pair
+
+note over specs,rabbit
+  No cleanupSpec() container stop or Testcontainers extension ownership.
+  Every iteration stays on its specification's owner shard.
+end note
+
+specs -> specs : Worker exits after all selected specifications
+note over postgres,rabbit
+  Ryuk removes the disposable containers on worker exit.
+  Another shard / worker owns an independent fixture pair.
+end note
+@enduml
