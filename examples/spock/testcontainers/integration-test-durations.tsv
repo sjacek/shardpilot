@@ -1,4 +1,6 @@
 # Illustrative weights, NOT measured runtimes. All iterations belong to their specification's owner.
+# Each binary class name measures the whole specification, not a feature label or an unrolled row name.
+# With two shards, RoundTrip + Persistence belong to 1 and Transaction + Routing belong to 2.
 example.shardpilot.PostgresRoundTripSpec	14.0
 example.shardpilot.PostgresTransactionSpec	10.0
 example.shardpilot.RabbitRoutingSpec	8.0

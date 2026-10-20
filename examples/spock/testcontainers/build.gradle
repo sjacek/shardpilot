@@ -8,6 +8,7 @@ repositories {
 }
 
 java {
+    // Fixture bytecode targets Java 17; the Gradle daemon still needs a JDK compatible with the Wrapper.
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
@@ -30,6 +31,7 @@ sourceSets {
 }
 
 configurations {
+    // Reuse the framework API/launcher without putting database and broker clients in ordinary unit tests.
     integrationTestImplementation.extendsFrom testImplementation
     integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
 }
@@ -37,6 +39,7 @@ configurations {
 dependencies {
     // Use Spock's JUnit Platform engine, not the Jupiter engine or its annotation lifecycle.
     testImplementation platform('org.junit:junit-bom:6.1.3')
+    // Spock's Groovy variant and the compiler dependency must agree on the Groovy major version.
     testImplementation 'org.spockframework:spock-core:2.5-groovy-5.0'
     testImplementation 'org.apache.groovy:groovy:5.1.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -45,6 +48,7 @@ dependencies {
     integrationTestImplementation platform('org.testcontainers:testcontainers-bom:2.0.5')
     integrationTestImplementation 'org.testcontainers:testcontainers-postgresql'
     integrationTestImplementation 'org.testcontainers:testcontainers-rabbitmq'
+    // The container supplies a PostgreSQL server; JDBC calls still need their own driver dependency.
     integrationTestImplementation 'org.postgresql:postgresql:42.7.14'
     integrationTestImplementation 'com.rabbitmq:amqp-client:5.37.0'
     integrationTestRuntimeOnly 'org.slf4j:slf4j-simple:2.0.20'
@@ -58,6 +62,7 @@ def integrationTests = tasks.register('integrationTest', Test) {
     description = 'Runs sharded Spock specifications against worker-local PostgreSQL and RabbitMQ.'
     group = 'verification'
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    // Keep helpers and generated Groovy classes loadable even when they are not test candidates.
     classpath = sourceSets.integrationTest.runtimeClasspath
     // Generated Groovy closures stay loadable on the runtime classpath, not separate test candidates.
     include '**/*Spec.class'
@@ -67,12 +72,14 @@ def integrationTests = tasks.register('integrationTest', Test) {
     useJUnitPlatform {
         includeEngines 'spock'
     }
+    // Ordering applies only if both tasks are scheduled; check supplies their lifecycle dependencies.
     shouldRunAfter tasks.named('test')
 
     // Keep one long-lived worker; SpockConfig.groovy separately disables framework parallelism.
     maxParallelForks = 1
     forkEvery = 0
     maxHeapSize = '384m'
+    // Testcontainers' Docker transport uses JNA; explicitly permit its native access on current JDKs.
     jvmArgs '--enable-native-access=ALL-UNNAMED'
 
     // Configuration-cache reuse is allowed, but live integration results must not be reused.
@@ -85,6 +92,7 @@ def integrationTests = tasks.register('integrationTest', Test) {
         durationsFile = layout.projectDirectory.file('integration-test-durations.tsv')
     }
 
+    // Forward explicit build properties into the worker JVM; use identical overrides in every shard.
     ['example.postgresImage', 'example.rabbitmqImage'].each { String property ->
         def override = providers.gradleProperty(property)
         if (override.isPresent()) systemProperty property, override.get()

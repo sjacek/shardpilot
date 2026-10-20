@@ -4,6 +4,10 @@ package example.shardpilot
 // Tables exist only in a runtime Testcontainers database, not an IDE-managed datasource.
 @SuppressWarnings(['SqlNoDataSourceInspection', 'SqlResolve'])
 class PostgresRoundTripSpec extends AbstractInfrastructureSpec {
+    /**
+     * Each row has its own Spock instance and JDBC connection, but the same specification-owned database.
+     * Restricting the query to that row's code keeps the result independent of the other iteration's data.
+     */
     def 'stores and reads entry #code with amount #amount'() {
         when:
         def entries = database().withCloseable { connection ->
@@ -27,14 +31,18 @@ class PostgresRoundTripSpec extends AbstractInfrastructureSpec {
         }
 
         then:
+        // withCloseable has already released JDBC resources; assert only on detached captured values.
         entries == [[code: code, amount: amount]]
 
         where:
+        // Distinct keys avoid iteration-order dependencies; G literals preserve exact decimal values.
+        // Unrolled labels identify report entries, not separately assignable ShardPilot work units.
         code           | amount
         'demo-entry-a' | 12.50G
         'demo-entry-b' | 7.25G
     }
 
+    /** Aggregates a separate table so this feature can run before or after the parameterized feature. */
     def 'aggregates amounts independently of the round trip feature'() {
         when:
         def total = database().withCloseable { connection ->

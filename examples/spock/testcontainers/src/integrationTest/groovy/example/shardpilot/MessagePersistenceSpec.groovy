@@ -3,10 +3,14 @@ package example.shardpilot
 import java.nio.charset.StandardCharsets
 import java.sql.SQLException
 
-/** Small persistence/acknowledgment examples, not an atomic database/broker transaction or complete inbox. */
+/**
+ * Small persistence/acknowledgment examples, not an atomic database/broker transaction or complete inbox.
+ * The unique-key feature demonstrates rejection of a duplicate, not successful idempotent reprocessing.
+ */
 // Tables exist only in a runtime Testcontainers database, not an IDE-managed datasource.
 @SuppressWarnings(['SqlNoDataSourceInspection', 'SqlResolve'])
 class MessagePersistenceSpec extends AbstractInfrastructureSpec {
+    /** Stores one delivered payload with JDBC autocommit before sending its manual AMQP acknowledgment. */
     def 'persists a received event before acknowledging it'() {
         when:
         def storedCodes = database().withCloseable { connection ->
@@ -41,6 +45,7 @@ class MessagePersistenceSpec extends AbstractInfrastructureSpec {
         storedCodes == ['event-001']
     }
 
+    /** Confirms constraint rejection; it does not acknowledge broker deliveries or recover duplicates. */
     def 'rejects a duplicate event identifier'() {
         when:
         database().withCloseable { connection ->
@@ -52,6 +57,7 @@ class MessagePersistenceSpec extends AbstractInfrastructureSpec {
         }
 
         then:
+        // Spock checks the exception from the preceding when block after withCloseable unwinds resources.
         def failure = thrown(SQLException)
         // SQLSTATE is stable across localized PostgreSQL/driver error messages.
         failure.getSQLState() == '23505'

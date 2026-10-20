@@ -4,6 +4,7 @@ package example.shardpilot
 // Tables exist only in a runtime Testcontainers database, not an IDE-managed datasource.
 @SuppressWarnings(['SqlNoDataSourceInspection', 'SqlResolve'])
 class PostgresTransactionSpec extends AbstractInfrastructureSpec {
+    /** Verifies rollback against real PostgreSQL state, with schema creation outside the rolled-back work. */
     def 'rolls back uncommitted rows'() {
         when:
         def count = database().withCloseable { connection ->
@@ -20,9 +21,11 @@ class PostgresTransactionSpec extends AbstractInfrastructureSpec {
         }
 
         then:
+        // The result is captured before closing the statement/connection, not a live ResultSet handle.
         count == 0
     }
 
+    /** Verifies commit visibility beyond the writing connection's lifetime, not just in its own session. */
     def 'exposes committed rows to another connection'() {
         when:
         database().withCloseable { connection ->
