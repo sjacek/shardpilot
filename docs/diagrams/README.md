@@ -1,0 +1,70 @@
+# PlantUML diagrams
+
+[Documentation index](../README.md)
+
+The `.puml` files are editable diagram sources. SVG files beside them are generated previews
+committed for Markdown viewers that cannot render PlantUML. Change a source and regenerate its
+preview together; do not edit an SVG by hand.
+
+| Diagram | Source | Preview | Explains |
+| --- | --- | --- | --- |
+| Components | [components.puml](components.puml) | [components.svg](components.svg) | Gradle integration and responsibilities of the six implementation classes. |
+| Assignment | [shard-assignment.puml](shard-assignment.puml) | [shard-assignment.svg](shard-assignment.svg) | Measured-family packing, hash fallback and candidate exclusion. |
+| CI execution | [ci-execution.puml](ci-execution.puml) | [ci-execution.svg](ci-execution.svg) | Independent jobs, consistent inputs and CI-owned result collection. |
+
+## Local rendering
+
+Use a local Java runtime, a PlantUML JAR and Graphviz `dot` available on `PATH`. PlantUML is a
+documentation tool, not a ShardPilot runtime/build dependency. No renderer JAR or machine-specific
+installation path is committed to this repository. No diagram uses remote includes or a rendering
+service. The initial previews were rendered with PlantUML 1.2026.8.
+
+From the repository root, set `PLANTUML_JAR` to your local JAR path. With the current PlantUML CLI:
+
+```shell
+java -Djava.awt.headless=true -jar "$PLANTUML_JAR" --check-syntax "docs/diagrams/*.puml"
+java -Djava.awt.headless=true -jar "$PLANTUML_JAR" --check-before-run --format svg --disable-metadata "docs/diagrams/*.puml"
+java scripts/NormalizeSvg.java docs/diagrams/components.svg docs/diagrams/shard-assignment.svg docs/diagrams/ci-execution.svg
+```
+
+PowerShell, using the equivalent environment variable:
+
+```powershell
+java '-Djava.awt.headless=true' -jar $env:PLANTUML_JAR --check-syntax 'docs/diagrams/*.puml'
+java '-Djava.awt.headless=true' -jar $env:PLANTUML_JAR --check-before-run --format svg --disable-metadata 'docs/diagrams/*.puml'
+java scripts/NormalizeSvg.java docs/diagrams/components.svg docs/diagrams/shard-assignment.svg docs/diagrams/ci-execution.svg
+```
+
+These commands generate and normalize SVGs next to the sources. Check each process exit code and
+visually review each affected diagram for clipping, overlaps, readable labels and correct relationships. For a PNG
+review, choose an absolute output directory under ignored `build/`; PlantUML resolves a relative
+output directory against the input file's directory, not the shell working directory.
+
+If your installed renderer uses older option names, consult its `--help` output and the official
+[command-line reference](https://plantuml.com/command-line) and [SVG guide](https://plantuml.com/svg).
+Keep the source and preview compatible with a pinned renderer version when reproducible diffs matter.
+
+## SVG compatibility
+
+PlantUML 1.2026.8 emits SVG 1.1 previews with `lengthAdjust` on a group, interactive `data-*`
+attributes and an unused `xlink` declaration. Strict SVG 1.1 IDE validation reports these attributes
+even though browsers display the diagrams. `lengthAdjust` belongs on text elements, not groups.
+
+The repository's [normalizer](../../scripts/NormalizeSvg.java) runs on a JDK without external
+dependencies. It moves group text adjustment to the text elements, retaining explicit overrides;
+removes unqualified interactive metadata from these static previews; and removes the root `xlink`
+declaration only when it is unused. Geometry, labels, IDs and actual links are preserved. XML DTDs
+and external entities are rejected. This is a generation step for our previews, not a PlantUML patch
+or a blanket suppression of SVG inspections.
+
+Run normalization after every SVG render. `./gradlew test --tests NormalizeSvgTest` verifies the
+normalizer and the committed previews; it is also part of `check`. The utility is compiled for tests
+only and is not included in the plugin's runtime, sources or Javadoc artifacts.
+
+## Maintenance checks
+
+- Update diagrams when changing component responsibilities, assignment rules or CI boundaries.
+- Keep algorithm details consistent with `ShardPlan` and exclusion behavior with `ShardClassFilter`.
+- Show Gradle/framework execution and CI result collection as external responsibilities, not plugin services.
+- Keep examples generic; never copy private service topology, credentials or application data.
+- Validate Markdown links and commit both the `.puml` source and refreshed `.svg` preview.

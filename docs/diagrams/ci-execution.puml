@@ -1,0 +1,51 @@
+@startuml
+title ShardPilot: two independent CI jobs
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam ArrowColor #475569
+skinparam sequenceParticipantBackgroundColor #EFF6FF
+skinparam sequenceParticipantBorderColor #2563EB
+skinparam sequenceLifeLineBorderColor #94A3B8
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+hide footbox
+
+participant "CI pipeline" as ci #F1F5F9
+participant "Job 1\nisolated workspace" as one
+participant "Job 2\nisolated workspace" as two
+participant "CI reports / status" as reports #F1F5F9
+
+note over ci,reports
+  Same consumer + plugin revisions, task, selection, history and count = 2.
+  Only index differs. No shared writable build directory.
+end note
+
+ci -> one : Start Test task; index = 1
+ci -> two : Start Test task; index = 2
+
+par Job 1
+  one -> one : Build local ownership plan
+  one -> one : Exclude families not owned by 1
+  one -> one : Gradle / framework execute retained tests
+  one -> reports : Job 1 status + separate reports
+else Job 2
+  two -> two : Build same local ownership plan
+  two -> two : Exclude families not owned by 2
+  two -> two : Gradle / framework execute retained tests
+  two -> reports : Job 2 status + separate reports
+end
+
+reports -> ci : Gate pipeline on all required job results
+
+note over one,two
+  No communication between shards.
+  Empty shards can be legitimate; normal test failures still fail.
+end note
+
+note over ci,reports
+  Scheduling, artifact collection and global completion checks belong to CI.
+  ShardPilot neither merges reports nor detects missing jobs.
+end note
+@enduml

@@ -1,0 +1,49 @@
+@startuml
+title ShardPilot: component responsibilities
+top to bottom direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam ArrowColor #475569
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam componentBackgroundColor #EFF6FF
+skinparam componentBorderColor #2563EB
+skinparam packageBorderColor #94A3B8
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+
+package "Configuration" {
+  component "ShardPilotPlugin\nconfigureEach(Test)" as plugin
+  component "Consumer's existing or later\nregistered Test task" as test #F1F5F9
+}
+
+package "Per-task settings and hooks" {
+  component "ShardPilotExtension\nper-task provider properties" as settings
+  component "PrepareShardAction\nvalidate + log plan metadata" as prepare
+  component "ShardClassFilter\nexclude non-owned candidates" as filter
+}
+
+package "Assignment" {
+  component "DurationHistory\nparse and validate TSV" as history
+  component "ShardPlan\nmeasured packing + hash fallback" as plan
+}
+
+plugin -down-> test : attach settings,\ninputs and hooks
+test -down-> settings : owns
+test -down-> prepare : doFirst(action)
+test -down-> filter : exclude(spec)
+settings -[hidden]right-> prepare
+prepare -right-> filter : obtain plan
+filter -down-> history : parse contents
+filter -down-> plan : create / query
+history -[hidden]right-> plan
+
+note bottom of plan
+  Nested classes share their family's owner.
+  Each task / job computes a local plan.
+  Gradle and the framework retain execution
+  and normal failure policy.
+end note
+@enduml

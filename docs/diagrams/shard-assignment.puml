@@ -1,0 +1,60 @@
+@startuml
+title ShardPilot: assignment and exclusion
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam ArrowColor #475569
+skinparam activityBackgroundColor #EFF6FF
+skinparam activityBorderColor #2563EB
+skinparam activityDiamondBackgroundColor #F1F5F9
+skinparam activityDiamondBorderColor #64748B
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+
+start
+if (Task opted in?) then (no)
+  :Add no ownership exclusions;
+  stop
+else (yes)
+  :Validate shard count and one-based index;
+  :Parse optional TSV history;
+  note right
+    Unset or missing file = empty history.
+    Invalid settings or metadata fail the task;
+    there is no silent error fallback.
+  end note
+  :Sort records by binary name;
+  :Group at first $ and sum nested timings;
+  :Sort families by duration descending,
+  then family name ascending;
+  :Pack measured families onto least-loaded shard;
+  note right
+    Equal loads choose the lowest index.
+    Unknown classes are not included in loads.
+  end note
+  :Keep immutable plan for subsequent candidates;
+endif
+
+:Evaluate one candidate file;
+if (Count = 1, directory or non-class file?) then (yes)
+  :Add no ownership exclusion for this candidate;
+else (no)
+  :Convert relative .class path to binary name;
+  :Take family before first $;
+  if (Family has a measured owner?) then (yes)
+    :Use packed owner;
+  else (no)
+    :owner = floorMod(family.hashCode(), count) + 1;
+  endif
+  if (Owner = selected index?) then (yes)
+    :Add no ownership exclusion for this candidate;
+  else (no)
+    :Exclude candidate from this shard;
+  endif
+endif
+
+:Gradle retains original includes/excludes;
+:Framework discovery and selection remain unchanged;
+stop
+@enduml
