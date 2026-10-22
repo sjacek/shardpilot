@@ -1,9 +1,18 @@
 # Changelog
 
-Notable changes to ShardPilot are recorded here. Changes under **Unreleased** are not a published
-release. The current build version is `0.1.0`; no public release is recorded yet.
+Notable changes to ShardPilot are recorded here. Changes under **Unreleased** are not part of a
+published release. Release dates follow the version creation dates recorded by the Gradle Plugin Portal.
 
 ## Unreleased
+
+### Changed
+
+- Expanded the README to explain CI testing bottlenecks, parallel shards, duration-aware workload
+  balancing and practical speedup limits. Project, Plugin Portal and Maven metadata share one summary.
+- Installation, CI and release guides now use the published `0.1.0` plugin by default, with
+  composite builds reserved for explicit local plugin development and checkout-based examples.
+
+## [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0) - 2026-10-20
 
 ### Added
 
@@ -67,7 +76,7 @@ release. The current build version is `0.1.0`; no public release is recorded yet
 
 ### Scope and limitations
 
-- This is the initial development version, not a Gradle Plugin Portal release.
+- This is the initial Gradle Plugin Portal release.
 - Initial local verification used Gradle `9.8.1` on Windows with JDK `25`. Broader support requires
   passing the eight-cell Linux Gradle/JDK matrix for the release revision; Java 17 bytecode alone
   is not a compatibility claim for untested combinations.

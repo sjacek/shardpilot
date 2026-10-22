@@ -24,7 +24,8 @@ still applies. Maven Central and the configured image registry must be reachable
 dependencies/images. Missing Docker fails the integration tests instead of skipping them.
 
 The example consumes the plugin using `includeBuild('../../..')` in its own settings. It is not
-included as a subproject in the plugin build, and does not depend on an unpublished Portal version.
+included as a subproject in the plugin build, and deliberately tests the checkout rather than the
+published Portal artifact. Normal consumer installation uses the [published plugin](../README.md#getting-started).
 The example creates its own `integrationTest` source set, task and `check` dependency. Those are
 consumer choices, not behavior added by ShardPilot.
 

@@ -2,7 +2,8 @@
 
 [Documentation index](README.md)
 
-First include the local plugin build as described in [Getting started](../README.md#getting-started).
+First apply the published plugin as described in [Getting started](../README.md#getting-started).
+An included build is only needed for [local plugin development](../README.md#local-plugin-development).
 The plugin ID is `io.github.sjacek.shardpilot`. Applying it adds a `shardPilot` extension to every
 standard Gradle `Test` task, including tasks registered later. It does not apply a JVM plugin or
 create a test task.
@@ -28,7 +29,7 @@ but changing those inputs can still affect Gradle's up-to-date/cache checks.
 ```groovy
 plugins {
     id 'java'
-    id 'io.github.sjacek.shardpilot'
+    id 'io.github.sjacek.shardpilot' version '0.1.0'
 }
 
 tasks.named('test', Test) {
@@ -61,7 +62,7 @@ import io.github.sjacek.shardpilot.ShardPilotExtension
 
 plugins {
     java
-    id("io.github.sjacek.shardpilot")
+    id("io.github.sjacek.shardpilot") version "0.1.0"
 }
 
 tasks.test {

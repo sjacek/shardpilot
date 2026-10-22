@@ -4,9 +4,10 @@ ShardPilot splits the classes of an opted-in Gradle `Test` task between independ
 Each execution calculates ownership locally from the same inputs. There is no coordinator service
 or replacement test engine.
 
-This documentation describes `0.1.0`, an unpublished release candidate. Use the
-[root README](../README.md#getting-started) for local composite-build installation. Do not assume
-that a matching version is available from the Gradle Plugin Portal.
+This documentation describes the published
+[0.1.0 release](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0). Use the
+[root README](../README.md#getting-started) to apply it from the Gradle Plugin Portal, or the
+[local development setup](../README.md#local-plugin-development) to test a checkout explicitly.
 
 ## Guides
 
@@ -40,7 +41,7 @@ results for the release revision. See the [verification scope](testing.md#verifi
 ## Project records
 
 - [Example index](../examples/README.md): runnable scenarios grouped by framework.
-- [Changelog](../CHANGELOG.md): unreleased features and limitations.
+- [Changelog](../CHANGELOG.md): released changes, upcoming work and limitations.
 - [Contribution guidelines](../CONTRIBUTING.md): implementation and review expectations.
 - [MIT license](../LICENSE) and [third-party notices](../THIRD_PARTY_NOTICES.md): distribution terms.
 

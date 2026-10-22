@@ -1,4 +1,8 @@
+import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.publish.maven.MavenPom
+import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.plugin.compatibility.CompatibilityExtension
+import org.gradle.plugin.devel.PluginDeclaration
 
 plugins {
     id 'java-gradle-plugin'
@@ -6,8 +10,10 @@ plugins {
     id 'com.gradle.plugin-publish' version '2.2.1'
 }
 
-group = 'io.github.sjacek'
-version = '0.1.0'
+project.setGroup('io.github.sjacek')
+project.setVersion('0.1.0')
+// Keep the project, Plugin Portal and Maven publication summaries aligned.
+project.setDescription('Duration-balanced, deterministic class-level test sharding for faster Gradle CI pipelines, without a coordinator.')
 
 apply from: 'gradle/release-verification.gradle'
 
@@ -36,7 +42,7 @@ gradlePlugin {
             declaration.setId('io.github.sjacek.shardpilot')
             declaration.setImplementationClass('io.github.sjacek.shardpilot.ShardPilotPlugin')
             declaration.setDisplayName('ShardPilot')
-            declaration.setDescription('Duration-balanced class-level test sharding for Gradle, without a coordinator.')
+            declaration.setDescription(project.getDescription())
             declaration.tags.set(['testing', 'sharding', 'testng', 'spock', 'junit', 'ci'])
             // Use the typed extension API rather than the legacy dynamic Groovy compatibility helper.
             CompatibilityExtension featureCompatibility = ((ExtensionAware) declaration)
@@ -89,9 +95,9 @@ tasks.withType(Jar).configureEach {
 
 publishing {
     publications.withType(MavenPublication).configureEach {
-        pom {
-            name = 'ShardPilot'
-            description = 'Duration-balanced class-level test sharding for Gradle.'
+        pom { MavenPom pom ->
+            pom.getName().set('ShardPilot')
+            pom.getDescription().set(project.getDescription())
             licenses {
                 license {
                     name = 'MIT License'
