@@ -2,7 +2,8 @@
 
 [Documentation index](README.md)
 
-The current version is `0.1.0`, prepared for the first release. No public release is recorded.
+The current version is [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0),
+available from the Gradle Plugin Portal. The Portal records its creation date as 20 October 2026.
 The build uses `com.gradle.plugin-publish` 2.2.1 and produces plugin, source and Javadoc JARs,
 Maven publication metadata and the `publishPlugins` task. Project/SCM URLs, tags and the tested
 configuration-cache feature are configured in `build.gradle`.
@@ -23,7 +24,7 @@ timing aggregation or tie-breaking can move classes between shards. Document tha
 require every job in a pipeline to use the same plugin version. Public extension/property changes
 also need migration notes and updated Groovy/Kotlin examples.
 
-## Prepare the first publication
+## Review publication prerequisites
 
 1. Verify public repository ownership, the `io.github.sjacek.shardpilot` namespace, authorship and
    copyright attribution. Review the [MIT license](../LICENSE) and [third-party notices](../THIRD_PARTY_NOTICES.md).
@@ -37,8 +38,9 @@ also need migration notes and updated Groovy/Kotlin examples.
 5. Review tracked files and publication artifacts for private application configuration, customer
    data, secrets and unintended infrastructure dependencies.
 
-The `maven-publish` plugin alone does not make this project available through the Plugin Portal.
-Keep local composite-build instructions until a real published version has been verified.
+The `maven-publish` plugin alone does not make a version available through the Plugin Portal.
+Keep [local composite builds](../README.md#local-plugin-development) as a development option,
+not as a substitute for verifying published artifact resolution.
 
 ## Configure GitHub publication
 
@@ -67,15 +69,15 @@ It does not create tags, change the changelog or create a GitHub Release.
 
 ## Publish from a version tag
 
-1. Set `version` in `build.gradle` to the release version, for example `0.1.0`. Do not derive it
-   from a tag or source revision.
-2. Run local checks and `bash ./gradlew verifyReleaseTag -PreleaseTag=v0.1.0`. This offline guard
+1. Set `version` in `build.gradle` to a new release version, for example `0.1.1`. Version `0.1.0`
+   is already published and must not be overwritten. Do not derive the version from a tag or source revision.
+2. Run local checks and `bash ./gradlew verifyReleaseTag -PreleaseTag=v0.1.1`. This offline guard
    accepts only `vMAJOR.MINOR.PATCH` with no leading zeroes, suffixes or build metadata, and checks
    equality with the evaluated `project.version`. Snapshots and prerelease tags are not released
    by this workflow.
 3. Commit and push the intended release revision, including both workflow files and
    `gradle/release-verification.gradle`. The maintainer then creates and pushes the immutable
-   tag `v0.1.0` on that revision. Future versions use the same `v` prefix and must match the build.
+   tag `v0.1.1` on that revision. Future versions use the same `v` prefix and must match the build.
 4. Follow **Actions → Publish Gradle plugin**. The job chain is tag validation → reusable eight-cell
    compatibility matrix → Portal validation (`--validate-only`) → publication. Any failed,
    cancelled or skipped prerequisite prevents publication. No separate tag-triggered matrix is

@@ -23,8 +23,9 @@ per test worker, rather than sharing a broker/database instance between CI jobs.
 
 Before fan-out, resolve one fixed set of inputs for the whole run:
 
-- The consumer revision and plugin version/revision. For this unpublished version, every job must
-  have the same included plugin build available at the path configured in settings.
+- The consumer revision and immutable plugin version, such as `0.1.0` from the Gradle Plugin Portal.
+  Do not substitute a local checkout in release-resolution checks. When deliberately testing plugin
+  development with an included build, every job must use the same source revision and configured path.
 - The same task and original test selection, including file patterns, framework tags and any
   command-line filters.
 - The same compiled test inputs and relevant build configuration.

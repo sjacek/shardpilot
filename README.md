@@ -1,6 +1,7 @@
 # ShardPilot
 
-Duration-balanced, class-level test sharding for Gradle. No coordinator, CI vendor lock-in,
+Duration-balanced, deterministic class-level test sharding for faster Gradle CI pipelines.
+No coordinator, CI vendor lock-in,
 test-runner replacement, telemetry, or runtime dependencies outside the Gradle API.
 
 Plugin ID: `io.github.sjacek.shardpilot` · License: [MIT](LICENSE).
@@ -13,19 +14,52 @@ The Gradle Wrapper retains its upstream Apache 2.0 license; see [third-party not
 
 ## Why ShardPilot?
 
-A large test task can dominate a CI pipeline even when the project has only one module.
-ShardPilot distributes its **test classes**, rather than whole modules, between independent jobs.
-Recorded durations improve balance; a deterministic hash assigns classes without measurements.
+As a project grows, its test suite often becomes one of the longest stages in the CI pipeline.
+Hundreds or thousands of unit and integration tests accumulate in a single job, delaying feedback,
+slowing down merge requests and extending the time needed to deliver changes. A large test task
+can become a bottleneck even when the project has only one module.
 
-- Opt-in configuration on each standard Gradle `Test` task.
-- Longest-processing-time-first balancing with deterministic tie-breaking.
-- Nested classes remain with their outer class, preserving class-level test setup.
-- Existing file includes, excludes and framework discovery remain in effect.
-- No additional service, test engine, automatic retries or CI-specific environment detection.
+When testing becomes a bottleneck, split the suite into smaller subsets called **shards** and run
+them as parallel CI jobs. Each job executes only its assigned tests. With sufficient runner capacity,
+this reduces the duration of the testing stage and helps the entire pipeline finish sooner.
+
+ShardPilot distributes **test classes**, rather than whole modules, across independent jobs.
+It works with standard Gradle `Test` tasks without requiring you to reorganize the project into
+artificial modules or replace your test framework.
+
+### Duration-aware balancing
+
+Dividing tests into equally sized groups does not necessarily produce equally fast jobs: a few
+expensive integration tests can take longer than hundreds of lightweight unit tests.
+
+ShardPilot uses historical execution times to balance recorded workloads between shards with
+deterministic longest-processing-time-first assignment. Classes without timing history use
+deterministic hash-based assignment, so you can start without measurements and improve balancing
+as timing data becomes available.
+
+Actual speedup depends on runner capacity, workload balance and test infrastructure startup costs.
+Sharding does not reduce the total amount of test work, and one large test class is not split
+between jobs.
+
+### Keep your existing testing setup
+
+- Works with standard Gradle `Test` tasks, including custom `integrationTest` tasks.
+- Tested with JUnit Jupiter, Spock and TestNG.
+- Keeps nested tests with their enclosing class, preserving class-level test setup.
+- Preserves existing file includes, excludes and framework discovery.
+- Supports Gradle Configuration Cache.
+- Opt-in configuration for each test task.
+- CI-provider independent, with no coordinator service or replacement test runner.
+- No telemetry or runtime dependencies outside the Gradle API.
+
+Your build retains control over test frameworks, source sets, containers, parallel execution,
+retries and failure handling. ShardPilot assigns test classes; your CI launches every shard and
+collects the results. It does not create CI jobs or coordinate their completion.
 
 ## Status
 
-Version `0.1.0` is prepared for the first release, not published to the Gradle Plugin Portal.
+Version [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0)
+is available from the Gradle Plugin Portal.
 The [tag publication workflow](.github/workflows/publish.yml) submits matching stable version tags
 after the complete compatibility matrix succeeds; see [release setup](docs/releases.md#configure-github-publication)
 for the required environment secrets and tag protection.
@@ -44,41 +78,39 @@ Kotlin DSL build configuration has a separate fixture; Kotlin-authored test clas
 
 ## Getting started
 
-This development version is consumed from a local checkout, not from an assumed Plugin Portal
-release. The consumer needs an existing JVM project and a configured test framework. ShardPilot
-does not replace the project's Gradle Wrapper or select its JDK.
+The consumer needs an existing JVM project and a configured test framework. ShardPilot
+does not replace the project's Gradle Wrapper or select its JDK. Normal builds use the published
+plugin; a local checkout is only needed when developing ShardPilot itself.
 
-### 1. Include the plugin build
+### 1. Apply the published plugin
 
-In the consumer's `settings.gradle`:
-
-```groovy
-pluginManagement {
-    includeBuild('../shardpilot') // Path to your local checkout, not a required repository layout.
-}
-```
-
-Or, in `settings.gradle.kts`:
-
-```kotlin
-pluginManagement {
-    includeBuild("../shardpilot")
-}
-```
-
-Replace the path with the location of the ShardPilot checkout. Keep any existing plugin
-repositories and other settings; add the included build to the existing `pluginManagement` block.
-
-### 2. Opt in a test task
-
-In `build.gradle`:
+In the consumer's `build.gradle`:
 
 ```groovy
 plugins {
     id 'java'
-    id 'io.github.sjacek.shardpilot'
+    id 'io.github.sjacek.shardpilot' version '0.1.0'
 }
+```
 
+Or, in `build.gradle.kts`:
+
+```kotlin
+plugins {
+    java
+    id("io.github.sjacek.shardpilot") version "0.1.0"
+}
+```
+
+The Plugin Portal is Gradle's default plugin repository. If settings declare custom plugin
+repositories, retain `gradlePluginPortal()` in the existing `pluginManagement.repositories` block.
+No `includeBuild` or Maven Local publication is required.
+
+### 2. Opt in a test task
+
+After applying the plugin, configure the existing task in `build.gradle`:
+
+```groovy
 tasks.named('test', Test) {
     useJUnitPlatform() // Your existing framework configuration remains yours.
     shardPilot {
@@ -110,14 +142,14 @@ concurrently against the same build directory because Gradle test outputs would 
 
 ### Kotlin DSL task configuration
 
-In `build.gradle.kts`, after including the plugin build in settings:
+In `build.gradle.kts`:
 
 ```kotlin
 import io.github.sjacek.shardpilot.ShardPilotExtension
 
 plugins {
     java
-    id("io.github.sjacek.shardpilot")
+    id("io.github.sjacek.shardpilot") version "0.1.0"
 }
 
 tasks.test {
@@ -254,13 +286,25 @@ The [TestNG counterpart](examples/testng/testcontainers/README.md) adds inherite
 and data-provider invocations; see its [guide](docs/testng-testcontainers-example.md).
 The [example index](examples/README.md) groups all three scenarios by framework.
 
-## Before a public release
+## Local plugin development
 
-- Verify the public repository location, plugin namespace ownership and copyright attribution.
-- Add Plugin Portal publication metadata and credentials through the host's protected secret store.
-- Extend the tested Gradle/JDK/OS matrix before advertising broader compatibility.
-- Publish an immutable release version, not this development snapshot.
-- Keep service-specific exclusions, CI topology, test data and infrastructure out of this repository.
+To test changes from a local ShardPilot checkout, add an explicit override to the consumer's
+existing `pluginManagement` block in `settings.gradle`:
+
+```groovy
+pluginManagement {
+    includeBuild('../shardpilot') // Replace with the path to the local checkout.
+}
+```
+
+The Kotlin DSL equivalent is `includeBuild("../shardpilot")`. Keep existing plugin repositories
+and other settings. The included build substitutes the plugin implementation; remove the override
+when verifying resolution of a released version. The repository's standalone examples use this
+mechanism deliberately so they exercise the checkout being developed.
+
+For future releases, follow the [release guide](docs/releases.md): publish a new immutable version
+after the full compatibility matrix. Do not republish `0.1.0` or broaden compatibility claims
+without corresponding test results. Keep service-specific configuration out of the plugin.
 
 ## License
 

@@ -15,7 +15,7 @@ configuration. Keep credentials, personal data and raw application output out of
 | A shard runs no tests. | It owns no candidates after the existing selection. | Compare all shard results to a count-1 baseline. Empty shards are valid; zero timings can pack all measured families onto shard 1. |
 | `--tests` fails with no matching tests. | The matching class belongs to a different shard, or the selector is wrong. | Use count 1/index 1 for focused local execution. Do not disable failure checks globally. |
 | `integrationTest` is missing. | No consumer task/source set has registered it. | Register the task in the consumer, then opt it in. ShardPilot only configures `Test` tasks that exist. |
-| Plugin ID cannot be resolved. | The development plugin is not published or the included-build path is wrong. | Follow the [local composite-build setup](../README.md#getting-started) and make the same checkout available in CI. |
+| Plugin ID cannot be resolved. | The version is unavailable, plugin repositories omit the Portal, network access is blocked, or an explicit included-build path is wrong. | Pin a published version and retain `gradlePluginPortal()`; follow [installation](../README.md#getting-started). Only plugin development needs a [local checkout override](../README.md#local-plugin-development). |
 | Kotlin DSL cannot find a project-level `shardPilot` block. | The extension belongs to each task. | Use the [typed task extension](configuration.md#kotlin-dsl). |
 
 Do not use a single successful shard as evidence that the suite passed. The CI pipeline must
