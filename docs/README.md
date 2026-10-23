@@ -4,9 +4,12 @@ ShardPilot splits the classes of an opted-in Gradle `Test` task between independ
 Each execution calculates ownership locally from the same inputs. There is no coordinator service
 or replacement test engine.
 
-This documentation describes `0.1.0`, an unpublished release candidate. Use the
-[root README](../README.md#getting-started) for local composite-build installation. Do not assume
-that a matching version is available from the Gradle Plugin Portal.
+This checkout documents the upcoming 0.2.1 release. The published
+[0.1.0 release](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0) supports sharding
+without the new optional test-process block. Use the
+[root README](../README.md#getting-started) to apply it from the Gradle Plugin Portal, or the
+[local development setup](../README.md#local-plugin-development) to test a checkout explicitly.
+The [0.2.1 release notes](releases/0.2.1.md) contain migration examples and the publication checklist.
 
 ## Guides
 
@@ -20,13 +23,14 @@ that a matching version is available from the Gradle Plugin Portal.
 | [TestNG with PostgreSQL and RabbitMQ](testng-testcontainers-example.md) | Run class fixtures and data-provider rows with the native TestNG adapter and worker-local containers. |
 | [Testing and compatibility](testing.md) | Verify changes and understand what the existing tests actually cover. |
 | [Troubleshooting](troubleshooting.md) | Diagnose empty shards, unexpected selection, poor balance or cache behavior. |
-| [Releases and upgrades](releases.md) | Prepare a public release and manage plugin, Wrapper and dependency updates. |
+| [Releases and upgrades](releases.md) | Configure protected publication credentials, release from a tested version tag and manage upgrades. |
 | [PlantUML diagrams](diagrams/README.md) | Find editable diagram sources and regenerate the committed previews. |
 
-## Boundaries of the initial version
+## Boundaries
 
-ShardPilot owns class assignment and candidate exclusion. The consumer owns test frameworks,
-source sets, lifecycle wiring, test parallelism, retries, containers and resource isolation.
+ShardPilot owns class assignment and candidate exclusion, and can optionally configure Gradle's
+test-process heap, parallelism and replacement limits. The consumer owns test frameworks,
+source sets, lifecycle wiring, framework threads, retries, containers and the total resource budget.
 CI owns launching every shard and deciding whether the complete pipeline has passed.
 
 Timing history is optional UTF-8 TSV. The plugin does not import JUnit XML, export updated timings,
@@ -40,7 +44,7 @@ results for the release revision. See the [verification scope](testing.md#verifi
 ## Project records
 
 - [Example index](../examples/README.md): runnable scenarios grouped by framework.
-- [Changelog](../CHANGELOG.md): unreleased features and limitations.
+- [Changelog](../CHANGELOG.md): released changes, upcoming work and limitations.
 - [Contribution guidelines](../CONTRIBUTING.md): implementation and review expectations.
 - [MIT license](../LICENSE) and [third-party notices](../THIRD_PARTY_NOTICES.md): distribution terms.
 

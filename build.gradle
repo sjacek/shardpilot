@@ -1,4 +1,8 @@
+import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.publish.maven.MavenPom
+import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.plugin.compatibility.CompatibilityExtension
+import org.gradle.plugin.devel.PluginDeclaration
 
 plugins {
     id 'java-gradle-plugin'
@@ -6,8 +10,18 @@ plugins {
     id 'com.gradle.plugin-publish' version '2.2.1'
 }
 
-group = 'io.github.sjacek'
-version = '0.1.0'
+project.setGroup('io.github.sjacek')
+project.setVersion('0.2.1')
+// Keep the project, Plugin Portal and Maven publication summaries aligned.
+project.setDescription('ShardPilot helps shorten CI feedback for large JVM unit and integration test suites by splitting ' +
+        'Gradle Test tasks into deterministic, non-overlapping class-level shards for parallel CI jobs. ' +
+        'It balances shards using historical test durations, with deterministic hashing when timing data is unavailable. ' +
+        'Works with existing JUnit Jupiter, Spock and TestNG tasks, preserving nested test families and test filters. ' +
+        'Optional per-task controls configure worker heap size, parallel forks and process recycling. ' +
+        'Supports Gradle Configuration Cache and any CI provider, without a coordinator or replacement test runner. ' +
+        'Your CI launches every shard and collects the results.')
+
+apply from: 'gradle/release-verification.gradle'
 
 repositories {
     mavenCentral()
@@ -34,7 +48,7 @@ gradlePlugin {
             declaration.setId('io.github.sjacek.shardpilot')
             declaration.setImplementationClass('io.github.sjacek.shardpilot.ShardPilotPlugin')
             declaration.setDisplayName('ShardPilot')
-            declaration.setDescription('Duration-balanced class-level test sharding for Gradle, without a coordinator.')
+            declaration.setDescription(project.getDescription())
             declaration.tags.set(['testing', 'sharding', 'testng', 'spock', 'junit', 'ci'])
             // Use the typed extension API rather than the legacy dynamic Groovy compatibility helper.
             CompatibilityExtension featureCompatibility = ((ExtensionAware) declaration)
@@ -49,6 +63,8 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:6.1.3')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation gradleTestKit()
+    // Parse workflow structure as YAML 1.2 in regression tests; not a plugin runtime dependency.
+    testImplementation 'org.snakeyaml:snakeyaml-engine:3.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -57,6 +73,9 @@ sourceSets.test.java.srcDir('scripts')
 
 test {
     useJUnitPlatform()
+    inputs.file('gradle/release-verification.gradle').withPropertyName('releaseTagVerificationScript')
+    inputs.files('.github/workflows/compatibility.yml', '.github/workflows/publish.yml')
+            .withPropertyName('releaseWorkflowConfiguration')
     // The Wrapper builds the plugin; TestKit independently selects the consumer's Gradle runtime.
     // A system property is also a Test input, so switching matrix cells cannot reuse old results.
     systemProperty 'shardpilot.test.gradleVersion',
@@ -82,9 +101,9 @@ tasks.withType(Jar).configureEach {
 
 publishing {
     publications.withType(MavenPublication).configureEach {
-        pom {
-            name = 'ShardPilot'
-            description = 'Duration-balanced class-level test sharding for Gradle.'
+        pom { MavenPom pom ->
+            pom.getName().set('ShardPilot')
+            pom.getDescription().set(project.getDescription())
             licenses {
                 license {
                     name = 'MIT License'

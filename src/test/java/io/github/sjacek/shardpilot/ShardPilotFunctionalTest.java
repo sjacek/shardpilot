@@ -56,8 +56,83 @@ class ShardPilotFunctionalTest {
     @Test
     void applyingThePluginAloneDoesNotShardTests() throws Exception {
         fixture(false);
+        append("""
+                test {
+                    forkEvery = 7
+                    maxParallelForks = 1
+                    doFirst { Test task ->
+                        assert task.maxHeapSize == '256m'
+                        assert task.forkEvery == 7
+                        assert task.maxParallelForks == 1
+                    }
+                }
+                """);
         run("test", "-Pshardpilot.count=2", "-Pshardpilot.index=1");
         assertEquals(8, cases("test").size());
+    }
+
+    @Test
+    void processOptionsAreIndependentOfShardingAndLeaveUnspecifiedTaskSettingsUntouched() throws Exception {
+        fixture(false);
+        append("""
+                test {
+                    forkEvery = 7
+                    shardPilot {
+                        testProcesses { maxParallelForks = providers.provider { 1 } }
+                    }
+                    doFirst { Test task ->
+                        assert task.maxHeapSize == '256m'
+                        assert task.forkEvery == 7
+                        assert task.maxParallelForks == 1
+                    }
+                }
+                """);
+        run("test", "--tests", "example.BetaTest", "-Pshardpilot.count=2", "-Pshardpilot.index=99");
+        assertEquals(Set.of("example.BetaTest#beta()"), cases("test"));
+    }
+
+    @Test
+    void processPolicyLimitsRealWorkerHeapsAndRecyclesProcessesWithReusableConfigurationCache() throws Exception {
+        processFixture(false);
+        run("test", "--tests", "example.*ProcessTest", "-PprocessForkEvery=0");
+        assertEquals(1, probeWorkers(128).size(), "zero must reuse the process across both classes");
+        BuildResult recycled = run("test", "--tests", "example.*ProcessTest", "-PprocessForkEvery=1");
+        assertEquals(SUCCESS, testOutcome(recycled), "changing only forkEvery must invalidate test results");
+        assertEquals(2, probeWorkers(128).size(), "each class must execute in a fresh Gradle worker");
+        assertEquals(2, cases("test").size());
+
+        BuildResult reused = run("test", "--tests", "example.*ProcessTest", "-PprocessForkEvery=1");
+        assertTrue(reused.getOutput().contains("Reusing configuration cache."));
+        assertEquals(UP_TO_DATE, testOutcome(reused));
+        // Remove declared probe outputs to execute workers from the restored configuration as well.
+        for (String name : List.of("First", "Second")) {
+            Files.delete(directory.resolve("build/process-probes/" + name));
+        }
+        BuildResult restored = run("test", "--tests", "example.*ProcessTest", "-PprocessForkEvery=1");
+        assertTrue(restored.getOutput().contains("Reusing configuration cache."));
+        assertEquals(SUCCESS, testOutcome(restored));
+        assertEquals(2, probeWorkers(128).size());
+
+        run("test", "--tests", "example.*ProcessTest", "-PprocessForkEvery=1", "-PprocessHeap=160m");
+        assertEquals(2, probeWorkers(160).size(), "provider overrides must reach actual worker JVMs");
+    }
+
+    @Test
+    void processPolicyAllowsTwoRealWorkersWithoutChangingFrameworkOrShardSelection() throws Exception {
+        processFixture(true);
+        run("test", "--tests", "example.*ProcessTest", "--max-workers=2");
+        assertEquals(2, probeWorkers(128).size());
+        assertEquals(2, cases("test").size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"maxHeapSize = '0m'", "maxParallelForks = 0", "forkEvery = -1L"})
+    void invalidProcessPoliciesFailBeforeExecutingTests(String setting) throws Exception {
+        fixture(false);
+        append("test { shardPilot { testProcesses { " + setting + " } } }\n");
+        BuildResult failure = runner("test").buildAndFail();
+        assertTrue(failure.getOutput().contains("ShardPilot testProcesses."));
+        assertFalse(Files.exists(directory.resolve("build/test-results/test")));
     }
 
     @ParameterizedTest
@@ -216,6 +291,7 @@ class ShardPilotFunctionalTest {
         write("durations.tsv", "");
         assertTrue(runner("test", "-Pshardpilot.count=2", "-Pshardpilot.index=3")
                 .buildAndFail().getOutput().contains("index must be between 1 and shard count"));
+        append("test { shardPilot { testProcesses { maxHeapSize = '128m'; forkEvery = 1L } } }\n");
         write("src/test/java/example/BetaTest.java", """
                 package example;
                 import org.junit.jupiter.api.Test;
@@ -245,6 +321,11 @@ class ShardPilotFunctionalTest {
                     useJUnitPlatform()
                     extensions.configure<ShardPilotExtension>("shardPilot") {
                         enabled.set(true)
+                        testProcesses {
+                            maxHeapSize.set("128m")
+                            maxParallelForks.set(1)
+                            forkEvery.set(1L)
+                        }
                     }
                 }
                 """);
@@ -252,6 +333,64 @@ class ShardPilotFunctionalTest {
         javaTest("Beta", "beta", "");
         run("test");
         assertEquals(Set.of("example.BetaTest#beta()"), cases("test"));
+    }
+
+    private void processFixture(boolean parallel) throws IOException {
+        fixture(false);
+        append("""
+                test {
+                    // File selection happens before worker assignment; CLI method filters alone do not.
+                    include '**/*ProcessTest.class'
+                    shardPilot {
+                        enabled = %s
+                        testProcesses {
+                            maxHeapSize = providers.gradleProperty('processHeap').orElse('128m')
+                            maxParallelForks = %d
+                            forkEvery = providers.gradleProperty('processForkEvery').map { Long.parseLong(it) }.orElse(0L)
+                        }
+                    }
+                    systemProperty 'probeDirectory', layout.buildDirectory.dir('process-probes').get().asFile.absolutePath
+                    systemProperty 'parallelProbe', '%s'
+                    outputs.dir(layout.buildDirectory.dir('process-probes'))
+                    doFirst { Test task ->
+                        assert task.maxParallelForks == %d
+                    }
+                }
+                """.formatted(parallel, parallel ? 2 : 1, parallel, parallel ? 2 : 1));
+        for (String name : List.of("First", "Second")) {
+            write("src/test/java/example/" + name + "ProcessTest.java", """
+                    package example;
+                    import java.nio.file.*;
+                    import java.time.*;
+                    class %sProcessTest {
+                        @org.junit.jupiter.api.Test void recordsProcess() throws Exception {
+                            Path root = Path.of(System.getProperty("probeDirectory"));
+                            Files.createDirectories(root);
+                            Files.writeString(root.resolve("%s"), ProcessHandle.current().pid() + " "
+                                    + Runtime.getRuntime().maxMemory());
+                            if (Boolean.getBoolean("parallelProbe")) {
+                                Instant deadline = Instant.now().plusSeconds(30);
+                                while (!Files.exists(root.resolve("First")) || !Files.exists(root.resolve("Second"))) {
+                                    if (Instant.now().isAfter(deadline)) throw new AssertionError("Two concurrent workers required");
+                                    Thread.sleep(20);
+                                }
+                            }
+                        }
+                    }
+                    """.formatted(name, name));
+        }
+    }
+
+    private Set<String> probeWorkers(int heapMiB) throws IOException {
+        var workers = new HashSet<String>();
+        for (String name : List.of("First", "Second")) {
+            String[] probe = Files.readString(directory.resolve("build/process-probes/" + name)).split(" ");
+            workers.add(probe[0]);
+            long heap = Long.parseLong(probe[1]);
+            long limit = heapMiB * 1024L * 1024;
+            assertTrue(heap >= limit * 9 / 10 && heap <= limit, "actual worker heap must match the configured limit");
+        }
+        return workers;
     }
 
     private void testNgFixture() throws IOException {

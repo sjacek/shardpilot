@@ -6,6 +6,10 @@ Treat every shard as an ordinary invocation of the same Gradle task in an isolat
 ShardPilot does not detect a CI vendor, create jobs or coordinate them. Each job independently
 computes the same plan and keeps its own subset of candidate classes.
 
+For publishing ShardPilot itself after its Gradle/JDK matrix, see the
+[tag release workflow](releases.md#publish-from-a-version-tag). That workflow is separate from
+the consumer-suite sharding described here.
+
 For runnable Docker-backed suites, see the [JUnit Jupiter](testcontainers-example.md),
 [Spock](spock-testcontainers-example.md) and [TestNG](testng-testcontainers-example.md)
 PostgreSQL/RabbitMQ examples. All keep one fixture pair
@@ -19,8 +23,9 @@ per test worker, rather than sharing a broker/database instance between CI jobs.
 
 Before fan-out, resolve one fixed set of inputs for the whole run:
 
-- The consumer revision and plugin version/revision. For this unpublished version, every job must
-  have the same included plugin build available at the path configured in settings.
+- The consumer revision and immutable plugin version, such as `0.1.0` from the Gradle Plugin Portal.
+  Do not substitute a local checkout in release-resolution checks. When deliberately testing plugin
+  development with an included build, every job must use the same source revision and configured path.
 - The same task and original test selection, including file patterns, framework tags and any
   command-line filters.
 - The same compiled test inputs and relevant build configuration.
@@ -88,9 +93,13 @@ Shard count, index and history contents are task inputs, but this does not make 
 network-dependent tests intrinsically cacheable. Do not share a writable project build directory
 as a substitute for a build cache.
 
-CI job parallelism and Gradle/framework parallelism multiply resource use. ShardPilot does not
-change `maxParallelForks`, framework threads, retry plugins or memory limits. Size the complete
-matrix against available CPU, memory, database capacity and container startup cost.
+CI job parallelism and Gradle/framework parallelism multiply resource use. Since 0.2.1,
+ShardPilot can explicitly configure per-task `maxHeapSize`, `maxParallelForks` and `forkEvery`
+through the optional [test-process block](../README.md#optional-test-process-settings).
+Without that block, native process settings remain unchanged. Framework threads, retry plugins,
+container limits and the total runner budget remain consumer/CI responsibilities. Size the complete
+matrix against available CPU, memory, database capacity and container startup cost; a per-JVM
+heap limit does not include metaspace, native memory or service containers.
 
 An empty shard can be legitimate and is not itself evidence of lost coverage. Conversely, an
 explicit `--tests` selection on a non-owning shard may fail with Gradle's normal no-match error.

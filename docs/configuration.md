@@ -2,7 +2,8 @@
 
 [Documentation index](README.md)
 
-First include the local plugin build as described in [Getting started](../README.md#getting-started).
+First apply the published plugin as described in [Getting started](../README.md#getting-started).
+An included build is only needed for [local plugin development](../README.md#local-plugin-development).
 The plugin ID is `io.github.sjacek.shardpilot`. Applying it adds a `shardPilot` extension to every
 standard Gradle `Test` task, including tasks registered later. It does not apply a JVM plugin or
 create a test task.
@@ -23,12 +24,32 @@ override those conventions. Leave both values unpinned in a build that uses a CI
 Even disabled tasks receive declared ShardPilot inputs. Their candidate selection is unchanged,
 but changing those inputs can still affect Gradle's up-to-date/cache checks.
 
+## Optional test processes (0.2.0)
+
+An explicit `shardPilot.testProcesses { ... }` block sets `maxHeapSize`, `maxParallelForks`
+and/or `forkEvery` on the owning Gradle `Test` task. See the
+[Groovy and Kotlin examples](../README.md#optional-test-process-settings).
+Version 0.1.0 does not provide this API; use the 0.2.0 release when available or an explicit included build.
+
+| Property | Gradle type | Meaning |
+| --- | --- | --- |
+| `maxHeapSize` | `Property<String>` | Positive per-JVM size, in bytes or with a `k`/`m`/`g` suffix. |
+| `maxParallelForks` | `Property<Integer>` | Positive maximum number of concurrent test processes in the task. |
+| `forkEvery` | `Property<Long>` | Nonnegative classes per process; `0L` disables periodic replacement. |
+
+There are no plugin defaults for these properties. Omitting the block or an individual property
+preserves native task configuration. The block also works with sharding disabled. Providers are
+resolved after the configuration action returns, before task inputs are snapshotted; later native
+task assignments can override the values. All supplied values are validated before modifying the task.
+Configured options become explicit task inputs so changing the process policy invalidates old results.
+There is no automatic memory detection, memory-driven scheduling, retry or failure-policy change.
+
 ## Groovy DSL
 
 ```groovy
 plugins {
     id 'java'
-    id 'io.github.sjacek.shardpilot'
+    id 'io.github.sjacek.shardpilot' version '0.1.0'
 }
 
 tasks.named('test', Test) {
@@ -61,7 +82,7 @@ import io.github.sjacek.shardpilot.ShardPilotExtension
 
 plugins {
     java
-    id("io.github.sjacek.shardpilot")
+    id("io.github.sjacek.shardpilot") version "0.1.0"
 }
 
 tasks.test {

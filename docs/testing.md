@@ -38,12 +38,21 @@ fail instead of being reduced to warnings.
 
 ## Test responsibilities
 
+TestKit verifies that optional process configuration leaves untouched settings intact and works
+with sharding disabled. Real worker probes check heap limits, sequential reuse, class-boundary
+replacement, and two concurrent processes. The probes execute again after strict configuration-cache
+restoration and verify invalidation when only the replacement limit changes. Groovy/provider and
+Kotlin DSL configuration, invalid values and fatal test failures are covered. These small fixtures
+do not reproduce an application's memory leak or prove that a configured heap prevents OOM.
+
 | Test class | Behavior covered |
 | --- | --- |
 | `DurationHistoryTest` | Comments, blank lines, CRLF, nested names, immutable results, malformed metadata and safe error messages. |
 | `ShardPlanTest` | Deterministic packing/ties, nested aggregation, floating-point order, hash fallback, complete ownership, invalid settings and overflow. |
 | `ShardPilotFunctionalTest` | Real Gradle tasks with Jupiter/Spock/native TestNG, weighted/hash-only partitions, provider-row ownership, opt-in, filters, custom tasks, empty results, fatal setup failures, Kotlin DSL, actual Gradle/JDK runtimes and configuration-cache reuse. |
 | `NormalizeSvgTest` | Standalone preview normalization, text/geometry/link preservation, XML input safety, idempotence and committed SVG compatibility checks. |
+| `ReleaseTagVerificationTest` | Actual Gradle guard script, stable/malformed/missing/mismatched tags, evaluated build versions and strict configuration-cache reuse. |
+| `PublicationWorkflowTest` | Parsed YAML, complete matrix dependency gating, immutable checkout SHA, required jobs, credential isolation and disabled publisher caches. |
 
 Functional partition checks compare the union of shard results to an unsharded baseline and check
 for duplicates. Configuration-cache checks reuse a build, then change timing contents to verify
@@ -52,9 +61,10 @@ another shard's report files when rerunning a task sequentially in a fixture.
 
 ## Gradle and JDK matrix
 
-The [compatibility workflow](../.github/workflows/compatibility.yml) runs on pushes, pull requests
-and manual dispatch. Every cell runs the complete Docker-free `check assemble`, not only plugin
-application or a compilation smoke test. All cells are required; failures do not cancel the others.
+The [compatibility workflow](../.github/workflows/compatibility.yml) runs on branch pushes, pull
+requests, manual dispatch and calls from the tag-publication workflow. Every cell runs the complete
+Docker-free `check assemble`, not only plugin application or a compilation smoke test. All cells
+are required; failures do not cancel the others.
 
 | Consumer Gradle | JDK 17 | JDK 21 | JDK 25 |
 | --- | --- | --- | --- |
@@ -102,10 +112,22 @@ CI runs on Linux and retains uniquely named HTML/JUnit reports for every cell, i
 It validates the Wrapper, uses read-only repository permissions and does not publish the plugin or
 require release credentials. The matrix does not run the Docker-backed examples.
 
+The [publication workflow](../.github/workflows/publish.yml) calls this same matrix at the tagged
+commit, after checking its version, and publishes only if the entire call succeeds. Workflow
+regressions are checked by parsing YAML 1.2 with a test-only SnakeYAML Engine dependency. Release
+guard fixtures use the fixed publishing Wrapper; consumer fixtures use `testGradleVersion`.
+Neither regression test publishes anything or needs Portal credentials.
+
 ## Verified scope
 
-All eight target pairs have also passed local Windows verification: 46 tests per pair, with no
-failures or skipped tests. Linux results come from the compatibility workflow for each revision.
+The 0.2.0 candidate's complete 67-test suite passed all eight target pairs locally on Linux amd64
+in official Eclipse Temurin containers on 23 October 2026: 536 test executions, no failures or
+skipped tests. Every cell ran `check assemble`, including release/workflow regressions, actual
+runtime assertions and the test-process probes. All cells used the same source snapshot.
+Subsequent changes were limited to release metadata and documentation; plugin runtime code is
+unchanged. The 0.2.1 tag workflow still reruns every cell against the exact committed release
+revision before publication.
+The original 46-test plugin suite also passed all eight target pairs locally on Windows.
 Plugin classes target Java 17 bytecode. The fixtures currently use JUnit Jupiter 6.1.3, Spock 2.5 for Groovy 5.0, Groovy 5.1.3
 and TestNG 7.12.0 through Gradle's native TestNG adapter.
 These fixture versions document the test environment; they are not dependencies injected into

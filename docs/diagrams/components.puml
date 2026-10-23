@@ -21,6 +21,7 @@ package "Configuration" {
 
 package "Per-task settings and hooks" {
   component "ShardPilotExtension\nper-task provider properties" as settings
+  component "TestProcessOptions\noptional heap / forks / recycling" as processes
   component "PrepareShardAction\nvalidate + log plan metadata" as prepare
   component "ShardClassFilter\nexclude non-owned candidates" as filter
 }
@@ -32,6 +33,8 @@ package "Assignment" {
 
 plugin -down-> test : attach settings,\ninputs and hooks
 test -down-> settings : owns
+settings -left-> processes : testProcesses(action)\nconfiguration time only
+processes -up-> test : public Gradle setters\n+ explicit task inputs
 test -down-> prepare : doFirst(action)
 test -down-> filter : exclude(spec)
 settings -[hidden]right-> prepare
