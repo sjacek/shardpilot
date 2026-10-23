@@ -1,0 +1,143 @@
+import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.publish.maven.MavenPom
+import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.plugin.devel.PluginDeclaration
+import org.gradle.plugin.compatibility.CompatibilityExtension
+
+plugins {
+    id 'java-gradle-plugin'
+    id 'maven-publish'
+    id 'com.gradle.plugin-publish'
+}
+
+project.setDescription(rootProject.description)
+base { archivesName = 'shardpilot' }
+
+evaluationDependsOn(':shardpilot-core')
+def sharedCoreSources = project(':shardpilot-core').sourceSets.main
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    // The plugin bytecode is independent of the JDK used to compile consumer tests.
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
+
+gradlePlugin {
+    website = 'https://github.com/sjacek/shardpilot'
+    vcsUrl = 'https://github.com/sjacek/shardpilot.git'
+    plugins {
+        shardpilot { PluginDeclaration declaration ->
+            declaration.setId('io.github.sjacek.shardpilot')
+            declaration.setImplementationClass('io.github.sjacek.shardpilot.ShardPilotPlugin')
+            declaration.setDisplayName('ShardPilot')
+            declaration.setDescription(project.getDescription())
+            declaration.tags.set(['testing', 'sharding', 'testng', 'spock', 'junit', 'ci'])
+            // Use the typed extension API rather than the legacy dynamic Groovy compatibility helper.
+            CompatibilityExtension featureCompatibility = ((ExtensionAware) declaration)
+                    .getExtensions().getByType(CompatibilityExtension)
+            // Strict TestKit fixtures verify this feature; no Isolated Projects claim is made.
+            featureCompatibility.getFeatures().getConfigurationCache().set(true)
+        }
+    }
+}
+
+dependencies {
+    // Bundle the shared classes into the existing plugin artifact, preserving Portal resolution
+    // and the public Java package/API without requiring a separately published core dependency.
+    implementation files(sharedCoreSources.output)
+    // Manifest transport is YAML 1.2; this parser belongs to the Gradle plugin, not consumer test workers.
+    implementation 'org.snakeyaml:snakeyaml-engine:3.2'
+    testImplementation platform('org.junit:junit-bom:6.1.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation gradleTestKit()
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// Exercise the standalone documentation utility without publishing it as plugin code.
+sourceSets.test.java.srcDir(rootProject.file('scripts'))
+
+test {
+    useJUnitPlatform()
+    workingDir = rootProject.projectDir
+    inputs.file(rootProject.file('gradle/release-verification.gradle')).withPropertyName('releaseTagVerificationScript')
+    inputs.files(rootProject.file('.github/workflows/compatibility.yml'), rootProject.file('.github/workflows/publish.yml'))
+            .withPropertyName('releaseWorkflowConfiguration')
+    inputs.files(rootProject.file('pom.xml'), rootProject.file('shardpilot-core/pom.xml'),
+            rootProject.file('shardpilot-maven-plugin/pom.xml'), rootProject.file('.mvn/wrapper/maven-wrapper.properties'))
+            .withPropertyName('mavenReactorConfiguration')
+    inputs.file(rootProject.file('scripts/verify-maven-release.sh')).withPropertyName('signedMavenReleaseCheck')
+    // Check the actual publication model, including the marker, rather than only a composite classpath.
+    def metadataTasks = tasks.matching { it.name in ['generatePomFileForPluginMavenPublication',
+            'generatePomFileForShardpilotPluginMarkerMavenPublication', 'generateMetadataFileForPluginMavenPublication'] }
+    dependsOn metadataTasks
+    inputs.files(metadataTasks).withPropertyName('gradlePublicationMetadata')
+    systemProperty 'shardpilot.test.publicationDirectory', layout.buildDirectory.dir('publications').get().asFile.absolutePath
+    systemProperty 'shardpilot.test.releaseVersion', project.version.toString()
+    def pluginArchive = tasks.named('jar', Jar).flatMap { it.archiveFile }
+    inputs.file(pluginArchive).withPropertyName('distributablePluginJar')
+    systemProperty 'shardpilot.test.pluginJar', pluginArchive.get().asFile.absolutePath
+    // The Wrapper builds the plugin; TestKit independently selects the consumer's Gradle runtime.
+    // A system property is also a Test input, so switching matrix cells cannot reuse old results.
+    systemProperty 'shardpilot.test.gradleVersion',
+            providers.gradleProperty('testGradleVersion').orElse(gradle.gradleVersion).get()
+    systemProperty 'shardpilot.test.javaVersion',
+            providers.gradleProperty('testJavaVersion').orElse(JavaVersion.current().majorVersion).get()
+    // TestKit launches nested builds; keep their memory budgets independent of test parallelism.
+    maxParallelForks = 1
+    maxHeapSize = '512m'
+    testLogging {
+        exceptionFormat = 'full'
+        showStandardStreams = false
+    }
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(Jar).configureEach {
+    from(rootProject.file('LICENSE')) { into 'META-INF' }
+}
+
+tasks.named('jar', Jar) { from sharedCoreSources.output }
+tasks.named('sourcesJar', Jar) { from sharedCoreSources.allSource }
+tasks.named('javadoc', Javadoc) { source sharedCoreSources.allJava }
+tasks.named('check') { dependsOn ':shardpilot-core:check' }
+
+publishing {
+    publications.withType(MavenPublication).configureEach {
+        if (name == 'pluginMaven') artifactId = 'shardpilot'
+        pom { MavenPom pom ->
+            pom.getName().set('ShardPilot')
+            pom.getDescription().set(project.getDescription())
+            pom.getUrl().set(gradlePlugin.website.get())
+            licenses {
+                license {
+                    name = 'MIT License'
+                    url = 'https://opensource.org/license/mit'
+                    distribution = 'repo'
+                }
+            }
+            developers {
+                developer { id = 'sjacek'; name = 'sjacek'; url = 'https://github.com/sjacek' }
+            }
+            scm {
+                connection = 'scm:git:https://github.com/sjacek/shardpilot.git'
+                developerConnection = 'scm:git:ssh://git@github.com/sjacek/shardpilot.git'
+                url = gradlePlugin.website
+                tag = "v${project.version}"
+            }
+        }
+    }
+}

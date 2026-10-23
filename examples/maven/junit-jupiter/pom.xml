@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example.shardpilot</groupId><artifactId>jupiter-shards</artifactId><version>1.0-SNAPSHOT</version>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>17</maven.compiler.release>
+    <shardpilot.index>1</shardpilot.index>
+    <junit.version>6.1.3</junit.version>
+    <surefire.version>3.5.4</surefire.version>
+    <shardpilot.version>0.3.0</shardpilot.version>
+  </properties>
+  <dependencies>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>${junit.version}</version><scope>test</scope></dependency>
+  </dependencies>
+  <build><plugins>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.14.0</version></plugin>
+    <plugin>
+      <groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>${shardpilot.version}</version>
+      <configuration>
+        <durationsFile>${project.basedir}/durations.tsv</durationsFile>
+        <additionalExcludesFile>${project.basedir}/excluded-tests.txt</additionalExcludesFile>
+      </configuration>
+      <executions>
+        <execution><id>select-unit</id><phase>process-test-classes</phase><goals><goal>select</goal></goals>
+          <configuration><runner>SUREFIRE</runner></configuration>
+        </execution>
+        <execution><id>select-integration</id><phase>pre-integration-test</phase><goals><goal>select</goal></goals>
+          <configuration><runner>FAILSAFE</runner></configuration>
+        </execution>
+      </executions>
+    </plugin>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>${surefire.version}</version>
+      <configuration>
+        <includes><include>**/*Test.java</include><include>**/*Spec.java</include></includes>
+        <excludesFile>${project.build.directory}/shardpilot/unit/excludes.txt</excludesFile>
+        <reportsDirectory>${project.build.directory}/surefire-reports/shard-${shardpilot.index}</reportsDirectory>
+        <argLine>-Xmx256m</argLine>
+      </configuration>
+    </plugin>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>${surefire.version}</version>
+      <configuration>
+        <excludesFile>${project.build.directory}/shardpilot/integration/excludes.txt</excludesFile>
+        <reportsDirectory>${project.build.directory}/failsafe-reports/shard-${shardpilot.index}</reportsDirectory>
+        <summaryFile>${project.build.directory}/failsafe-reports/shard-${shardpilot.index}/failsafe-summary.xml</summaryFile>
+        <argLine>-Xmx256m</argLine>
+      </configuration>
+      <executions><execution><id>integration-tests</id><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions>
+    </plugin>
+  </plugins></build>
+</project>

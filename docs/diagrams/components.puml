@@ -14,39 +14,46 @@ skinparam packageBorderColor #94A3B8
 skinparam noteBackgroundColor #FFFBEB
 skinparam noteBorderColor #D97706
 
-package "Configuration" {
+package "Consumer task configuration" {
   component "ShardPilotPlugin\nconfigureEach(Test)" as plugin
-  component "Consumer's existing or later\nregistered Test task" as test #F1F5F9
+  component "ShardPilotExtension\nsettings owned by one Test task" as settings
 }
 
-package "Per-task settings and hooks" {
-  component "ShardPilotExtension\nper-task provider properties" as settings
+package "Core task behavior" {
   component "TestProcessOptions\noptional heap / forks / recycling" as processes
-  component "PrepareShardAction\nvalidate + log plan metadata" as prepare
+  component "PrepareShardAction\nvalidate + log metadata" as prepare
   component "ShardClassFilter\nexclude non-owned candidates" as filter
 }
 
-package "Assignment" {
+package "Opt-in class manifests" {
+  component "ShardVerification\nregister typed sibling tasks" as verification
+  component "Prepare / Write / Verify\nYAML + JSON / HTML coverage" as manifests
+}
+
+package "Shared assignment" {
   component "DurationHistory\nparse and validate TSV" as history
   component "ShardPlan\nmeasured packing + hash fallback" as plan
 }
 
-plugin -down-> test : attach settings,\ninputs and hooks
-test -down-> settings : owns
-settings -left-> processes : testProcesses(action)\nconfiguration time only
-processes -up-> test : public Gradle setters\n+ explicit task inputs
-test -down-> prepare : doFirst(action)
-test -down-> filter : exclude(spec)
-settings -[hidden]right-> prepare
-prepare -right-> filter : obtain plan
-filter -down-> history : parse contents
-filter -down-> plan : create / query
-history -[hidden]right-> plan
+plugin --> settings : attach extension to Test
+settings --> processes : testProcesses(action)
+settings --> prepare : doFirst hook
+settings --> filter : exclusion hook
+settings --> verification : verification(action)
+verification --> manifests : explicit opt-in
+prepare --> filter : obtain plan
+filter --> history : parse contents
+history --> plan : measured families
+filter --> plan : query ownership
+manifests --> plan : preparation reuses planner
 
+note bottom of processes
+  Uses public Gradle Test setters.
+  Gradle owns worker processes.
+end note
 note bottom of plan
-  Nested classes share their family's owner.
-  Each task / job computes a local plan.
-  Gradle and the framework retain execution
-  and normal failure policy.
+  Nested classes share a family owner.
+  The consumer owns test frameworks,
+  execution and normal failure policy.
 end note
 @enduml

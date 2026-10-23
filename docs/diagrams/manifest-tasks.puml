@@ -1,0 +1,42 @@
+@startuml
+title Optional manifest tasks: dependencies and ordering
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam componentStyle rectangle
+skinparam componentBackgroundColor #EFF6FF
+skinparam componentBorderColor #2563EB
+skinparam ArrowColor #475569
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+
+component "Source-set\ncompilation" as compile #F1F5F9
+component "prepare<Task>\nShardManifests" as prepare
+component "write<Task>\nActualShardManifest" as actual
+component "Owning Test task\nGradle + framework" as test #F1F5F9
+component "verify<Task>Shards\nDownloaded evidence only" as verify
+component "CI completion gate\nEvery test job AND coverage" as ci #F1F5F9
+
+compile --> prepare : file dependencies
+compile --> actual : file dependencies
+actual --> test : Test dependsOn writer
+prepare -[dashed]-> verify : mustRunAfter
+actual -[dashed]-> verify : mustRunAfter
+test --> ci : normal test outcome
+verify --> ci : coverage outcome
+
+note bottom of verify
+  Ordering is not a dependency.
+  Running only verification schedules
+  no compilation, plan generation
+  or test workers.
+end note
+
+legend bottom left
+  Solid arrows: prerequisite / required outcome.
+  Dashed arrows: order only when both tasks are selected.
+  Gray nodes are owned by the consumer / CI.
+endlegend
+@enduml

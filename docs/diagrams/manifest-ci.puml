@@ -1,0 +1,44 @@
+@startuml
+title Optional manifests: one immutable CI artifact cohort
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam ArrowColor #475569
+skinparam sequenceParticipantBackgroundColor #EFF6FF
+skinparam sequenceParticipantBorderColor #2563EB
+skinparam sequenceLifeLineBorderColor #94A3B8
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+hide footbox
+
+participant "Compile job" as compile
+collections "CI artifacts" as artifacts #F1F5F9
+participant "Shard i (1..N)\nisolated workspace" as shard
+participant "Coverage job" as coverage
+participant "CI gate" as ci #F1F5F9
+actor "Reviewer" as reviewer
+
+compile -> compile : Compile eligible bytecode\nPrepare all partitions
+compile -> artifacts : baseline.yaml + planned-1..N.yaml
+
+loop Every index, same revisions / eligibility / history / count
+  artifacts -> shard : Common plan and compiled inputs
+  shard -> shard : Write actual-i.yaml BEFORE workers
+  shard -> shard : Execute normal Test task
+  shard -> artifacts : actual-i.yaml + normal reports\nUpload even on test failure
+  shard -> ci : Normal test-job outcome
+end
+
+artifacts -> coverage : Same baseline + plan\nAll actual-1..N.yaml
+coverage -> coverage : Verify exact class selections\nNever regenerate evidence
+coverage -> artifacts : coverage.json + coverage.html\nPassed / failed; one evidence snapshot
+coverage -> ci : Verification-job outcome
+ci -> ci : Require ALL test jobs\nAND coverage job to succeed
+artifacts -> reviewer : Download HTML or open exposed MR link\nConsumer-owned publication; no test rerun
+
+note over artifacts,coverage
+  CI owns artifact identity, transfer and retention.
+  Index-specific files must belong to the same run.
+end note
+@enduml

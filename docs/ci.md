@@ -2,9 +2,12 @@
 
 [Documentation index](README.md)
 
-Treat every shard as an ordinary invocation of the same Gradle task in an isolated workspace.
+Treat every shard as an ordinary invocation of the same Gradle task or Maven lifecycle in an isolated workspace.
 ShardPilot does not detect a CI vendor, create jobs or coordinate them. Each job independently
 computes the same plan and keeps its own subset of candidate classes.
+
+The Gradle commands below target opted-in `Test` tasks. The [Maven CI sequence](#maven-ci-sequence)
+uses Surefire/Failsafe lifecycle bindings and separate unit/integration namespaces.
 
 For publishing ShardPilot itself after its Gradle/JDK matrix, see the
 [tag release workflow](releases.md#publish-from-a-version-tag). That workflow is separate from
@@ -23,17 +26,18 @@ per test worker, rather than sharing a broker/database instance between CI jobs.
 
 Before fan-out, resolve one fixed set of inputs for the whole run:
 
-- The consumer revision and immutable plugin version, such as `0.1.0` from the Gradle Plugin Portal.
-  Do not substitute a local checkout in release-resolution checks. When deliberately testing plugin
-  development with an included build, every job must use the same source revision and configured path.
-- The same task and original test selection, including file patterns, framework tags and any
-  command-line filters.
+- The consumer revision and immutable plugin version, available from the selected adapter's
+  repository. Do not substitute a local checkout in release-resolution checks. For Gradle composite
+  development, every job must use the same source revision and configured path; Maven jobs must
+  resolve the same parent/core/adapter artifacts.
+- The same task or runner/suite and original test selection, including file patterns and framework
+  tags. Respect the adapter's supported command-line filters; Maven focused overrides are rejected.
 - The same compiled test inputs and relevant build configuration.
 - The same timing-history contents, or the same absence of history.
 - The same positive shard count.
 
-Only the one-based index varies between jobs. A CI system may record a history checksum in its
-own metadata to detect mismatches; ShardPilot currently does not emit a plan digest or checksum.
+Only the one-based index varies between jobs. CI should record revision/history identity in its
+metadata. Optional coverage reports include class-selection hashes, not history/bytecode checksums.
 Do not update history between jobs or after some shards have begun.
 
 ## Create the matrix
@@ -50,12 +54,99 @@ when needed. The task must already exist and opt in. Unit and integration suites
 matrices, shard counts and timing files; they are not balanced together.
 
 Make every index from 1 through count a required job. Missing an index omits its tests; running an
-index twice repeats its tests. The plugin cannot detect either condition across isolated processes.
+index twice repeats its tests. Core filtering cannot reconcile isolated processes. Optional manifest
+aggregation detects missing/mismatched selection artifacts; it cannot identify repeated jobs whose
+same-index downloads overwrite one another.
 The pipeline succeeds only after all required jobs succeed under the consumer's normal policy.
+
+## Optional class-selection gate (0.3.0)
+
+![Compile, execution and aggregation artifact flow](diagrams/manifest-ci.svg)
+
+[PlantUML source](diagrams/manifest-ci.puml)
+
+For a configured `integrationTest` verification block, add these responsibilities to the CI DAG:
+
+| Job | Command | Artifact responsibility |
+| --- | --- | --- |
+| Compile / prepare | `./gradlew prepareIntegrationTestShardManifests` | Publish one `plan/` cohort containing baseline and all planned partitions. |
+| Every test shard | `./gradlew integrationTest -Pshardpilot.count=N -Pshardpilot.index=I` | Use the same cohort/inputs; retain actual-I.yaml and normal reports, including on failure. |
+| Aggregate coverage | `./gradlew verifyIntegrationTestShards` | Download all selection artifacts; retain coverage.json and coverage.html even on failure. |
+| Packaging / completion | CI configuration | Require every test shard and the coverage job. |
+
+The paths above use the default `build/shardpilot/integrationTest/` namespace. Set verification
+`shardCount=N` explicitly in compile/aggregation jobs, which need no execution index. The verifier
+does not run producers or need Docker; it only reads downloaded evidence. Do not enable plan-only
+mode on this final gate. A green coverage report can coexist with failed test assertions.
+
+See the [manifest guide](shard-verification.md) for exact paths, formats, empty-shard policy and
+failure/cache behavior. The diagram above shows the opt-in flow; the earlier diagram shows core
+execution without artifact verification.
+
+The standalone HTML view includes class assignments, shard sizes and plan/actual differences.
+For a direct merge-request link in GitLab, publish exactly that file with `artifacts:expose_as`;
+keep the JSON artifact in the verification job. See the [publisher example](shard-verification.md#finding-a-class-assignment-in-gitlab)
+and its GitLab Pages preview requirements. CI still requires every normal test result and the
+verification outcome, independently of whether the presentation job succeeds.
+
+The two `when: always` decisions have different purposes: scheduling the coverage/publisher jobs
+after failed predecessors is separate from uploading artifacts after a failed script. Match both
+jobs' branch/tag/MR rules to their producers. A publisher that only checks/downloads HTML does not
+need to compile, rerun verification or launch Docker; a missing file is a failure to investigate.
+Configure artifact permissions and expiry in CI. See
+[HTML/GitLab troubleshooting](troubleshooting.md#html-report-and-gitlab-links) for missing links,
+artifact-browser redirects, unavailable preview and early failures with no report.
+
+## Maven CI sequence
+
+![Maven lifecycle and independent evidence aggregation](diagrams/maven-execution.svg)
+
+[PlantUML source](diagrams/maven-execution.puml) · [Native runner configuration](maven.md#configure-a-native-runner)
+
+The following commands run in a consuming Maven project with the adapter and native runner
+configured. They use two shards and the default Surefire `unit` namespace. Pin a resolvable plugin
+version in the POM; a development installation must be available identically to every job.
+
+| Job | Command | Retain / download |
+| --- | --- | --- |
+| Compile / prepare | `./mvnw test-compile shardpilot:prepare -Dshardpilot.count=2` | Upload `target/shardpilot/unit/plan/`, containing baseline and both partitions. |
+| Unit shard 1 | `./mvnw test -Dshardpilot.count=2 -Dshardpilot.index=1` | Same model/history/compiled inputs; upload `actual/actual-1.yaml` and native test reports. |
+| Unit shard 2 | `./mvnw test -Dshardpilot.count=2 -Dshardpilot.index=2` | Same inputs; upload `actual/actual-2.yaml` and native test reports. |
+| Aggregate unit selections | `./mvnw shardpilot:verify -Dshardpilot.count=2` | Download the common plan and both actual files; upload `coverage.json` and `coverage.html`. |
+
+Preparation requires compiled test classes but does not run native test goals. `select` is bound
+before Surefire and writes evidence before workers. A node recomputes ownership from its effective
+filters/history; it does not read a downloaded plan to force its selection. Aggregation compares
+that selection against the common plan, so immutable inputs remain necessary.
+
+For a POM containing both Surefire and Failsafe, as in the [Jupiter example](../examples/maven/README.md),
+add a second preparation command with `-Dshardpilot.runner=FAILSAFE`. Run each node through
+`./mvnw verify -Dshardpilot.count=2 -Dshardpilot.index=I` to include both suites and Failsafe's
+normal result gate. Aggregate each suite separately: the ordinary `shardpilot:verify` command
+checks Surefire, and `shardpilot:verify -Dshardpilot.count=2 -Dshardpilot.runner=FAILSAFE` checks
+Failsafe. Keep count identical in both commands. Each suite must have its own plan and actual cohort.
+
+**`mvn verify` and `mvn shardpilot:verify` have different purposes.** The lifecycle invocation runs
+normal build/test bindings; the plugin goal only checks downloaded class-selection evidence.
+Calling the plugin goal cannot turn a failed native test run into a success. Require every native
+job and every suite's coverage gate, including after assertion failures. Upload evidence/reports
+after failure whenever the workspace survives.
+
+Maven's default report locations are `target/surefire-reports` and `target/failsafe-reports`;
+consumer configuration can relocate them. Give each downloaded shard's XML/logs a distinct
+namespace, preserving every reactor module's path. The example uses index-specific report paths
+for a sequential local demonstration. Maven `-T2` builds modules in parallel; `shardpilot.count=2`
+splits classes within each module. These are independent forms of parallelism.
+
+Run `shardpilot:verify` directly in aggregation; do not prepend `clean`, `test`, `verify` or
+`shardpilot:prepare`. These can erase downloaded `target/` evidence or run producers again.
+For an MR link, use the [existing HTML publisher pattern](shard-verification.md#finding-a-class-assignment-in-gitlab)
+with a literal `target/shardpilot/<suite>/coverage.html` path. Preserve the same scheduling,
+artifact retention and separate outcome gates as the Gradle flow.
 
 ## Isolate execution and outputs
 
-Do not run concurrent shards in the same checkout/build directory. They use the same Gradle task
+Do not run concurrent shards in the same checkout/build directory. They use the same native runner
 output paths and could overwrite reports or interfere with task state. Use separate checkouts or
 worktrees with separate build outputs. Provision databases, ports, containers and other external
 test resources with the isolation required by the suite.
@@ -69,7 +160,7 @@ For an unmodified standard `test` task, collect each job's own outputs, includin
 Custom tasks, subprojects and consumer reporting configuration may change these paths. Store each
 artifact under a unique job/shard name. If downloading all artifacts into one location, retain
 separate directories rather than overwriting files with identical names. Report aggregation belongs
-to CI tooling; ShardPilot does not merge XML or generate a combined report.
+to CI tooling; ShardPilot does not merge XML or generate a combined test-execution report.
 
 ## History maintenance
 
@@ -104,3 +195,5 @@ heap limit does not include metaspace, native memory or service containers.
 An empty shard can be legitimate and is not itself evidence of lost coverage. Conversely, an
 explicit `--tests` selection on a non-owning shard may fail with Gradle's normal no-match error.
 Do not globally disable that failure policy to hide an incorrectly configured matrix.
+The optional coverage gate rejects empty partitions by default; set `requireNonEmptyShards=false`
+only when the suite intentionally permits them. This does not alter Gradle's test failure policy.

@@ -9,15 +9,19 @@ the Gradle version; use a JDK supported by that Gradle runtime.
 
 ```shell
 ./gradlew check assemble
+./mvnw -B -ntp verify
 ```
 
 PowerShell:
 
 ```powershell
 .\gradlew.bat check assemble
+.\mvnw.cmd -B -ntp verify
 ```
 
-`check` runs the test suite and Gradle plugin validation. `assemble` builds the plugin, sources and
+Root Gradle `check` runs the shared-core and Gradle-adapter suites plus plugin validation.
+Root Maven `verify` builds the same core and Maven adapter, then runs isolated native-runner
+Invoker fixtures and runnable Maven examples. `assemble` builds the Gradle plugin, sources and
 Javadoc artifacts. Functional tests use Gradle TestKit and temporary consumer builds, so the first
 run needs Maven Central access for fixture dependencies. Keep TestKit execution sequential: nested
 Gradle daemons and workers consume additional memory beyond the outer test worker.
@@ -25,15 +29,19 @@ Gradle daemons and workers consume additional memory beyond the outer test worke
 For a focused iteration:
 
 ```shell
-./gradlew test --tests 'io.github.sjacek.shardpilot.ShardPlanTest'
-./gradlew test --tests 'io.github.sjacek.shardpilot.ShardPilotFunctionalTest'
+./gradlew :shardpilot-core:test --tests 'io.github.sjacek.shardpilot.ShardPlanTest'
+./gradlew :shardpilot-gradle-plugin:test --tests 'io.github.sjacek.shardpilot.ShardPilotFunctionalTest'
+./gradlew :shardpilot-core:test --tests 'io.github.sjacek.shardpilot.ClassManifestTest' --tests 'io.github.sjacek.shardpilot.ShardCoverageTest'
 ```
 
 The plugin's own test task is not configured to shard itself. These selectors run normal Gradle
 tests. Run the complete `check assemble` before handing off a change.
 
-Standard outputs are `build/reports/tests/test/index.html`, `build/test-results/test/` and
-`build/libs/`. TestKit fixtures retain strict configuration-cache settings so unsupported captures
+Gradle reports live under each source module's `build/reports/tests/test/index.html` and
+`build/test-results/test/`; distribution JARs are under `shardpilot-gradle-plugin/build/libs/`.
+Maven unit reports are under each module's `target/surefire-reports`; Invoker logs and results are
+under `shardpilot-maven-plugin/target/it`, `target/examples` and `target/invoker-reports`.
+TestKit fixtures retain strict configuration-cache settings so unsupported captures
 fail instead of being reduced to warnings.
 
 ## Test responsibilities
@@ -49,15 +57,71 @@ do not reproduce an application's memory leak or prove that a configured heap pr
 | --- | --- |
 | `DurationHistoryTest` | Comments, blank lines, CRLF, nested names, immutable results, malformed metadata and safe error messages. |
 | `ShardPlanTest` | Deterministic packing/ties, nested aggregation, floating-point order, hash fallback, complete ownership, invalid settings and overflow. |
+| `ClassManifestTest` | Canonical YAML round trips, schema/types/duplicate keys, CRLF/comments/flow sequences, nested/Unicode/default-package names, root normalization, collisions, empty-class policy and malformed-document rejection. |
+| `ShardCoverageTest` | Complete/disjoint/index-matching evidence, canonical hashes, empty policy, missing/stale/duplicate/foreign records, plan-only mode and JSON escaping. |
+| `ShardCoverageHtmlTest` | Sorted class assignments, wrong-node differences, partial evidence, plan-only labels, empty shards, Unicode/HTML escaping and a shared JSON/HTML snapshot with defensively copied public collections. |
+| `ShardManifestsTest` | Shared preparation/selection across input orders, family ownership with empty partitions, preserved plans after invalid inputs, selective index cleanup, normalized report-path collisions and partial I/O failures. |
 | `ShardPilotFunctionalTest` | Real Gradle tasks with Jupiter/Spock/native TestNG, weighted/hash-only partitions, provider-row ownership, opt-in, filters, custom tasks, empty results, fatal setup failures, Kotlin DSL, actual Gradle/JDK runtimes and configuration-cache reuse. |
 | `NormalizeSvgTest` | Standalone preview normalization, text/geometry/link preservation, XML input safety, idempotence and committed SVG compatibility checks. |
 | `ReleaseTagVerificationTest` | Actual Gradle guard script, stable/malformed/missing/mismatched tags, evaluated build versions and strict configuration-cache reuse. |
 | `PublicationWorkflowTest` | Parsed YAML, complete matrix dependency gating, immutable checkout SHA, required jobs, credential isolation and disabled publisher caches. |
+| `MavenAdapterTest` | Relative pattern files/regex, immutable effective-model merging, native Surefire/Failsafe eligibility, generated-output isolation, metadata exclusion, empty selections, safe wiring, property-origin/bypass rejection, preserved preparation evidence and selection/report I/O failures. |
 
 Functional partition checks compare the union of shard results to an unsharded baseline and check
 for duplicates. Configuration-cache checks reuse a build, then change timing contents to verify
 that old test results are not accepted as unchanged. Empty-shard checks also guard against retaining
 another shard's report files when rerunning a task sequentially in a fixture.
+
+## Manifest verification tests
+
+TestKit exercises the full artifact boundary with real compiled Jupiter/Spock fixtures and strict
+Configuration Cache. The manifest scenarios cover:
+
+- Native include/exclude patterns and custom file specs, with no helper `Test` task.
+- Actual evidence written before normal execution and retained after a deliberately failed test.
+  Selection verification can still pass, proving why CI needs both outcome gates.
+- Reused configuration and unchanged-input up-to-date preparation, followed by a history change
+  that changes the plan and is reflected in actual selections.
+- Malformed history, zero count and empty eligibility failing before touching a previous valid plan.
+- Count reduction removing numeric planned files while preserving unrelated metadata.
+- Standalone aggregation failing for missing downloads without compiling, rerunning tests or
+  replacing evidence; failed validation overwrites earlier green JSON and HTML reports.
+- Groovy/Kotlin DSL, an explicitly realized lazy owner, custom output paths containing spaces and
+  combined local producer/verification invocations with ordering rather than hidden dependencies.
+- Standalone HTML on success and missing/mismatched evidence, including a separately configured
+  HTML path restored through Configuration Cache.
+- Coincident JSON/HTML output paths rejected without scheduling producers or serializing coverage.
+  Gradle owns output cleanup; the core separately proves rejection before touching existing reports.
+- Two owning tasks with independent cohorts through Configuration Cache reuse; corrupting one
+  actual selection fails only that gate and leaves the other task's valid report/evidence intact.
+
+![Task and CI gate boundaries covered by TestKit](diagrams/manifest-tasks.svg)
+
+The [manifest guide](shard-verification.md) defines file and report contracts. Its hashes describe
+candidate-name sets rather than test outcomes, bytecode or artifact provenance.
+
+## Maven integration fixtures
+
+`./mvnw verify` uses Maven Invoker with an isolated repository, installing only test copies of
+the candidate parent/core/plugin there. No global candidate installation or remote publication
+is needed. Hook scripts parse YAML and native JUnit XML rather than trusting log counts alone.
+
+- The [Jupiter POM](../examples/maven/junit-jupiter/pom.xml) prepares separate unit/integration plans,
+  runs two nodes through real Surefire/Failsafe, checks nested methods and a custom `Spec` suffix,
+  preserves a deliberately failing consumer exclusion and verifies both JSON/HTML reports.
+- The [reactor POM](../examples/maven/reactor/pom.xml) runs two modules with `-T2`; identical class
+  names remain isolated by module and each receives a complete/disjoint two-node partition.
+- Negative fixtures prove rejection of focused class overrides, missing evidence with failure
+  reports, actual evidence surviving a failed assertion, and a deny-all empty shard that cannot
+  fall back to default Surefire selection.
+- The custom-suite fixture runs two native nodes with a relative includes file, maintained
+  exclusions, nested Jupiter methods, weighted history, paths containing spaces and independent
+  JSON/HTML overrides. Failing sentinel tests detect accidental widening to native defaults or
+  loss of consumer exclusions. YAML and native XML assert exact ownership and unique method execution.
+
+Gradle TestKit also loads only the shipped Gradle JAR and SnakeYAML runtime to exercise shared
+planning/verification, excluding development core-output paths. This guards distribution compatibility
+after extraction, in addition to the existing Groovy/Kotlin DSL and Configuration Cache checks.
 
 ## Gradle and JDK matrix
 
@@ -78,6 +142,11 @@ other JDK versions and other JDK vendors are not covered by this matrix.
 Gradle 9.0.0 is the lower test boundary, 9.1.0 introduces JDK 25 runtime support, and 9.8.1 matches
 the repository Wrapper. The JDK 25 exclusion follows the
 [Gradle Java runtime compatibility table](https://docs.gradle.org/current/userguide/compatibility.html).
+
+The same required reusable workflow also runs Maven Wrapper 3.9.16 on JDK 17, 21 and 25. Every
+Maven job runs the complete native reactor verification, including Invoker/examples. Release
+publication waits for the entire workflow, so a failed Maven job cannot be bypassed by successful
+Gradle cells. These are declared CI targets; local results do not establish a green Linux matrix.
 
 The Wrapper always builds and validates the plugin with Gradle 9.8.1. The `testGradleVersion`
 property selects the distribution used by **every functional TestKit consumer**, independently
@@ -114,9 +183,35 @@ require release credentials. The matrix does not run the Docker-backed examples.
 
 The [publication workflow](../.github/workflows/publish.yml) calls this same matrix at the tagged
 commit, after checking its version, and publishes only if the entire call succeeds. Workflow
-regressions are checked by parsing YAML 1.2 with a test-only SnakeYAML Engine dependency. Release
+regressions are checked by parsing YAML 1.2 with SnakeYAML Engine, also used for manifest transport. Release
 guard fixtures use the fixed publishing Wrapper; consumer fixtures use `testGradleVersion`.
 Neither regression test publishes anything or needs Portal credentials.
+
+## Publication artifact checks
+
+The compatibility workflow also requires a twelfth job for signed Maven release artifacts:
+
+```shell
+bash scripts/verify-maven-release.sh
+```
+
+It requires Bash, GnuPG and a JDK, generates a disposable signing key and activates the actual
+`central-release` profile with `central.skipUpload=true`. It checks all nine artifacts in the
+parent/core/adapter cohort, effective and published POM metadata, license entries,
+Java 17 bytecode, plugin descriptor, sources, Javadoc and checksums. GnuPG verifies every detached
+signature. Temporary signing material is deleted on exit; only the success JSON is retained as
+a CI artifact. This is a local package/signature check, not remote Central validation or publication.
+Do not run it concurrently with another Maven reactor build because both write `target/`.
+
+`PublicationArtifactsTest` checks actual generated Gradle implementation/marker POMs, module
+metadata and distribution contents. `PublicationWorkflowTest` verifies tag/version gating, both
+publishers' dependencies, scoped credentials and the explicit upload override. The standalone
+bundle checker's unit tests cover absent attachments, altered checksums, invalid metadata,
+foreign entries, normalized ZIP paths/collisions and XML external-entity rejection. These tests
+use synthetic signature fixtures; the separate GnuPG check supplies cryptographic verification.
+
+See [Central setup](maven-central.md) for the real publisher's token and key. Neither the normal
+test suites nor the signed-bundle gate needs that publisher's secrets.
 
 ## Verified scope
 
@@ -124,9 +219,34 @@ The 0.2.0 candidate's complete 67-test suite passed all eight target pairs local
 in official Eclipse Temurin containers on 23 October 2026: 536 test executions, no failures or
 skipped tests. Every cell ran `check assemble`, including release/workflow regressions, actual
 runtime assertions and the test-process probes. All cells used the same source snapshot.
-Subsequent changes were limited to release metadata and documentation; plugin runtime code is
-unchanged. The 0.2.1 tag workflow still reruns every cell against the exact committed release
-revision before publication.
+The 0.2.1 changes relative to that snapshot were limited to metadata/documentation. Version 0.3.0
+adds runtime manifest/coverage tasks and needs its own complete matrix at the release revision.
+On 23 October 2026, the initial modular 0.3.0 checkout passed `check assemble` locally on Windows with
+Gradle 9.8.1 and Temurin 25.0.4.1: **121 tests** (69 core + 52 Gradle adapter), zero failures/errors/skips,
+plugin validation and Javadoc/source artifacts. Native Maven 3.9.16/JDK 25 passed **87 unit tests**
+(the same 69 core cases + 18 adapter cases), four negative/empty-selection Invoker fixtures and
+the Jupiter/reactor examples. Both commands use the same core sources; those duplicated core
+executions are not additional distinct cases. These local results do not replace the complete
+release workflow or establish Maven 4/untested native-runner versions.
+The same checkout also passed all 121 Gradle/core cases using TestKit consumers on Gradle 9.0.0
+and Temurin 21.0.12.1 (built with the repository Wrapper), and the complete native Maven verification
+on JDK 21. These two consumer/runtime pairs are additional local evidence, not the full CI matrix.
+
+The subsequent regression expansion passed on Windows/Temurin 25.0.4.1 with Gradle 9.8.1 and
+Maven 3.9.16: **128 Gradle/core cases** (74 core + 54 Gradle adapter), **113 Maven/core unit cases**
+(the same 74 core + 39 Maven adapter) and **seven native Invoker/example projects**. All completed
+without failures, errors or skips; Gradle plugin validation and source/Javadoc assembly passed.
+The added cases cover report I/O and path collisions, public snapshot isolation, native filter/model
+boundaries and independent task cohorts. These expanded local results are for JDK 25; the earlier
+JDK 21 results above precede this regression expansion.
+
+The publication expansion then passed **151 Gradle/core cases** (74 core + 77 Gradle adapter)
+on the same Windows/JDK 25 runtime, together with `check assemble` and `publishPlugins --validate-only`.
+The unchanged native regression suite again passed 113 unit cases and all seven Invoker/example
+projects. The production Maven release profile also produced a complete local bundle: nine signed
+artifacts, 54 entries, verified checksums/metadata and nine successful GnuPG signature checks.
+That check used a disposable key and `central.skipUpload=true`; no remote publication was performed.
+
 The original 46-test plugin suite also passed all eight target pairs locally on Windows.
 Plugin classes target Java 17 bytecode. The fixtures currently use JUnit Jupiter 6.1.3, Spock 2.5 for Groovy 5.0, Groovy 5.1.3
 and TestNG 7.12.0 through Gradle's native TestNG adapter.
@@ -143,14 +263,14 @@ interoperability remain outside the verified scope.
 ## Runnable Testcontainers examples
 
 The [PostgreSQL and RabbitMQ example](testcontainers-example.md) is a separate consumer build.
-Compile it without Docker with `./gradlew -p examples/junit-jupiter/testcontainers integrationTestClasses`;
-execute it with `./gradlew -p examples/junit-jupiter/testcontainers check` when Docker is available. Its tests
+Compile it without Docker with `./gradlew -p examples/gradle/junit-jupiter/testcontainers integrationTestClasses`;
+execute it with `./gradlew -p examples/gradle/junit-jupiter/testcontainers check` when Docker is available. Its tests
 are not included in the parent plugin's `check`, and missing Docker is a failure rather than a skip.
 The example has also been verified on the same Windows/Gradle/JDK target using Docker Desktop's
 Linux engine, with a full run, both non-overlapping shards, configuration-cache reuse and an empty shard.
 
 The [Spock counterpart](spock-testcontainers-example.md) is independently runnable with
-`./gradlew -p examples/spock/testcontainers check`. Use `integrationTestClasses` for compilation
+`./gradlew -p examples/gradle/spock/testcontainers check`. Use `integrationTestClasses` for compilation
 without Docker, and select count/index as described in its guide. Its `setupSpec()`/`@Shared`
 boundary is a specification, and data-table iteration reporting does not split specification ownership.
 It has been checked on the same Docker Desktop/Windows runtime: nine cases in the baseline, five
@@ -158,7 +278,7 @@ and four in the two non-overlapping shards, both data-table iterations together,
 reuse and an empty shard with no stale reports.
 
 The [TestNG counterpart](testng-testcontainers-example.md) runs through
-`./gradlew -p examples/testng/testcontainers check`, with `integrationTestClasses` available without
+`./gradlew -p examples/gradle/testng/testcontainers check`, with `integrationTestClasses` available without
 Docker. It has been checked on the same Docker Desktop/Windows runtime: nine cases in the baseline,
 five and four in disjoint shards, both provider rows together, one PostgreSQL/RabbitMQ startup per
 worker, configuration-cache reuse and an empty shard with no stale XML. Separate Docker-free

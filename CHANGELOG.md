@@ -1,14 +1,50 @@
 # Changelog
 
-Notable changes to ShardPilot are recorded here. Entries marked **Unreleased** or **publication
-pending** are not published releases. Release dates follow the version creation dates recorded
-by the Gradle Plugin Portal.
+Notable changes to ShardPilot are recorded here. Release dates follow the version creation dates
+recorded by the Gradle Plugin Portal.
 
 ## Unreleased
 
-No changes beyond the 0.2.1 release candidate.
+No changes beyond the 0.3.0 release candidate.
 
-## 0.2.1 — publication pending
+## [0.3.0](docs/releases/0.3.0.md)
+
+### Added
+
+- **First Maven version of ShardPilot.** Split unit and integration test classes across CI jobs
+  using native Surefire/Failsafe. Configure `io.github.sjacek:shardpilot-maven-plugin:0.3.0` in
+  `pom.xml`; see the [Maven setup guide](docs/maven.md) and [runnable POMs](examples/maven/README.md).
+- Maven Central distribution includes source and Javadoc JARs for IDE navigation, signed together
+  with the parent, core and adapter. Maintainers have a [token and signing-key setup guide](docs/maven-central.md)
+  and one version-tag workflow for both Maven Central and the Gradle Plugin Portal.
+- Optionally verify that every eligible class belongs to exactly one shard and each node's
+  selected classes match the common plan. Fail the CI gate when selection evidence is missing
+  or inconsistent, without rerunning tests. See [class-manifest verification](docs/shard-verification.md).
+- Find which shard owns a class in the standalone `coverage.html` report. Compare planned and
+  actual assignments and diagnose missing evidence, including after verification fails. Open
+  the file locally or [expose it in a GitLab merge request](docs/shard-verification.md#finding-a-class-assignment-in-gitlab).
+- Inspect and collect readable YAML manifests containing the full candidate list, planned
+  partitions and each node's actual selection. Gradle and Maven use the same manifest format;
+  JSON reports remain available for CI automation.
+
+### Changed
+
+- Runnable examples are now grouped by build tool: [Gradle examples](examples/gradle/README.md)
+  cover JUnit Jupiter, Spock and TestNG with Testcontainers; [Maven examples](examples/maven/README.md)
+  cover Surefire/Failsafe and parallel builds of multiple modules.
+
+### Compatibility and migration
+
+- Existing Gradle sharding and test-process configuration continues to work. Enable the new
+  manifest verification explicitly when adding it to a pipeline.
+- When upgrading from development snapshots with text manifests, regenerate the common plan
+  and every node's evidence together in YAML; do not mix old and new artifacts.
+- Coverage reports verify class selection. Keep every normal test job required, because matching
+  selections do not prove that test methods passed.
+
+See the [0.3.0 release notes](docs/releases/0.3.0.md) for setup and upgrade details.
+
+## [0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1)
 
 ### Changed
 
@@ -19,7 +55,7 @@ No changes beyond the 0.2.1 release candidate.
   are unchanged; the new version publishes the expanded description from a new immutable tag.
 - See the [0.2.1 release notes](docs/releases/0.2.1.md) for publication and consumer verification.
 
-## 0.2.0 — not published
+## [0.2.0](docs/releases/0.2.0.md) — not published
 
 ### Added
 

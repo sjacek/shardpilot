@@ -1,0 +1,43 @@
+@startuml
+title ShardPilot: one release gate, two publication destinations
+top to bottom direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam componentStyle rectangle
+skinparam componentBackgroundColor #EFF6FF
+skinparam componentBorderColor #2563EB
+skinparam ArrowColor #475569
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+
+component "New immutable vMAJOR.MINOR.PATCH tag\nTag equals Gradle / Maven version" as tag
+package "Required checks at the exact commit SHA - no release secrets" {
+  component "8 Gradle / JDK cells\ncheck + assemble" as gradleChecks
+  component "3 Maven / JDK jobs\nverify + native fixtures" as mavenChecks
+  component "Signed Maven bundle check\nDisposable key; no upload\n9 artifacts + signatures + checksums" as bundle
+}
+component "All 12 checks pass" as gate #DCFCE7
+component "gradle-plugin-portal environment\nPortal credentials\nValidate + publishPlugins" as gradlePublish
+component "maven-central environment\nCentral token + signing key\ncentral-release / skipUpload=false" as mavenPublish
+cloud "Gradle Plugin Portal\nshardpilot + marker\nCore bundled in Gradle JAR" as portal
+cloud "Maven Central\nParent + core + Maven adapter\nSources + Javadoc + PGP" as central
+
+tag --> gradleChecks
+tag --> mavenChecks
+tag --> bundle
+gradleChecks --> gate
+mavenChecks --> gate
+bundle --> gate
+gate --> gradlePublish
+gate --> mavenPublish
+gradlePublish --> portal
+mavenPublish --> central
+
+note bottom of gate
+  Publishers run independently after the shared gate.
+  A partial publication requires inspecting remote state
+  and retrying only the failed job, keeping the same tag.
+end note
+@enduml

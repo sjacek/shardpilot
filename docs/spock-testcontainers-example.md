@@ -1,8 +1,8 @@
 # Spock with PostgreSQL and RabbitMQ
 
-[Documentation index](README.md) · [Runnable example](../examples/spock/testcontainers/README.md)
+[Documentation index](README.md) · [Runnable example](../examples/gradle/spock/testcontainers/README.md)
 
-The [Spock example](../examples/spock/testcontainers/build.gradle) is an independent Groovy consumer
+The [Spock example](../examples/gradle/spock/testcontainers/build.gradle) is an independent Groovy consumer
 build with four specifications against real PostgreSQL and RabbitMQ. It mirrors the JDBC/AMQP
 scenarios in the [JUnit Jupiter example](testcontainers-example.md), but uses Spock fixture methods,
 conditions, exception expectations and a two-row data table.
@@ -11,19 +11,19 @@ inherited class fixtures and data-provider invocations.
 
 ## Build and fixture structure
 
-The example resolves the checkout with `includeBuild('../../..')` and registers its own
+The example resolves the checkout with `includeBuild('../../../..')` and registers its own
 `integrationTest` source set and task. It uses Groovy 5.1.3, Spock `2.5-groovy-5.0`, JUnit Platform
 6.1.3, Testcontainers 2.0.5, PostgreSQL JDBC 42.7.14 and RabbitMQ client 5.37.0. Spock supplies the test
 engine; the Jupiter engine is not required. These dependencies are confined to the example build.
 
 | File or class | Responsibility |
 | --- | --- |
-| [build.gradle](../examples/spock/testcontainers/build.gradle) | Groovy compilation, Spock engine selection, task registration, sharding and live-test cache policy. |
-| [SpockConfig.groovy](../examples/spock/testcontainers/src/integrationTest/resources/SpockConfig.groovy) | Sequential execution inside the worker and individual reporting of table iterations. |
-| [TestInfrastructure](../examples/spock/testcontainers/src/integrationTest/groovy/example/shardpilot/TestInfrastructure.groovy) | Lazy worker-local PostgreSQL/RabbitMQ startup and generated databases. |
-| [AbstractInfrastructureSpec](../examples/spock/testcontainers/src/integrationTest/groovy/example/shardpilot/AbstractInfrastructureSpec.groovy) | `setupSpec()`, the specification's `@Shared` database URL and feature-owned clients. |
-| [IntegrationTestImages](../examples/spock/testcontainers/src/integrationTest/groovy/example/shardpilot/IntegrationTestImages.groovy) | Public image defaults and explicit test-JVM overrides. |
-| [Timing history](../examples/spock/testcontainers/integration-test-durations.tsv) | Illustrative specification-level weights, not measured runtimes. |
+| [build.gradle](../examples/gradle/spock/testcontainers/build.gradle) | Groovy compilation, Spock engine selection, task registration, sharding and live-test cache policy. |
+| [SpockConfig.groovy](../examples/gradle/spock/testcontainers/src/integrationTest/resources/SpockConfig.groovy) | Sequential execution inside the worker and individual reporting of table iterations. |
+| [TestInfrastructure](../examples/gradle/spock/testcontainers/src/integrationTest/groovy/example/shardpilot/TestInfrastructure.groovy) | Lazy worker-local PostgreSQL/RabbitMQ startup and generated databases. |
+| [AbstractInfrastructureSpec](../examples/gradle/spock/testcontainers/src/integrationTest/groovy/example/shardpilot/AbstractInfrastructureSpec.groovy) | `setupSpec()`, the specification's `@Shared` database URL and feature-owned clients. |
+| [IntegrationTestImages](../examples/gradle/spock/testcontainers/src/integrationTest/groovy/example/shardpilot/IntegrationTestImages.groovy) | Public image defaults and explicit test-JVM overrides. |
+| [Timing history](../examples/gradle/spock/testcontainers/integration-test-durations.tsv) | Illustrative specification-level weights, not measured runtimes. |
 
 The task includes concrete outer `*Spec.class` candidates and explicitly excludes the abstract base
 from that selection. Otherwise a shard retaining only the abstract helper could fail Gradle's
@@ -70,25 +70,25 @@ still applies. Uncached dependencies and images require Maven Central/registry a
 Full suite:
 
 ```shell
-./gradlew -p examples/spock/testcontainers check -Pshardpilot.count=1 -Pshardpilot.index=1
+./gradlew -p examples/gradle/spock/testcontainers check -Pshardpilot.count=1 -Pshardpilot.index=1
 ```
 
 Two isolated CI jobs, or two **sequential** local invocations:
 
 ```shell
-./gradlew -p examples/spock/testcontainers integrationTest -Pshardpilot.count=2 -Pshardpilot.index=1
-./gradlew -p examples/spock/testcontainers integrationTest -Pshardpilot.count=2 -Pshardpilot.index=2
+./gradlew -p examples/gradle/spock/testcontainers integrationTest -Pshardpilot.count=2 -Pshardpilot.index=1
+./gradlew -p examples/gradle/spock/testcontainers integrationTest -Pshardpilot.count=2 -Pshardpilot.index=2
 ```
 
 PowerShell:
 
 ```powershell
-.\gradlew.bat -p examples/spock/testcontainers check '-Pshardpilot.count=1' '-Pshardpilot.index=1'
-.\gradlew.bat -p examples/spock/testcontainers integrationTest '-Pshardpilot.count=2' '-Pshardpilot.index=1'
-.\gradlew.bat -p examples/spock/testcontainers integrationTest '-Pshardpilot.count=2' '-Pshardpilot.index=2'
+.\gradlew.bat -p examples/gradle/spock/testcontainers check '-Pshardpilot.count=1' '-Pshardpilot.index=1'
+.\gradlew.bat -p examples/gradle/spock/testcontainers integrationTest '-Pshardpilot.count=2' '-Pshardpilot.index=1'
+.\gradlew.bat -p examples/gradle/spock/testcontainers integrationTest '-Pshardpilot.count=2' '-Pshardpilot.index=2'
 ```
 
-For compilation without Docker, use `./gradlew -p examples/spock/testcontainers integrationTestClasses`.
+For compilation without Docker, use `./gradlew -p examples/gradle/spock/testcontainers integrationTestClasses`.
 Only the example's `check` depends on these tests; the parent plugin build remains Docker-independent.
 
 ## Specification ownership and test data
@@ -131,8 +131,8 @@ Up-to-date/build-cache reuse is disabled for the live integration task. Configur
 remains enabled and must not be confused with reusing old test results. An empty shard may have
 no test worker and therefore no containers.
 
-JUnit XML and HTML reports live under `examples/spock/testcontainers/build/test-results/integrationTest/`
-and `examples/spock/testcontainers/build/reports/tests/integrationTest/`. Keep each shard's artifacts
+JUnit XML and HTML reports live under `examples/gradle/spock/testcontainers/build/test-results/integrationTest/`
+and `examples/gradle/spock/testcontainers/build/reports/tests/integrationTest/`. Keep each shard's artifacts
 separately: sequential invocations replace the task's reports. Compare the full unsharded result set
 with the union of shard results, including table iteration identities, and check for duplicates.
 Use separate writable workspaces for concurrent jobs. See [CI integration](ci.md).

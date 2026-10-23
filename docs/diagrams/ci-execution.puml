@@ -1,5 +1,5 @@
 @startuml
-title ShardPilot: two independent CI jobs
+title Core sharding: two independent CI jobs
 skinparam backgroundColor #FFFFFF
 skinparam shadowing false
 skinparam defaultFontName SansSerif
@@ -46,6 +46,7 @@ end note
 
 note over ci,reports
   Scheduling, artifact collection and global completion checks belong to CI.
-  ShardPilot neither merges reports nor detects missing jobs.
+  Optional manifest verification checks collected class selections.
+  It does not merge test reports or prove successful job completion.
 end note
 @enduml

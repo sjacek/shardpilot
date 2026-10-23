@@ -1,7 +1,0 @@
-pluginManagement {
-    // Resolve the enclosing checkout, not an unpublished Portal snapshot.
-    // This is a standalone consumer build; it does not add its Docker-backed check to the parent build.
-    includeBuild('../../..')
-}
-
-rootProject.name = 'shardpilot-testng-testcontainers-example'

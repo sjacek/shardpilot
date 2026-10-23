@@ -2,13 +2,16 @@
 
 [Documentation index](README.md)
 
-This checkout prepares **0.2.1**, with [release notes and migration examples](releases/0.2.1.md).
-It supersedes the unpublished 0.2.0 candidate and includes the expanded Plugin Portal description.
-Publication is still pending; the existing published version is
-[0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0).
+Version **[0.3.0](releases/0.3.0.md)** adds class-manifest verification, HTML reports and the Maven adapter; see the
+[release notes and migration examples](releases/0.3.0.md).
 The build uses `com.gradle.plugin-publish` 2.2.1 and produces plugin, source and Javadoc JARs,
 Maven publication metadata and the `publishPlugins` task. Project/SCM URLs, tags and the tested
-configuration-cache feature are configured in `build.gradle`.
+configuration-cache feature are configured in `shardpilot-gradle-plugin/build.gradle`.
+Root `build.gradle` owns the shared Gradle version and release-tag guard; root `pom.xml` is the
+independent Maven reactor entry point.
+
+Review the [publication descriptions](publication-descriptions.md) for the complete Maven Central
+and Gradle Plugin Portal text and its source metadata before creating a release tag.
 
 The [publication workflow](../.github/workflows/publish.yml) submits a release automatically after
 a matching stable version tag and a successful compatibility matrix. The maintainer controls
@@ -34,8 +37,8 @@ also need migration notes and updated Groovy/Kotlin examples.
    implementation separate from sharding behavior.
 3. Store publication credentials in the host's protected secret mechanism, not in repository files,
    examples, test fixtures, Gradle arguments printed to logs or shared caches.
-4. Configure the release environment below. The publication workflow reruns all eight
-   [Gradle/JDK cells](testing.md#gradle-and-jdk-matrix) for the exact tagged commit; a local
+4. Configure both release environments below. The publication workflow reruns all eight
+   [Gradle/JDK cells](testing.md#gradle-and-jdk-matrix), three Maven/JDK jobs and the signed-bundle check for the exact tagged commit; a local
    Wrapper-only run or a green matrix for another revision does not replace this gate.
 5. Review tracked files and publication artifacts for private application configuration, customer
    data, secrets and unintended infrastructure dependencies.
@@ -54,38 +57,50 @@ Add these environment secrets using the publisher's Plugin Portal API key:
 | `GRADLE_PUBLISH_KEY` | Plugin Portal API key identifier. |
 | `GRADLE_PUBLISH_SECRET` | Matching Plugin Portal API secret. |
 
+Also create **`maven-central`** with `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`,
+`MAVEN_GPG_KEY` and `MAVEN_GPG_PASSPHRASE`. Follow the
+[Central token, GPG key and secret setup](maven-central.md). The existing `io.github.sjacek`
+namespace was already verified for Asyncwright; ShardPilot uses the same namespace.
+
 Do not store values in repository files, workflow YAML, command-line arguments or logs. The
 environment secrets are used only by the final publishing step; they are not passed to tag
 validation or the reusable compatibility workflow. Missing/empty credentials fail before upload.
 
-Restrict this environment to version tags such as `v*`, not arbitrary branches. Protect creation
+Restrict both environments to version tags such as `v*`, not arbitrary branches. Protect creation
 and updates of release tags with a repository ruleset so only trusted maintainers can release
 code. Tag creation authorizes publication of that tag's code, including its Gradle build logic.
 Required environment reviewers can add a manual approval gate if desired; without reviewers,
 the publishing job runs automatically after the matrix succeeds. See
 [GitHub environment protection](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
 
-The workflow has read-only repository permissions, checks out the triggering commit SHA at every
-stage and disables shared Gradle caches and configuration cache during credentialed execution.
+The workflow has read-only repository permissions and checks out the triggering commit SHA at every
+stage. Credentialed execution uses no shared build caches; Gradle also disables Configuration Cache.
 It does not create tags, change the changelog or create a GitHub Release.
+
+![Required checks and separate publication environments](diagrams/publication.svg)
 
 ## Publish from a version tag
 
-1. Set `version` in `build.gradle` to a new release version: `0.2.1` for this candidate. Version `0.1.0`
-   is already published and must not be overwritten. Do not derive the version from a tag or source revision.
-2. Run local checks and `bash ./gradlew verifyReleaseTag -PreleaseTag=v0.2.1`. This offline guard
+1. Set `version` in root `build.gradle` to the new release version, currently `0.3.0`.
+   Align root `pom.xml`, core/plugin module parent versions and pinned example POM versions.
+   `PublicationWorkflowTest` checks Maven reactor versions against the evaluated Gradle version.
+   Published versions must not be overwritten. Do not derive the version from a tag or source revision.
+2. Run local checks and `bash ./gradlew verifyReleaseTag -PreleaseTag=v0.3.0`. This offline guard
    accepts only `vMAJOR.MINOR.PATCH` with no leading zeroes, suffixes or build metadata, and checks
    equality with the evaluated `project.version`. Snapshots and prerelease tags are not released
    by this workflow.
 3. Commit and push the intended release revision, including both workflow files and
    `gradle/release-verification.gradle`. The maintainer then creates and pushes the immutable
-   tag `v0.2.1` on that revision. Future versions use the same `v` prefix and must match the build.
-4. Follow **Actions → Publish Gradle plugin**. The job chain is tag validation → reusable eight-cell
-   compatibility matrix → Portal validation (`--validate-only`) → publication. Any failed,
+   tag `v0.3.0` on that revision. Future versions use the same `v` prefix and must match the build.
+4. Follow **Actions → Publish ShardPilot**. The job chain is tag validation → reusable
+   compatibility workflow (eight Gradle cells, three Maven/JDK jobs and signed-bundle verification)
+   → independent Gradle and Maven publishers. Gradle performs Portal validation (`--validate-only`)
+   before upload; Maven signs the cohort, uploads it and waits for Central publication. Any failed,
    cancelled or skipped prerequisite prevents publication. No separate tag-triggered matrix is
    launched by the compatibility workflow.
 5. Wait for Plugin Portal approval when required, then verify normal plugin resolution without
    `includeBuild` or Maven Local. A successful upload job is not proof of Portal availability.
+   Verify Maven parent/core/adapter resolution in a fresh consumer without local candidate artifacts too.
 
 Only creation of a matching `v[0-9]*` tag starts the release path. Deleting or force-updating an
 existing tag does not publish. A mismatched or malformed version fails before the matrix; do not
@@ -94,22 +109,64 @@ upload. A failed run may be rerun for the same commit after fixing external conf
 never try to overwrite artifacts already accepted by the Portal. This automation does not bypass
 the [Portal's initial manual review](https://plugins.gradle.org/docs/publish-plugin#approval).
 
+The two destinations are independent. If only one publisher fails, inspect remote status and
+rerun only that failed job for the same commit; never rerun a successful publication to overwrite
+immutable artifacts. See [partial-publication recovery](maven-central.md#release-and-recover-a-partial-publication).
+
 ## Prepare a release candidate
 
 Update `version` in `build.gradle`, then update version/status references in the root README,
-[documentation index](README.md) and this guide. Group candidate entries under the version with
-**publication pending** in [CHANGELOG.md](../CHANGELOG.md), leaving a fresh `Unreleased` section.
-After successful publication and consumer resolution, replace the pending marker with the Portal
-version link and actual creation date. Do not invent a date while publication is still pending.
+[documentation index](README.md) and this guide. Group entries under the version heading in
+[CHANGELOG.md](../CHANGELOG.md), leaving a fresh `Unreleased` section.
+After successful publication and consumer resolution, add the Portal version link and actual
+creation date. Use the date recorded by the Portal; omit it until known.
 
 Run `./gradlew clean check assemble` (or `gradlew.bat clean check assemble`). Inspect the plugin,
-sources and Javadoc JARs under `build/libs/`. Verify the plugin descriptor and MIT license entry;
+sources and Javadoc JARs under `shardpilot-gradle-plugin/build/libs/`. Verify the plugin descriptor and MIT license entry;
 the Wrapper's Apache-licensed files belong to the repository and are not bundled as plugin code.
 
 Exercise both Groovy and Kotlin consumer examples with the candidate. After publication and Portal
 approval, verify resolution of the exact candidate through the Plugin Portal, without an included
 build or Maven Local. Running TestKit/composite builds proves implementation behavior, not that
 remote marker artifacts and metadata are correct.
+
+## Distribution artifacts
+
+Source-module names and distribution coordinates serve different purposes. The Gradle adapter's
+module move must not rename its published `shardpilot` artifact or plugin marker.
+
+| Distribution | Coordinates at 0.3.0 | Local output / dependency boundary |
+| --- | --- | --- |
+| Gradle implementation | `io.github.sjacek:shardpilot:0.3.0` | `shardpilot-gradle-plugin/build/libs/shardpilot-0.3.0.jar`; core classes bundled, SnakeYAML resolved at runtime. |
+| Gradle marker | `io.github.sjacek.shardpilot:io.github.sjacek.shardpilot.gradle.plugin:0.3.0` | Generated marker POM depends on the unchanged implementation coordinates. |
+| Maven parent | `io.github.sjacek:shardpilot-parent:0.3.0` | Root `pom.xml`; parent POM required to resolve the Maven modules' models. |
+| Maven core | `io.github.sjacek:shardpilot-core:0.3.0` | `shardpilot-core/target/shardpilot-core-0.3.0.jar`; shared logic and normal SnakeYAML dependency. |
+| Maven adapter | `io.github.sjacek:shardpilot-maven-plugin:0.3.0` | `shardpilot-maven-plugin/target/shardpilot-maven-plugin-0.3.0.jar`; generated native plugin descriptor and core dependency. |
+
+Inspect generated Gradle metadata under `shardpilot-gradle-plugin/build/publications/` using
+`generatePomFileForPluginMavenPublication`, `generatePomFileForShardpilotPluginMarkerMavenPublication`
+and `generateMetadataFileForPluginMavenPublication`. These metadata tasks do not publish. Check
+that the implementation POM/module retains `shardpilot`, the marker targets it and no separate
+`shardpilot-core` publication is required for Gradle consumers.
+
+The Maven reactor has its own build/release artifacts. Run `./mvnw -B -ntp verify` and keep the
+root POM, core/plugin parent versions and Gradle release version aligned. The required reusable
+workflow includes Maven/JDK checks as well as the eight Gradle cells. Maven Wrapper checksum and
+native filters/Invoker fixtures are verified without publisher credentials.
+
+The Gradle publishing job bundles core classes under the original `io.github.sjacek:shardpilot`
+coordinates and unchanged plugin marker. The separate Maven job publishes the parent, core and
+adapter together with source/Javadoc JARs and PGP signatures. An explicit `central-release` profile
+owns Maven signing and Central configuration; ordinary builds never activate it. Even with the
+profile active, `central.skipUpload=true` defaults to producing a local bundle. Only the credentialed
+job explicitly enables upload. `./mvnw install -DskipITs` remains local installation.
+
+Run `bash scripts/verify-maven-release.sh` before release changes are handed off. This credential-free
+check uses a disposable key, builds the same profile and validates the complete bundle plus all
+nine signatures. Its test-key bundle must never be published. See the
+[full setup and local verification guide](maven-central.md).
+
+## Portal validation
 
 The maintainer configures `GRADLE_PUBLISH_KEY` and `GRADLE_PUBLISH_SECRET` in a protected environment,
 or `gradle.publish.key` and `gradle.publish.secret` in the user's private Gradle properties. Never
@@ -142,8 +199,8 @@ Gradle releases or every JDK.
 
 ## Upgrade test dependencies or roll back
 
-JUnit, Spock and Groovy versions used by tests live in `build.gradle` and TestKit fixture build
-scripts. Update related versions consistently, rerun the fixtures and update the verification
+JUnit, Spock and Groovy versions used by tests live in module build files, Maven POMs and TestKit
+fixture build scripts. Update related versions consistently, rerun the fixtures and update the verification
 notes. These are test dependencies, not libraries injected into consumer applications.
 
 For a problematic release, pin consumers to the last known working version and rerun **all**

@@ -6,6 +6,10 @@ Start with the task path, plugin revision, enabled flag, shard count/index and e
 snapshot used by the job. Compare the same inputs across shards before changing test framework
 configuration. Keep credentials, personal data and raw application output out of public bug reports.
 
+The task/DSL and cache diagnostics below describe Gradle. For Maven, record the lifecycle/goal,
+runner (`SUREFIRE`/`FAILSAFE`), suite and module as well; use the
+[native-runner checklist](#maven-native-runner-checklist).
+
 ## Selection and execution
 
 | Symptom | Likely cause | Check |
@@ -53,9 +57,72 @@ Reproduce with strict cache settings. The built-in filter/action avoid capturing
 `Test`; a consumer callback or another plugin may not. Do not disable strict checks merely to
 declare the integration compatible.
 
+## Manifest verification
+
+![Validation and failure reporting](diagrams/manifest-validation.svg)
+
+[PlantUML source](diagrams/manifest-validation.puml) · [Manifest schema](shard-verification.md#manifest-format)
+
+| Symptom | Check / action |
+| --- | --- |
+| A generated sibling task cannot be found, or Gradle rejects registration in the current context. | Configure verification once outside deferred task actions, with an explicitly realized owner; use the [DSL examples](../README.md#optional-class-manifest-verification). |
+| `Missing class manifest`. | Download the baseline, all planned YAML files and every actual node artifact from the same pipeline. Empty files are not placeholders. Aggregation deliberately does not regenerate evidence. |
+| Invalid YAML, unsupported schema or wrong field types. | Require one mapping with integer `schemaVersion: 1` and a `classes` sequence of strings. Reject unknown fields, duplicate keys and nonstring names. Regenerate old `.txt` artifacts. |
+| Empty baseline or empty shard. | Eligibility must be nonempty. A legitimate empty partition needs `classes: []` and explicit `requireNonEmptyShards=false`; normal test failure policy still applies. |
+| Classes overlap, are missing or are foreign. | Compare source revision, discovery restrictions, count and history across the entire run. Reuse the application's eligibility rules for the unsharded baseline. |
+| `Shard N differs from plan`. | Inspect that index's planned and actual class lists. Swapped node artifacts can have the correct overall union and still fail this check. |
+| Unexpected indexed filenames. | Restore a clean cohort containing exactly indices 1..N. Avoid leftovers from a different count/run and preserve the expected `.yaml` names. |
+| An earlier green report became a failed report. | Verification always inspects current evidence. Keep failure JSON/HTML and investigate the new inputs instead of accepting a previous result. |
+| Coverage passed but a test failed or was skipped. | Coverage proves class selection only. CI must also require all ordinary test outcomes and handle skips under the consumer's policy. |
+| A class-selection hash changed. | Compare names and ownership. YAML formatting, comments and CRLF alone do not change the digest; history changes can change ownership. |
+
+Preparation rejects malformed history, invalid count and empty eligibility before modifying an
+existing valid plan. That does not make multi-file writes atomic: an I/O failure needs a fresh,
+successful preparation run. Retain actual evidence after ordinary test failure where possible.
+
+## HTML report and GitLab links
+
+| Symptom | Check / action |
+| --- | --- |
+| JSON moved but HTML is at its old location. | Set `htmlReportFile` explicitly; `reportFile`, manifest directories and HTML location are independent. Update the artifact path to match. |
+| No HTML after invoking only preparation or a normal test shard. | HTML is an output of `verify<Task>Shards`. The prepare/actual writers only record YAML evidence. |
+| An HTML row says `Matches`, but verification failed. | Read the global error. Per-index/per-class equality does not establish a complete, disjoint partition or an exact artifact filename set. |
+| A missing file is shown as `Unavailable`. | Restore the matching artifact cohort. Do not replace missing evidence with an empty YAML file or treat `None` assignments as proof of omission. |
+| Verification was skipped after a failed test node. | `artifacts:when: always` affects uploading only. Schedule the coverage/publisher jobs after failure too, keeping every normal test result required. Check job `rules` as well as `when`. |
+| The publisher fails because HTML is missing. | Check the coverage job's start, Gradle/plugin resolution, logs, `htmlReportFile`, write permissions and uploaded artifact paths. An early startup/I/O failure may prevent report generation. Do not fabricate a passing report in the publisher. |
+| No exposed artifact link in an MR. | Check that the publisher exists in the MR pipeline, has `artifacts:expose_as`, and uploads the literal configured HTML path. Paths with CI variables/globs are unsuitable for this link. |
+| The link opens an artifact browser rather than the report. | Publish exactly one HTML file in the exposing job's `artifacts:paths`. Retain JSON and other artifacts in the coverage job. |
+| HTML downloads instead of opening in the browser, or preview is denied. | Check GitLab Pages availability and private/internal Pages access control. Download and open the standalone HTML locally if preview is unavailable. |
+| An old pipeline's link no longer works. | Check artifact expiry/retention and job access. Download the same pipeline's report before expiry; do not mix old YAML with a new run's evidence. |
+
+See the [GitLab publisher example](shard-verification.md#finding-a-class-assignment-in-gitlab) and
+[report status reference](shard-verification.md#reading-html-statuses). ShardPilot does not change
+project visibility, configure Pages or extend artifact retention.
+
+## Maven native-runner checklist
+
+| Symptom | Check / action |
+| --- | --- |
+| Adapter resolves through a Gradle composite but Maven cannot find it. | These are separate distributions. Install the root Maven reactor for development, or use a repository containing `shardpilot-parent`, `shardpilot-core` and `shardpilot-maven-plugin` at matching versions. |
+| `Compiled test directory is missing`. | Run `test-compile` before explicit preparation/selection. Check the effective native `testClassesDirectory`; `shardpilot:verify` intentionally never compiles. |
+| Native `excludesFile` wiring is rejected. | Both runner and adapter must reference the same generated path. Update native wiring when overriding `suite`, `directory` or `excludesFile`; keep maintained exclusions in `additionalExcludesFile`. |
+| `-Dtest`, `-Dit.test`, a skip flag or filter-property override fails early. | These can bypass or invalidate class selection. Use the POM's supported native class filters, or an unsharded configuration without bound selection for focused runs. Count 1 still runs the adapter's validation. |
+| A second Surefire execution is rejected. | Configure the implicit `default-test` execution rather than adding a second test binding. One active native goal execution per project is supported. |
+| Failsafe selection fails before running tests. | Bind both native `integration-test` and `verify` goals, and bind adapter selection before the native integration runner. Use a separate integration output namespace. |
+| Unit coverage exists but integration coverage is missing. | Explicit preparation/aggregation defaults to Surefire. Prepare and verify Failsafe separately with `-Dshardpilot.runner=FAILSAFE` and matching custom path/suite options. |
+| `mvn verify` ran tests again in the aggregator. | Invoke `mvn shardpilot:verify` directly. The lifecycle and plugin goal are distinct; do not prepend `clean` to downloaded `target/` evidence. |
+| Evidence from modules with identical class names collides. | Preserve each module's directory during collection. Reactor `-T` is not a class-shard index, and POM-only aggregators have no coverage output. |
+
+The [Maven guide](maven.md) documents all parameters and supported native filters; the
+[CI sequence](ci.md#maven-ci-sequence) shows the separate native-result and selection gates.
+Native Maven fixtures currently cover JUnit Jupiter/Surefire/Failsafe 3.5.4; Gradle's Spock/TestNG
+fixtures do not establish coverage of those frameworks through Maven.
+
 ## A useful bug report
 
-Provide a minimal consumer build, Gradle/JDK/OS versions, DSL, task path, index/count and sanitized
+Provide a minimal consumer build, build-tool/JDK/OS versions, DSL/POM, task or goal, index/count and sanitized
 history that reproduces the issue. Include the baseline and per-shard outcomes when reporting
 missing or duplicated tests. If possible, add a TestKit regression fixture. Do not upload private
-test sources, secrets or production logs to a public issue.
+test sources, secrets or production logs to a public issue. For Maven, include runner plugin versions,
+the relevant effective plugin/execution configuration and module/suite paths; redact private repository
+addresses and credentials. A native Invoker fixture is the Maven equivalent of a TestKit regression.

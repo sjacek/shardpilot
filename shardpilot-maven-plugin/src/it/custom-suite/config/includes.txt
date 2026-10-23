@@ -1,0 +1,3 @@
+# Deliberately replaces Surefire's Test naming defaults with a maintained pattern file.
+
+**/*Spec.java
