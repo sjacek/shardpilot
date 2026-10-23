@@ -4,12 +4,12 @@ ShardPilot splits the classes of an opted-in Gradle `Test` task between independ
 Each execution calculates ownership locally from the same inputs. There is no coordinator service
 or replacement test engine.
 
-This checkout documents the upcoming 0.2.0 API. The published
+This checkout documents the upcoming 0.2.1 release. The published
 [0.1.0 release](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0) supports sharding
 without the new optional test-process block. Use the
 [root README](../README.md#getting-started) to apply it from the Gradle Plugin Portal, or the
 [local development setup](../README.md#local-plugin-development) to test a checkout explicitly.
-The [0.2.0 release notes](releases/0.2.0.md) contain migration examples and the publication checklist.
+The [0.2.1 release notes](releases/0.2.1.md) contain migration examples and the publication checklist.
 
 ## Guides
 

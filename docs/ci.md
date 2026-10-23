@@ -93,7 +93,7 @@ Shard count, index and history contents are task inputs, but this does not make 
 network-dependent tests intrinsically cacheable. Do not share a writable project build directory
 as a substitute for a build cache.
 
-CI job parallelism and Gradle/framework parallelism multiply resource use. Since 0.2.0,
+CI job parallelism and Gradle/framework parallelism multiply resource use. Since 0.2.1,
 ShardPilot can explicitly configure per-task `maxHeapSize`, `maxParallelForks` and `forkEvery`
 through the optional [test-process block](../README.md#optional-test-process-settings).
 Without that block, native process settings remain unchanged. Framework threads, retry plugins,

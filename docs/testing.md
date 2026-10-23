@@ -124,8 +124,9 @@ The 0.2.0 candidate's complete 67-test suite passed all eight target pairs local
 in official Eclipse Temurin containers on 23 October 2026: 536 test executions, no failures or
 skipped tests. Every cell ran `check assemble`, including release/workflow regressions, actual
 runtime assertions and the test-process probes. All cells used the same source snapshot.
-Only release documentation changed after that matrix; the tag workflow still reruns every cell
-against the exact committed release revision before publication.
+Subsequent changes were limited to release metadata and documentation; plugin runtime code is
+unchanged. The 0.2.1 tag workflow still reruns every cell against the exact committed release
+revision before publication.
 The original 46-test plugin suite also passed all eight target pairs locally on Windows.
 Plugin classes target Java 17 bytecode. The fixtures currently use JUnit Jupiter 6.1.3, Spock 2.5 for Groovy 5.0, Groovy 5.1.3
 and TestNG 7.12.0 through Gradle's native TestNG adapter.
