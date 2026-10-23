@@ -11,7 +11,7 @@ plugins {
 }
 
 project.setGroup('io.github.sjacek')
-project.setVersion('0.1.0')
+project.setVersion('0.2.0')
 // Keep the project, Plugin Portal and Maven publication summaries aligned.
 project.setDescription('Duration-balanced, deterministic class-level test sharding for faster Gradle CI pipelines, without a coordinator.')
 

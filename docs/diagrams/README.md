@@ -8,7 +8,7 @@ preview together; do not edit an SVG by hand.
 
 | Diagram | Source | Preview | Explains |
 | --- | --- | --- | --- |
-| Components | [components.puml](components.puml) | [components.svg](components.svg) | Gradle integration and responsibilities of the six implementation classes. |
+| Components | [components.puml](components.puml) | [components.svg](components.svg) | Gradle integration, optional test-process settings and implementation responsibilities. |
 | Assignment | [shard-assignment.puml](shard-assignment.puml) | [shard-assignment.svg](shard-assignment.svg) | Measured-family packing, hash fallback and candidate exclusion. |
 | CI execution | [ci-execution.puml](ci-execution.puml) | [ci-execution.svg](ci-execution.svg) | Independent jobs, consistent inputs and CI-owned result collection. |
 | Testcontainers lifecycle | [testcontainers-lifecycle.puml](testcontainers-lifecycle.puml) | [testcontainers-lifecycle.svg](testcontainers-lifecycle.svg) | Shared PostgreSQL/RabbitMQ fixtures within a worker, isolated test data and cleanup. |

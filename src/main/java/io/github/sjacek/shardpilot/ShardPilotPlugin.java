@@ -14,7 +14,7 @@ public final class ShardPilotPlugin implements Plugin<Project> {
     public void apply(Project project) {
         var providers = project.getProviders();
         project.getTasks().withType(Test.class).configureEach(test -> {
-            var settings = test.getExtensions().create("shardPilot", ShardPilotExtension.class);
+            var settings = test.getExtensions().create("shardPilot", ShardPilotExtension.class, test);
             settings.getEnabled().convention(false);
             settings.getShardCount().convention(providers.gradleProperty("shardpilot.count")
                     .map(Integer::parseInt).orElse(1));

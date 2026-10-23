@@ -93,9 +93,13 @@ Shard count, index and history contents are task inputs, but this does not make 
 network-dependent tests intrinsically cacheable. Do not share a writable project build directory
 as a substitute for a build cache.
 
-CI job parallelism and Gradle/framework parallelism multiply resource use. ShardPilot does not
-change `maxParallelForks`, framework threads, retry plugins or memory limits. Size the complete
-matrix against available CPU, memory, database capacity and container startup cost.
+CI job parallelism and Gradle/framework parallelism multiply resource use. Since 0.2.0,
+ShardPilot can explicitly configure per-task `maxHeapSize`, `maxParallelForks` and `forkEvery`
+through the optional [test-process block](../README.md#optional-test-process-settings).
+Without that block, native process settings remain unchanged. Framework threads, retry plugins,
+container limits and the total runner budget remain consumer/CI responsibilities. Size the complete
+matrix against available CPU, memory, database capacity and container startup cost; a per-JVM
+heap limit does not include metaspace, native memory or service containers.
 
 An empty shard can be legitimate and is not itself evidence of lost coverage. Conversely, an
 explicit `--tests` selection on a non-owning shard may fail with Gradle's normal no-match error.

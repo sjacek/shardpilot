@@ -52,11 +52,17 @@ between jobs.
 - CI-provider independent, with no coordinator service or replacement test runner.
 - No telemetry or runtime dependencies outside the Gradle API.
 
-Your build retains control over test frameworks, source sets, containers, parallel execution,
-retries and failure handling. ShardPilot assigns test classes; your CI launches every shard and
+Your build retains control over test frameworks, source sets, containers, retries and failure
+handling. Version 0.2.0 adds optional [test-process settings](#optional-test-process-settings)
+using Gradle's existing process controls. ShardPilot assigns test classes; your CI launches every shard and
 collects the results. It does not create CI jobs or coordinate their completion.
 
 ## Status
+
+This checkout prepares **0.2.0**, including optional test-process configuration. Until that
+version is published, use the [explicit local development override](#local-plugin-development)
+to exercise the new API. Version 0.1.0 does not provide `testProcesses`.
+The [0.2.0 release notes](docs/releases/0.2.0.md) describe migration and the remaining publication steps.
 
 Version [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0)
 is available from the Gradle Plugin Portal.
@@ -65,10 +71,11 @@ after the complete compatibility matrix succeeds; see [release setup](docs/relea
 for the required environment secrets and tag protection.
 The [compatibility matrix](docs/testing.md#gradle-and-jdk-matrix) defines eight Linux CI targets across
 Gradle 9.0.0, 9.1.0 and 9.8.1 with JDK 17, 21 and 25, excluding Gradle 9.0.0/JDK 25.
-All eight pairs have passed locally on Windows; release support requires a green Linux matrix
-run for the revision being released. Plugin bytecode targets
+For the 0.2.0 candidate, all eight pairs passed locally in Linux amd64 containers on 23 October 2026:
+67 tests per pair, 536 executions, no failures or skips. The tag workflow reruns the matrix for the
+release commit before publication. Plugin bytecode targets
 Java 17; that alone is not a claim of compatibility with every Gradle/JDK combination.
-Android, Kotlin Multiplatform and native-image test execution are outside this first version.
+Android, Kotlin Multiplatform and native-image test execution remain outside the verified scope.
 
 ShardPilot works on standard Gradle `Test` tasks. It does not create source sets, choose a test
 framework, add test dependencies, start containers, configure retries, or change failure policy.
@@ -172,6 +179,53 @@ The `shardPilot` extension belongs to each `Test` task, not to the root project.
 | `shardIndex` | `-Pshardpilot.index`, otherwise `1` | One-based index, between `1` and `shardCount`. |
 | `durationsFile` | Unset | Optional UTF-8 timing history; absent history uses hash-only assignment. |
 
+### Optional test-process settings
+
+The **0.2.0 candidate** adds an explicit `testProcesses` block for Gradle's existing worker JVMs.
+Use the [local development override](#local-plugin-development) until 0.2.0 is published, then
+change the plugin version in the installation examples above to `0.2.0`:
+
+```groovy
+tasks.named('integrationTest', Test) {
+    shardPilot {
+        enabled = true
+        testProcesses {
+            maxHeapSize = providers.gradleProperty('testHeap').orElse('2g')
+            maxParallelForks = 1
+            forkEvery = 50L
+        }
+    }
+}
+```
+
+The block is independent of `enabled`, which controls only sharding. Without the block,
+process settings remain untouched. Inside it, omitted properties retain the task's existing values.
+Values and providers are resolved when the block finishes during task configuration; later native
+`Test` assignments follow normal Gradle configuration order. No process settings are applied from
+execution-time hooks. Supplied settings are also test-task inputs, including `forkEvery`.
+
+`maxHeapSize` is a positive JVM size (bytes or a `k`/`m`/`g` suffix, case-insensitive),
+`maxParallelForks` must be positive, and `forkEvery` must be nonnegative (`0L` keeps a process
+for the whole task). The heap is **per JVM**, not the complete CI memory budget. CI still owns
+capacity planning for build daemons, native memory, containers and other jobs.
+
+Process replacement occurs between classes and adds startup cost. These limits do not guarantee
+that an individual class fits its heap and do not hide failures, retry OOMs or monitor memory.
+
+The Kotlin DSL equivalent is:
+
+```kotlin
+tasks.named<Test>("integrationTest") {
+    extensions.configure<io.github.sjacek.shardpilot.ShardPilotExtension>("shardPilot") {
+        testProcesses {
+            maxHeapSize.set(providers.gradleProperty("testHeap").orElse("2g"))
+            maxParallelForks.set(1)
+            forkEvery.set(50L)
+        }
+    }
+}
+```
+
 For an **already registered** integration test task, configure it independently:
 
 ```groovy
@@ -232,7 +286,7 @@ Framework discovery and `--tests` still belong to Gradle. An explicit selection 
 on a non-owning shard, and Gradle's usual no-matching-tests failure is intentionally not suppressed.
 For focused local runs, omit sharding CLI arguments or set both count and index to `1`.
 
-Only classes are distributed. Methods stay together, and framework/Gradle parallelism is not
+Only classes are distributed. Methods stay together, and framework parallelism is not
 enabled or disabled. Startup, container reuse, Spring context locality and unknown classes can
 affect wall-clock balance; recorded seconds are not a promise of a particular speedup.
 
