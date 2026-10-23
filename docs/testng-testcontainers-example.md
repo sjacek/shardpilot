@@ -1,15 +1,15 @@
 # TestNG with PostgreSQL and RabbitMQ
 
-[Documentation index](README.md) · [Runnable example](../examples/testng/testcontainers/README.md)
+[Documentation index](README.md) · [Runnable example](../examples/gradle/testng/testcontainers/README.md)
 
-The [TestNG example](../examples/testng/testcontainers/build.gradle) is an independent Java consumer
+The [TestNG example](../examples/gradle/testng/testcontainers/build.gradle) is an independent Java consumer
 build with four classes against real PostgreSQL and RabbitMQ containers. It mirrors the scenarios
 in the [JUnit Jupiter](testcontainers-example.md) and [Spock](spock-testcontainers-example.md)
 examples, using TestNG's inherited `@BeforeClass`, assertions and a two-row `@DataProvider`.
 
 ## Build and fixture structure
 
-The example resolves the plugin checkout with `includeBuild('../../..')`. It registers its own
+The example resolves the plugin checkout with `includeBuild('../../../..')`. It registers its own
 `integrationTest` source set, `Test` task and `check` dependency. Gradle's native `useTestNG()`
 adapter runs TestNG 7.12.0; no JUnit Platform engine, Jupiter extension or custom ShardPilot runner
 is involved. Dependencies include Testcontainers 2.0.5, PostgreSQL JDBC 42.7.14, RabbitMQ client
@@ -17,11 +17,11 @@ is involved. Dependencies include Testcontainers 2.0.5, PostgreSQL JDBC 42.7.14,
 
 | File or class | Responsibility |
 | --- | --- |
-| [build.gradle](../examples/testng/testcontainers/build.gradle) | TestNG selection, source set/task registration, sharding, sequential execution and live-test cache policy. |
-| [AbstractInfrastructureIT](../examples/testng/testcontainers/src/integrationTest/java/example/shardpilot/AbstractInfrastructureIT.java) | Inherited `@BeforeClass` database allocation, method-owned clients and bounded message polling. |
-| [TestInfrastructure](../examples/testng/testcontainers/src/integrationTest/java/example/shardpilot/TestInfrastructure.java) | Lazy worker-local PostgreSQL/RabbitMQ startup and generated databases. |
-| [IntegrationTestImages](../examples/testng/testcontainers/src/integrationTest/java/example/shardpilot/IntegrationTestImages.java) | Public image defaults and explicit test-JVM overrides. |
-| [Timing history](../examples/testng/testcontainers/integration-test-durations.tsv) | Illustrative class-level weights, not measured performance. |
+| [build.gradle](../examples/gradle/testng/testcontainers/build.gradle) | TestNG selection, source set/task registration, sharding, sequential execution and live-test cache policy. |
+| [AbstractInfrastructureIT](../examples/gradle/testng/testcontainers/src/integrationTest/java/example/shardpilot/AbstractInfrastructureIT.java) | Inherited `@BeforeClass` database allocation, method-owned clients and bounded message polling. |
+| [TestInfrastructure](../examples/gradle/testng/testcontainers/src/integrationTest/java/example/shardpilot/TestInfrastructure.java) | Lazy worker-local PostgreSQL/RabbitMQ startup and generated databases. |
+| [IntegrationTestImages](../examples/gradle/testng/testcontainers/src/integrationTest/java/example/shardpilot/IntegrationTestImages.java) | Public image defaults and explicit test-JVM overrides. |
+| [Timing history](../examples/gradle/testng/testcontainers/integration-test-durations.tsv) | Illustrative class-level weights, not measured performance. |
 
 Only outer `*IT.class` candidates are selected, and the abstract fixture is explicitly excluded.
 The base stays on the runtime classpath for inheritance; a shard with no concrete tests does not
@@ -67,27 +67,27 @@ applies. Uncached dependencies and images require Maven Central/registry access.
 Full suite:
 
 ```shell
-./gradlew -p examples/testng/testcontainers check -Pshardpilot.count=1 -Pshardpilot.index=1
+./gradlew -p examples/gradle/testng/testcontainers check -Pshardpilot.count=1 -Pshardpilot.index=1
 ```
 
 Two isolated CI jobs, or two **sequential** local invocations:
 
 ```shell
-./gradlew -p examples/testng/testcontainers integrationTest -Pshardpilot.count=2 -Pshardpilot.index=1
-./gradlew -p examples/testng/testcontainers integrationTest -Pshardpilot.count=2 -Pshardpilot.index=2
+./gradlew -p examples/gradle/testng/testcontainers integrationTest -Pshardpilot.count=2 -Pshardpilot.index=1
+./gradlew -p examples/gradle/testng/testcontainers integrationTest -Pshardpilot.count=2 -Pshardpilot.index=2
 ```
 
 PowerShell:
 
 ```powershell
-.\gradlew.bat -p examples/testng/testcontainers check '-Pshardpilot.count=1' '-Pshardpilot.index=1'
-.\gradlew.bat -p examples/testng/testcontainers integrationTest '-Pshardpilot.count=2' '-Pshardpilot.index=1'
-.\gradlew.bat -p examples/testng/testcontainers integrationTest '-Pshardpilot.count=2' '-Pshardpilot.index=2'
+.\gradlew.bat -p examples/gradle/testng/testcontainers check '-Pshardpilot.count=1' '-Pshardpilot.index=1'
+.\gradlew.bat -p examples/gradle/testng/testcontainers integrationTest '-Pshardpilot.count=2' '-Pshardpilot.index=1'
+.\gradlew.bat -p examples/gradle/testng/testcontainers integrationTest '-Pshardpilot.count=2' '-Pshardpilot.index=2'
 ```
 
 Quote dotted `-P` arguments with the batch launcher. Use `integrationTestClasses` to compile without
 Docker. The parent plugin's `check` remains Docker-independent. For IDE source roots and dependencies,
-[import the example build](../examples/README.md#import-into-intellij-idea), not just the parent.
+[import the example build](../examples/gradle/README.md#import-into-intellij-idea), not just the parent.
 Local SQL inspection suppressions cover only absent IDE datasources and runtime-created tables in
 the three SQL test classes; other SQL inspections remain enabled.
 
@@ -134,8 +134,8 @@ in PowerShell and using identical values in every shard. Keep normal runtime che
 Live integration results never use up-to-date/build-cache reuse. Configuration-cache reuse remains
 enabled and is separate from reusing test results. An empty shard may launch no worker or containers.
 
-Gradle writes JUnit XML under `examples/testng/testcontainers/build/test-results/integrationTest/`
-and HTML under `examples/testng/testcontainers/build/reports/tests/integrationTest/`. TestNG's default
+Gradle writes JUnit XML under `examples/gradle/testng/testcontainers/build/test-results/integrationTest/`
+and HTML under `examples/gradle/testng/testcontainers/build/reports/tests/integrationTest/`. TestNG's default
 reporters are disabled so they do not create overlapping outputs. Preserve each run's reports before
 the next sequential invocation replaces them. Compare the baseline's invocation identities with the
 union of all shards, including both provider rows, and check that the shards do not overlap.

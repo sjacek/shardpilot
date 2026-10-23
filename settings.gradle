@@ -1,1 +1,3 @@
 rootProject.name = 'shardpilot'
+include 'shardpilot-core'
+include 'shardpilot-gradle-plugin'

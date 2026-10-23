@@ -1,7 +1,0 @@
-pluginManagement {
-    // Resolve the enclosing checkout, not an unpublished Portal snapshot.
-    // This independent consumer does not add its Docker-backed check to the plugin's own lifecycle.
-    includeBuild('../../..')
-}
-
-rootProject.name = 'shardpilot-spock-testcontainers-example'

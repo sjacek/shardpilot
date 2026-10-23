@@ -1,0 +1,38 @@
+@startuml
+title Maven: native execution and independent coverage verification
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam ArrowColor #475569
+skinparam sequenceParticipantBackgroundColor #EFF6FF
+skinparam sequenceParticipantBorderColor #2563EB
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+hide footbox
+
+participant "Compile / prepare job" as prepare
+collections "CI artifacts\nProject + suite namespace" as artifacts
+participant "Node i\nMaven lifecycle" as node
+participant "Surefire / Failsafe" as runner
+participant "Aggregate job" as aggregate
+
+prepare -> prepare : test-compile; then shardpilot:prepare
+prepare -> artifacts : baseline.yaml + planned-1..N.yaml
+loop Every node, same model / history / revisions
+  artifacts -> node : Compiled inputs and common plan
+  node -> node : shardpilot:select BEFORE native runner\nRead effective filters; assign class families
+  node -> runner : Generated excludes.txt denies all other candidates
+  node -> artifacts : actual-i.yaml (pre-worker evidence)
+  runner -> runner : Normal tests, JVMs and failure handling
+  runner -> artifacts : Native JUnit reports and job outcome
+end
+artifacts -> aggregate : Common plan + all actual-i.yaml
+aggregate -> aggregate : shardpilot:verify\nNo compilation / test rerun / plan replacement
+aggregate -> artifacts : coverage.json + standalone coverage.html
+note over runner,aggregate
+  Require every native test outcome AND coverage success.
+  A selection match does not prove test-method success.
+  Empty selections use deny-all; bypassing overrides fail early.
+end note
+@enduml

@@ -1,12 +1,12 @@
 # PostgreSQL and RabbitMQ example
 
-[Documentation index](README.md) · [Runnable example](../examples/junit-jupiter/testcontainers/README.md)
+[Documentation index](README.md) · [Runnable example](../examples/gradle/junit-jupiter/testcontainers/README.md)
 
 This guide covers JUnit Jupiter. For specification lifecycle and data-table iterations, use the
 [Spock counterpart](spock-testcontainers-example.md). For inherited class fixtures and data providers,
 use the [TestNG counterpart](testng-testcontainers-example.md).
 
-The [standalone JUnit Jupiter example build](../examples/junit-jupiter/testcontainers/build.gradle) runs four integration-test
+The [standalone JUnit Jupiter example build](../examples/gradle/junit-jupiter/testcontainers/build.gradle) runs four integration-test
 classes against real PostgreSQL and RabbitMQ containers. ShardPilot distributes the classes;
 the test fixtures own container startup, data isolation and cleanup. No application server,
 Spring context or external database/broker deployment is needed.
@@ -23,18 +23,19 @@ The example targets Java 17 bytecode; the parent build's [verified runtime](test
 still applies. Maven Central and the configured image registry must be reachable for uncached
 dependencies/images. Missing Docker fails the integration tests instead of skipping them.
 
-The example consumes the plugin using `includeBuild('../../..')` in its own settings. It is not
-included as a subproject in the plugin build, and does not depend on an unpublished Portal version.
+The example consumes the plugin using `includeBuild('../../../..')` in its own settings. It is not
+included as a subproject in the plugin build, and deliberately tests the checkout rather than the
+published Portal artifact. Normal consumer installation uses the [published plugin](../README.md#getting-started).
 The example creates its own `integrationTest` source set, task and `check` dependency. Those are
 consumer choices, not behavior added by ShardPilot.
 
 | File or class | Role |
 | --- | --- |
-| [build.gradle](../examples/junit-jupiter/testcontainers/build.gradle) | Dependencies, integration task, sharding opt-in, sequential workers and live-test cache policy. |
-| [IntegrationTestImages](../examples/junit-jupiter/testcontainers/src/integrationTest/java/example/shardpilot/IntegrationTestImages.java) | Central defaults and explicit image overrides. |
-| [TestInfrastructure](../examples/junit-jupiter/testcontainers/src/integrationTest/java/example/shardpilot/TestInfrastructure.java) | Lazy worker-local containers, parallel startup and generated databases. |
-| [AbstractInfrastructureIT](../examples/junit-jupiter/testcontainers/src/integrationTest/java/example/shardpilot/AbstractInfrastructureIT.java) | Database per class, client factories and bounded message polling. |
-| [Timing history](../examples/junit-jupiter/testcontainers/integration-test-durations.tsv) | Illustrative weights for a predictable two-shard demonstration. |
+| [build.gradle](../examples/gradle/junit-jupiter/testcontainers/build.gradle) | Dependencies, integration task, sharding opt-in, sequential workers and live-test cache policy. |
+| [IntegrationTestImages](../examples/gradle/junit-jupiter/testcontainers/src/integrationTest/java/example/shardpilot/IntegrationTestImages.java) | Central defaults and explicit image overrides. |
+| [TestInfrastructure](../examples/gradle/junit-jupiter/testcontainers/src/integrationTest/java/example/shardpilot/TestInfrastructure.java) | Lazy worker-local containers, parallel startup and generated databases. |
+| [AbstractInfrastructureIT](../examples/gradle/junit-jupiter/testcontainers/src/integrationTest/java/example/shardpilot/AbstractInfrastructureIT.java) | Database per class, client factories and bounded message polling. |
+| [Timing history](../examples/gradle/junit-jupiter/testcontainers/integration-test-durations.tsv) | Illustrative weights for a predictable two-shard demonstration. |
 
 Dependencies include JUnit Jupiter 6.1.3, Testcontainers 2.0.5, PostgreSQL JDBC 42.7.14 and RabbitMQ
 Java client 5.37.0. They belong to the example, not the published plugin's runtime. The tests exercise
@@ -75,13 +76,13 @@ invocations also start new workers and new fixtures. JVM reuse is not Docker cro
 From the ShardPilot repository root:
 
 ```shell
-./gradlew -p examples/junit-jupiter/testcontainers integrationTest -Pshardpilot.count=1 -Pshardpilot.index=1
+./gradlew -p examples/gradle/junit-jupiter/testcontainers integrationTest -Pshardpilot.count=1 -Pshardpilot.index=1
 ```
 
 PowerShell:
 
 ```powershell
-.\gradlew.bat -p examples/junit-jupiter/testcontainers integrationTest '-Pshardpilot.count=1' '-Pshardpilot.index=1'
+.\gradlew.bat -p examples/gradle/junit-jupiter/testcontainers integrationTest '-Pshardpilot.count=1' '-Pshardpilot.index=1'
 ```
 
 Quote dotted `-P` arguments when invoking the batch launcher from PowerShell. Without explicit
@@ -103,10 +104,10 @@ does not retry failed tests or change their failure policy.
 For compilation only, without starting Docker:
 
 ```shell
-./gradlew -p examples/junit-jupiter/testcontainers integrationTestClasses
+./gradlew -p examples/gradle/junit-jupiter/testcontainers integrationTestClasses
 ```
 
-`./gradlew -p examples/junit-jupiter/testcontainers check` includes the Docker-backed tests. The parent plugin's
+`./gradlew -p examples/gradle/junit-jupiter/testcontainers check` includes the Docker-backed tests. The parent plugin's
 plain `./gradlew check` deliberately does not.
 
 ## Run two shards
@@ -114,15 +115,15 @@ plain `./gradlew check` deliberately does not.
 Use separate CI workspaces, or run these commands **sequentially** in a single local checkout:
 
 ```shell
-./gradlew -p examples/junit-jupiter/testcontainers integrationTest -Pshardpilot.count=2 -Pshardpilot.index=1
-./gradlew -p examples/junit-jupiter/testcontainers integrationTest -Pshardpilot.count=2 -Pshardpilot.index=2
+./gradlew -p examples/gradle/junit-jupiter/testcontainers integrationTest -Pshardpilot.count=2 -Pshardpilot.index=1
+./gradlew -p examples/gradle/junit-jupiter/testcontainers integrationTest -Pshardpilot.count=2 -Pshardpilot.index=2
 ```
 
 PowerShell:
 
 ```powershell
-.\gradlew.bat -p examples/junit-jupiter/testcontainers integrationTest '-Pshardpilot.count=2' '-Pshardpilot.index=1'
-.\gradlew.bat -p examples/junit-jupiter/testcontainers integrationTest '-Pshardpilot.count=2' '-Pshardpilot.index=2'
+.\gradlew.bat -p examples/gradle/junit-jupiter/testcontainers integrationTest '-Pshardpilot.count=2' '-Pshardpilot.index=1'
+.\gradlew.bat -p examples/gradle/junit-jupiter/testcontainers integrationTest '-Pshardpilot.count=2' '-Pshardpilot.index=2'
 ```
 
 The supplied TSV contains **illustrative, not measured** seconds. Nested weights are added to the
@@ -150,7 +151,7 @@ can change its patch contents; pin a verified digest when immutable CI images ar
 other compatible public versions, pass explicit properties, for example:
 
 ```shell
-./gradlew -p examples/junit-jupiter/testcontainers integrationTest -Pexample.postgresImage=postgres:18.6-alpine -Pexample.rabbitmqImage=rabbitmq:4.3.6-management-alpine
+./gradlew -p examples/gradle/junit-jupiter/testcontainers integrationTest -Pexample.postgresImage=postgres:18.6-alpine -Pexample.rabbitmqImage=rabbitmq:4.3.6-management-alpine
 ```
 
 Use the same overrides in every shard and quote each `-P...` argument in PowerShell. The build
@@ -158,8 +159,8 @@ forwards these properties to the test JVM; the plugin does not manage images. Re
 alternate runtimes remain standard Testcontainers configuration. Do not disable runtime checks or
 Ryuk to make an unavailable Docker setup appear successful.
 
-Reports are under `examples/junit-jupiter/testcontainers/build/test-results/integrationTest/` and
-`examples/junit-jupiter/testcontainers/build/reports/tests/integrationTest/`. Sequential runs replace that task's
+Reports are under `examples/gradle/junit-jupiter/testcontainers/build/test-results/integrationTest/` and
+`examples/gradle/junit-jupiter/testcontainers/build/reports/tests/integrationTest/`. Sequential runs replace that task's
 reports, so retain each run's artifacts separately when comparing the baseline with both shards.
 The union of shard results should equal the baseline, with no repeated test cases. One successful
 shard alone is not complete-suite verification.

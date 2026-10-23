@@ -1,9 +1,12 @@
-name: Gradle and JDK compatibility
+name: Build tool and JDK compatibility
 
 on:
   push:
+    # Release tags call this workflow from publish.yml instead of starting a second matrix.
+    branches: ['**']
   pull_request:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -32,6 +35,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+          ref: ${{ github.sha }}
       - name: Set up the matrix JDK
         uses: actions/setup-java@v6
         with:
@@ -54,7 +58,72 @@ jobs:
         with:
           name: compatibility-gradle-${{ matrix.gradle }}-jdk-${{ matrix.java }}
           path: |
-            build/reports/
-            build/test-results/test/
+            shardpilot-gradle-plugin/build/reports/
+            shardpilot-gradle-plugin/build/test-results/test/
+            shardpilot-core/build/reports/
+            shardpilot-core/build/test-results/test/
+          if-no-files-found: warn
+          retention-days: 14
+
+  release-artifacts:
+    name: Signed Maven release bundle (no upload)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Set up Java for release verification
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Verify the signed release with a disposable key
+        run: bash scripts/verify-maven-release.sh
+      - name: Retain release verification evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: compatibility-signed-maven-release
+          # The disposable private key lives only in a temporary directory and is never uploaded.
+          path: build/release-verification/report.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  maven:
+    name: Maven 3.9.16 / JDK ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['17', '21', '25']
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Set up the matrix JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Verify Maven core, adapter and real runner builds
+        run: bash ./mvnw -B -ntp verify
+      - name: Retain Maven tests and Invoker evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: compatibility-maven-jdk-${{ matrix.java }}
+          path: |
+            shardpilot-core/target/surefire-reports/
+            shardpilot-maven-plugin/target/surefire-reports/
+            shardpilot-maven-plugin/target/invoker-reports/
+            shardpilot-maven-plugin/target/it/**/build.log
+            shardpilot-maven-plugin/target/examples/**/build.log
+            shardpilot-maven-plugin/target/examples/**/coverage.html
           if-no-files-found: warn
           retention-days: 14

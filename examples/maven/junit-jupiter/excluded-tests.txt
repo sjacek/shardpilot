@@ -1,0 +1,2 @@
+# Existing consumer exclusions remain outside the generated node-selection file.
+**/ForbiddenTest.class

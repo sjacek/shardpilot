@@ -1,6 +1,0 @@
-pluginManagement {
-    // Consume the checkout containing this example; no published snapshot is assumed.
-    includeBuild('../../..')
-}
-
-rootProject.name = 'shardpilot-junit-jupiter-testcontainers-example'

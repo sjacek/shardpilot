@@ -1,0 +1,39 @@
+@startuml
+title Coverage reports: one snapshot, independent consumers
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam componentStyle rectangle
+skinparam componentBackgroundColor #EFF6FF
+skinparam componentBorderColor #2563EB
+skinparam ArrowColor #475569
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+
+artifact "Downloaded baseline + plans\nActual files only when enabled" as inputs #F1F5F9
+component "One immutable evaluation\nValid sets + file errors + gate outcome" as snapshot
+artifact "JSON report\nCounts / hashes or first error" as json
+artifact "Standalone HTML\nAssignments / counts / differences\nPartial evidence and diagnostics" as html
+component "Gradle verification outcome\nFail for validation or report I/O errors" as gate
+component "CI automation\nNormal tests AND coverage required" as ci #F1F5F9
+actor "Reviewer\nDownload or CI artifact link" as reviewer
+
+inputs --> snapshot : read each expected file once
+snapshot --> json
+snapshot --> html
+snapshot --> gate
+json --> ci : machine-readable evidence
+gate --> ci : required outcome
+html --> reviewer : consumer publishes artifact
+
+note bottom of html
+  No JavaScript or external assets.
+  Unavailable evidence is not zero classes.
+  Matching rows do not prove global success.
+end note
+note bottom of ci
+  Selection coverage is not test execution.
+  Publication cannot turn failure into success.
+end note
+@enduml

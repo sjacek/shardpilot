@@ -8,9 +8,16 @@ preview together; do not edit an SVG by hand.
 
 | Diagram | Source | Preview | Explains |
 | --- | --- | --- | --- |
-| Components | [components.puml](components.puml) | [components.svg](components.svg) | Gradle integration and responsibilities of the six implementation classes. |
+| Components | [components.puml](components.puml) | [components.svg](components.svg) | Gradle integration, optional test-process settings and implementation responsibilities. |
+| Source modules | [modules.puml](modules.puml) | [modules.svg](modules.svg) | Shared core, sibling Gradle/Maven adapters and preserved artifact coordinates. |
+| Maven execution | [maven-execution.puml](maven-execution.puml) | [maven-execution.svg](maven-execution.svg) | Test compilation, native runner selection and standalone artifact verification. |
+| Release publication | [publication.puml](publication.puml) | [publication.svg](publication.svg) | Shared credential-free release gate, disposable signing verification and separate Gradle/Central publishers. |
 | Assignment | [shard-assignment.puml](shard-assignment.puml) | [shard-assignment.svg](shard-assignment.svg) | Measured-family packing, hash fallback and candidate exclusion. |
 | CI execution | [ci-execution.puml](ci-execution.puml) | [ci-execution.svg](ci-execution.svg) | Independent jobs, consistent inputs and CI-owned result collection. |
+| Manifest tasks | [manifest-tasks.puml](manifest-tasks.puml) | [manifest-tasks.svg](manifest-tasks.svg) | Compilation dependencies, pre-worker evidence and aggregation ordering without reruns. |
+| Manifest CI flow | [manifest-ci.puml](manifest-ci.puml) | [manifest-ci.svg](manifest-ci.svg) | Common planning artifacts, every actual node selection and required CI outcomes. |
+| Manifest validation | [manifest-validation.puml](manifest-validation.puml) | [manifest-validation.svg](manifest-validation.svg) | Validation policy, plan-only mode and passed/failed JSON/HTML outcomes. |
+| HTML report | [html-report.puml](html-report.puml) | [html-report.svg](html-report.svg) | One evidence snapshot, both report formats, partial diagnostics and independent CI/reviewer consumers. |
 | Testcontainers lifecycle | [testcontainers-lifecycle.puml](testcontainers-lifecycle.puml) | [testcontainers-lifecycle.svg](testcontainers-lifecycle.svg) | Shared PostgreSQL/RabbitMQ fixtures within a worker, isolated test data and cleanup. |
 | Spock lifecycle | [spock-testcontainers-lifecycle.puml](spock-testcontainers-lifecycle.puml) | [spock-testcontainers-lifecycle.svg](spock-testcontainers-lifecycle.svg) | `setupSpec`, shared database URLs, feature iteration ownership and worker-scoped containers. |
 | TestNG lifecycle | [testng-testcontainers-lifecycle.puml](testng-testcontainers-lifecycle.puml) | [testng-testcontainers-lifecycle.svg](testng-testcontainers-lifecycle.svg) | Inherited `@BeforeClass`, class database URLs, provider-row ownership and worker-scoped containers. |
@@ -20,7 +27,8 @@ preview together; do not edit an SVG by hand.
 Use a local Java runtime, a PlantUML JAR and Graphviz `dot` available on `PATH`. PlantUML is a
 documentation tool, not a ShardPilot runtime/build dependency. No renderer JAR or machine-specific
 installation path is committed to this repository. No diagram uses remote includes or a rendering
-service. The initial previews were rendered with PlantUML 1.2026.8.
+service. The initial previews were rendered with PlantUML 1.2026.8; the 0.3.0 manifest diagrams
+and refreshed component/CI diagrams use PlantUML 1.2026.9.
 
 From the repository root, set `PLANTUML_JAR` to your local JAR path. With the current PlantUML CLI:
 
@@ -61,7 +69,7 @@ declaration only when it is unused. Geometry, labels, IDs and actual links are p
 and external entities are rejected. This is a generation step for our previews, not a PlantUML patch
 or a blanket suppression of SVG inspections.
 
-Run normalization after every SVG render. `./gradlew test --tests NormalizeSvgTest` verifies the
+Run normalization after every SVG render. `./gradlew :shardpilot-gradle-plugin:test --tests NormalizeSvgTest` verifies the
 normalizer and the committed previews; it is also part of `check`. The utility is compiled for tests
 only and is not included in the plugin's runtime, sources or Javadoc artifacts.
 

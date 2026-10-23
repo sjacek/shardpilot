@@ -1,0 +1,50 @@
+@startuml
+title Coverage validation: policy and failure boundaries
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam ArrowColor #475569
+skinparam activityBackgroundColor #EFF6FF
+skinparam activityBorderColor #2563EB
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+
+start
+:Snapshot baseline and planned-1..N YAML\n(actual-1..N when enabled);
+if (Valid schema, types and names?\nNonempty baseline; shard policy met?) then (yes)
+else (no)
+  :Write failure JSON + HTML; fail Gradle task;
+  stop
+endif
+:Check disjoint planned sets\nand exact union == baseline;
+if (Complete partition?) then (yes)
+else (no)
+  :Write failure JSON + HTML; fail Gradle task;
+  stop
+endif
+if (verifyActual?) then (true)
+  :Compare actual selections at each\nindex with its own planned set;
+  if (Every actual set matches?) then (yes)
+  else (no)
+    :Write failure JSON + HTML; fail Gradle task;
+    stop
+  endif
+else (false)
+  :Skip actual downloads\nPlan-only inspection;
+endif
+:Reject extra planned names\n(and actual names when enabled);
+if (Exact artifact filenames?) then (yes)
+else (no)
+  :Write failure JSON + HTML; fail Gradle task;
+  stop
+endif
+:Write passed JSON + HTML; succeed Gradle task;
+note right
+  Report I/O errors also fail the task.
+  HTML retains valid partial evidence.
+  Coverage success proves selection,
+  not successful test execution.
+end note
+stop
+@enduml

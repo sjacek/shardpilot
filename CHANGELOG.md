@@ -1,12 +1,96 @@
 # Changelog
 
-Notable changes to ShardPilot are recorded here. Changes under **Unreleased** are not a published
-release. The current build version is `0.1.0`; no public release is recorded yet.
+Notable changes to ShardPilot are recorded here. Release dates follow the version creation dates
+recorded by the Gradle Plugin Portal.
 
 ## Unreleased
 
+No changes beyond the 0.3.0 release candidate.
+
+## [0.3.0](docs/releases/0.3.0.md)
+
 ### Added
 
+- **First Maven version of ShardPilot.** Split unit and integration test classes across CI jobs
+  using native Surefire/Failsafe. Configure `io.github.sjacek:shardpilot-maven-plugin:0.3.0` in
+  `pom.xml`; see the [Maven setup guide](docs/maven.md) and [runnable POMs](examples/maven/README.md).
+- Maven Central distribution includes source and Javadoc JARs for IDE navigation, signed together
+  with the parent, core and adapter. Maintainers have a [token and signing-key setup guide](docs/maven-central.md)
+  and one version-tag workflow for both Maven Central and the Gradle Plugin Portal.
+- Optionally verify that every eligible class belongs to exactly one shard and each node's
+  selected classes match the common plan. Fail the CI gate when selection evidence is missing
+  or inconsistent, without rerunning tests. See [class-manifest verification](docs/shard-verification.md).
+- Find which shard owns a class in the standalone `coverage.html` report. Compare planned and
+  actual assignments and diagnose missing evidence, including after verification fails. Open
+  the file locally or [expose it in a GitLab merge request](docs/shard-verification.md#finding-a-class-assignment-in-gitlab).
+- Inspect and collect readable YAML manifests containing the full candidate list, planned
+  partitions and each node's actual selection. Gradle and Maven use the same manifest format;
+  JSON reports remain available for CI automation.
+
+### Changed
+
+- Runnable examples are now grouped by build tool: [Gradle examples](examples/gradle/README.md)
+  cover JUnit Jupiter, Spock and TestNG with Testcontainers; [Maven examples](examples/maven/README.md)
+  cover Surefire/Failsafe and parallel builds of multiple modules.
+
+### Compatibility and migration
+
+- Existing Gradle sharding and test-process configuration continues to work. Enable the new
+  manifest verification explicitly when adding it to a pipeline.
+- When upgrading from development snapshots with text manifests, regenerate the common plan
+  and every node's evidence together in YAML; do not mix old and new artifacts.
+- Coverage reports verify class selection. Keep every normal test job required, because matching
+  selections do not prove that test methods passed.
+
+See the [0.3.0 release notes](docs/releases/0.3.0.md) for setup and upgrade details.
+
+## [0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1)
+
+### Changed
+
+- Expanded the Plugin Portal and Maven description to explain the purpose of parallel CI sharding,
+  duration-based balancing, existing test-framework support and optional test-process controls.
+  The README introduction now describes the same intended use.
+- Supersedes the unpublished 0.2.0 candidate. Test-process configuration and sharding behavior
+  are unchanged; the new version publishes the expanded description from a new immutable tag.
+- See the [0.2.1 release notes](docs/releases/0.2.1.md) for publication and consumer verification.
+
+## [0.2.0](docs/releases/0.2.0.md) — not published
+
+### Added
+
+- Optional per-task `testProcesses` configuration for Gradle's `maxHeapSize`, `maxParallelForks`
+  and `forkEvery`, independent of sharding. Omitted settings stay untouched; explicit settings
+  accept providers, validate at configuration time, and participate in test-task cache inputs.
+- Real TestKit worker probes for heap limits, process reuse/replacement, concurrency,
+  configuration-cache restoration and process-policy input changes, plus Kotlin DSL coverage.
+
+### Changed
+
+- Expanded the README to explain CI testing bottlenecks, parallel shards, duration-aware workload
+  balancing and practical speedup limits. Project, Plugin Portal and Maven metadata share one summary.
+- Installation, CI and release guides now use the published `0.1.0` plugin by default, with
+  composite builds reserved for explicit local plugin development and checkout-based examples.
+
+### Compatibility and migration
+
+- Existing sharding configuration, assignment and native test-process settings remain unchanged
+  unless the new `testProcesses` block explicitly configures a setting. Sharding can stay disabled
+  while process settings are used. Direct Gradle `Test` setters remain supported.
+- All eight Gradle/JDK target pairs passed locally on Linux amd64 on 23 October 2026: 67 tests per
+  pair, 536 executions, no failures or skips. The tag workflow reruns the complete matrix for the
+  exact release commit before publication.
+- See the [0.2.0 release notes](docs/releases/0.2.0.md) for upgrade examples and publication checks.
+
+## [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0) - 2026-10-20
+
+### Added
+
+- Tag-triggered Plugin Portal publication gated by an offline version check and the complete
+  reusable eight-cell Gradle/JDK matrix at the same commit SHA. Publication uses scoped environment
+  secrets, mandatory Portal validation and no shared Gradle/configuration caches.
+- A configuration-cache-compatible `verifyReleaseTag` task with strict stable-version matching,
+  TestKit guard regressions and structural YAML tests for release dependencies and secret isolation.
 - An eight-cell GitHub Actions compatibility matrix for Gradle 9.0.0, 9.1.0 and 9.8.1 with
   Temurin JDK 17, 21 and 25, excluding the unsupported Gradle 9.0.0/JDK 25 pair. Every cell runs
   all Docker-free checks with strict configuration-cache TestKit fixtures and retains reports.
@@ -62,7 +146,7 @@ release. The current build version is `0.1.0`; no public release is recorded yet
 
 ### Scope and limitations
 
-- This is the initial development version, not a Gradle Plugin Portal release.
+- This is the initial Gradle Plugin Portal release.
 - Initial local verification used Gradle `9.8.1` on Windows with JDK `25`. Broader support requires
   passing the eight-cell Linux Gradle/JDK matrix for the release revision; Java 17 bytecode alone
   is not a compatibility claim for untested combinations.

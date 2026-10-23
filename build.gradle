@@ -1,100 +1,28 @@
-import org.gradle.plugin.compatibility.CompatibilityExtension
-
 plugins {
-    id 'java-gradle-plugin'
-    id 'maven-publish'
-    id 'com.gradle.plugin-publish' version '2.2.1'
+    id 'base'
+    id 'com.gradle.plugin-publish' version '2.2.1' apply false
 }
 
-group = 'io.github.sjacek'
-version = '0.1.0'
-
-repositories {
-    mavenCentral()
+allprojects {
+    group = 'io.github.sjacek'
+    version = '0.3.0'
 }
 
-java {
-    // The plugin bytecode is independent of the JDK used to compile consumer tests.
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-    withSourcesJar()
-    withJavadocJar()
-}
+// The Gradle adapter uses this text for both its Portal listing and publication POMs.
+// Native Maven artifacts have their own descriptions in their respective pom.xml files.
+project.setDescription('ShardPilot helps shorten CI feedback for large JVM unit and integration test suites by splitting ' +
+        'Gradle Test tasks into deterministic, non-overlapping class-level shards for parallel CI jobs. ' +
+        'It balances class families using historical test durations, with stable hashing when timing data is unavailable. ' +
+        'Works with existing JUnit Jupiter, Spock and TestNG tasks while preserving nested test families and configured test filters. ' +
+        'Optional per-task controls set worker heap size, parallel forks and process recycling. ' +
+        'Opt-in YAML class manifests and standalone JSON and HTML reports compare planned assignments with class selections collected from CI jobs. ' +
+        'Supports Gradle Configuration Cache and any CI provider without a coordinator, replacement test runner or telemetry. ' +
+        'Your CI launches every shard and collects the results; class-selection verification complements normal test result checks.')
 
-tasks.withType(JavaCompile).configureEach {
-    options.release = 17
-    options.encoding = 'UTF-8'
-}
+apply from: 'gradle/release-verification.gradle'
 
-gradlePlugin {
-    website = 'https://github.com/sjacek/shardpilot'
-    vcsUrl = 'https://github.com/sjacek/shardpilot.git'
-    plugins {
-        shardpilot { PluginDeclaration declaration ->
-            declaration.setId('io.github.sjacek.shardpilot')
-            declaration.setImplementationClass('io.github.sjacek.shardpilot.ShardPilotPlugin')
-            declaration.setDisplayName('ShardPilot')
-            declaration.setDescription('Duration-balanced class-level test sharding for Gradle, without a coordinator.')
-            declaration.tags.set(['testing', 'sharding', 'testng', 'spock', 'junit', 'ci'])
-            // Use the typed extension API rather than the legacy dynamic Groovy compatibility helper.
-            CompatibilityExtension featureCompatibility = ((ExtensionAware) declaration)
-                    .getExtensions().getByType(CompatibilityExtension)
-            // Strict TestKit fixtures verify this feature; no Isolated Projects claim is made.
-            featureCompatibility.getFeatures().getConfigurationCache().set(true)
-        }
-    }
-}
-
-dependencies {
-    testImplementation platform('org.junit:junit-bom:6.1.3')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation gradleTestKit()
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-// Exercise the standalone documentation utility without publishing it as plugin code.
-sourceSets.test.java.srcDir('scripts')
-
-test {
-    useJUnitPlatform()
-    // The Wrapper builds the plugin; TestKit independently selects the consumer's Gradle runtime.
-    // A system property is also a Test input, so switching matrix cells cannot reuse old results.
-    systemProperty 'shardpilot.test.gradleVersion',
-            providers.gradleProperty('testGradleVersion').orElse(gradle.gradleVersion).get()
-    systemProperty 'shardpilot.test.javaVersion',
-            providers.gradleProperty('testJavaVersion').orElse(JavaVersion.current().majorVersion).get()
-    // TestKit launches nested builds; keep their memory budgets independent of test parallelism.
-    maxParallelForks = 1
-    maxHeapSize = '512m'
-    testLogging {
-        exceptionFormat = 'full'
-        showStandardStreams = false
-    }
-}
-
-tasks.withType(Javadoc).configureEach {
-    options.encoding = 'UTF-8'
-}
-
-tasks.withType(Jar).configureEach {
-    from('LICENSE') { into 'META-INF' }
-}
-
-publishing {
-    publications.withType(MavenPublication).configureEach {
-        pom {
-            name = 'ShardPilot'
-            description = 'Duration-balanced class-level test sharding for Gradle.'
-            licenses {
-                license {
-                    name = 'MIT License'
-                    url = 'https://opensource.org/license/mit'
-                    distribution = 'repo'
-                }
-            }
-        }
-    }
-}
+tasks.named('check') { dependsOn ':shardpilot-core:check', ':shardpilot-gradle-plugin:check' }
+tasks.named('assemble') { dependsOn ':shardpilot-core:assemble', ':shardpilot-gradle-plugin:assemble' }
 
 tasks.named('wrapper') {
     gradleVersion = '9.8.1'

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
+         child.project.url.inherit.append.path="false">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.github.sjacek</groupId>
+  <artifactId>shardpilot-parent</artifactId>
+  <version>0.3.0</version>
+  <packaging>pom</packaging>
+  <name>ShardPilot build parent</name>
+  <description>ShardPilot helps shorten CI feedback by splitting JVM test classes into deterministic,
+    non-overlapping shards for parallel CI jobs. Gradle and Maven adapters share balancing based on
+    historical test durations, stable hashing when timings are unavailable, YAML class manifests and
+    standalone JSON and HTML reports for verifying class selections. This parent POM supplies shared
+    dependency and build configuration for shardpilot-core and shardpilot-maven-plugin. Consumers
+    configure the appropriate build-tool adapter; class-selection verification complements normal
+    test result checks.</description>
+  <url>https://github.com/sjacek/shardpilot</url>
+  <licenses><license><name>MIT License</name><url>https://opensource.org/license/mit</url></license></licenses>
+  <developers>
+    <developer><id>sjacek</id><name>sjacek</name><url>https://github.com/sjacek</url></developer>
+  </developers>
+  <!-- All modules share one repository. Maven must not append artifact names to these URLs. -->
+  <scm child.scm.connection.inherit.append.path="false"
+       child.scm.developerConnection.inherit.append.path="false" child.scm.url.inherit.append.path="false">
+    <connection>scm:git:https://github.com/sjacek/shardpilot.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/sjacek/shardpilot.git</developerConnection>
+    <url>https://github.com/sjacek/shardpilot</url>
+    <tag>v${project.version}</tag>
+  </scm>
+  <modules>
+    <module>shardpilot-core</module>
+    <module>shardpilot-maven-plugin</module>
+  </modules>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>17</maven.compiler.release>
+    <junit.version>6.1.3</junit.version>
+    <surefire.version>3.5.4</surefire.version>
+    <skipITs>false</skipITs>
+  </properties>
+  <dependencyManagement><dependencies>
+    <dependency><groupId>org.junit</groupId><artifactId>junit-bom</artifactId><version>${junit.version}</version><type>pom</type><scope>import</scope></dependency>
+  </dependencies></dependencyManagement>
+  <build><pluginManagement><plugins>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.14.0</version></plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>${surefire.version}</version></plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>${surefire.version}</version></plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.4.2</version></plugin>
+  </plugins></pluginManagement></build>
+  <profiles>
+    <profile>
+      <id>central-release</id>
+      <properties>
+        <!-- Local release checks produce the exact bundle but never upload by default. -->
+        <central.skipUpload>true</central.skipUpload>
+      </properties>
+      <build><plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId><artifactId>maven-source-plugin</artifactId><version>3.4.0</version>
+          <executions><execution><id>attach-sources</id><phase>package</phase><goals><goal>jar-no-fork</goal></goals></execution></executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.12.0</version>
+          <configuration>
+            <release>${maven.compiler.release}</release><encoding>UTF-8</encoding><docencoding>UTF-8</docencoding>
+            <detectJavaApiLink>false</detectJavaApiLink><detectOfflineLinks>false</detectOfflineLinks>
+            <notimestamp>true</notimestamp><failOnError>true</failOnError><failOnWarnings>true</failOnWarnings>
+          </configuration>
+          <executions><execution><id>attach-javadoc</id><phase>package</phase><goals><goal>jar</goal></goals></execution></executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId><artifactId>maven-gpg-plugin</artifactId><version>3.2.8</version>
+          <configuration>
+            <!-- BC reads the key and passphrase from environment variables, not a shared keyring. -->
+            <signer>bc</signer><bestPractices>true</bestPractices><useAgent>false</useAgent>
+          </configuration>
+          <executions><execution><id>sign-release-artifacts</id><phase>verify</phase><goals><goal>sign</goal></goals></execution></executions>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.central</groupId><artifactId>central-publishing-maven-plugin</artifactId><version>0.12.0</version>
+          <extensions>true</extensions>
+          <configuration>
+            <publishingServerId>central</publishingServerId>
+            <skipUpload>${central.skipUpload}</skipUpload>
+            <autoPublish>true</autoPublish><waitUntil>published</waitUntil><waitMaxTime>1800</waitMaxTime>
+          </configuration>
+        </plugin>
+      </plugins></build>
+    </profile>
+  </profiles>
+</project>
