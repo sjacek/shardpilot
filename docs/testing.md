@@ -205,7 +205,9 @@ Do not run it concurrently with another Maven reactor build because both write `
 
 `PublicationArtifactsTest` checks actual generated Gradle implementation/marker POMs, module
 metadata and distribution contents. `PublicationWorkflowTest` verifies tag/version gating, both
-publishers' dependencies, scoped credentials and the explicit upload override. The standalone
+publishers' dependencies, scoped credentials and the explicit upload override. It also checks the
+mutually exclusive tag-push/Gradle and manual/Maven routes, mandatory tag-ref guard and immutable
+checkout SHA shared with version validation. The standalone
 bundle checker's unit tests cover absent attachments, altered checksums, invalid metadata,
 foreign entries, normalized ZIP paths/collisions and XML external-entity rejection. These tests
 use synthetic signature fixtures; the separate GnuPG check supplies cryptographic verification.

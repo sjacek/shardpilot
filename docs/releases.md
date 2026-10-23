@@ -13,8 +13,9 @@ independent Maven reactor entry point.
 Review the [publication descriptions](publication-descriptions.md) for the complete Maven Central
 and Gradle Plugin Portal text and its source metadata before creating a release tag.
 
-The [publication workflow](../.github/workflows/publish.yml) submits a release automatically after
-a matching stable version tag and a successful compatibility matrix. The maintainer controls
+The [publication workflow](../.github/workflows/publish.yml) submits the Gradle plugin automatically
+after a matching stable version tag and a successful compatibility matrix. A manual run from that
+same tag publishes Maven Central later, with its own complete compatibility gate. The maintainer controls
 commits, tag creation, publisher credentials and release-environment protection rules.
 
 ## Versioning policy
@@ -37,7 +38,8 @@ also need migration notes and updated Groovy/Kotlin examples.
    implementation separate from sharding behavior.
 3. Store publication credentials in the host's protected secret mechanism, not in repository files,
    examples, test fixtures, Gradle arguments printed to logs or shared caches.
-4. Configure both release environments below. The publication workflow reruns all eight
+4. Configure the Gradle release environment below before pushing the tag; Central credentials
+   can be prepared before the later manual Maven run. Each publication reruns all eight
    [Gradle/JDK cells](testing.md#gradle-and-jdk-matrix), three Maven/JDK jobs and the signed-bundle check for the exact tagged commit; a local
    Wrapper-only run or a green matrix for another revision does not replace this gate.
 5. Review tracked files and publication artifacts for private application configuration, customer
@@ -57,7 +59,7 @@ Add these environment secrets using the publisher's Plugin Portal API key:
 | `GRADLE_PUBLISH_KEY` | Plugin Portal API key identifier. |
 | `GRADLE_PUBLISH_SECRET` | Matching Plugin Portal API secret. |
 
-Also create **`maven-central`** with `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`,
+Before the later manual Maven publication, create **`maven-central`** with `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`,
 `MAVEN_GPG_KEY` and `MAVEN_GPG_PASSPHRASE`. Follow the
 [Central token, GPG key and secret setup](maven-central.md). The existing `io.github.sjacek`
 namespace was already verified for Asyncwright; ShardPilot uses the same namespace.
@@ -68,9 +70,10 @@ validation or the reusable compatibility workflow. Missing/empty credentials fai
 
 Restrict both environments to version tags such as `v*`, not arbitrary branches. Protect creation
 and updates of release tags with a repository ruleset so only trusted maintainers can release
-code. Tag creation authorizes publication of that tag's code, including its Gradle build logic.
+code. Tag creation authorizes Gradle publication; manual dispatch from that tag authorizes Maven
+publication. Both execute that tag's build logic.
 Required environment reviewers can add a manual approval gate if desired; without reviewers,
-the publishing job runs automatically after the matrix succeeds. See
+the selected publishing job runs after its trigger and successful matrix. See
 [GitHub environment protection](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
 
 The workflow has read-only repository permissions and checks out the triggering commit SHA at every
@@ -92,26 +95,47 @@ It does not create tags, change the changelog or create a GitHub Release.
 3. Commit and push the intended release revision, including both workflow files and
    `gradle/release-verification.gradle`. The maintainer then creates and pushes the immutable
    tag `v0.3.0` on that revision. Future versions use the same `v` prefix and must match the build.
-4. Follow **Actions → Publish ShardPilot**. The job chain is tag validation → reusable
+4. Follow **Actions → Publish ShardPilot**, run **Gradle Plugin Portal / v0.3.0**. The job chain is tag validation → reusable
    compatibility workflow (eight Gradle cells, three Maven/JDK jobs and signed-bundle verification)
-   → independent Gradle and Maven publishers. Gradle performs Portal validation (`--validate-only`)
-   before upload; Maven signs the cohort, uploads it and waits for Central publication. Any failed,
+   → Gradle publication. Gradle performs Portal validation (`--validate-only`)
+   before upload; the Maven publisher is skipped in this tag-push run. Any failed,
    cancelled or skipped prerequisite prevents publication. No separate tag-triggered matrix is
    launched by the compatibility workflow.
 5. Wait for Plugin Portal approval when required, then verify normal plugin resolution without
    `includeBuild` or Maven Local. A successful upload job is not proof of Portal availability.
-   Verify Maven parent/core/adapter resolution in a fresh consumer without local candidate artifacts too.
+6. When ready, publish Maven from the same tag using the separate manual path below.
 
-Only creation of a matching `v[0-9]*` tag starts the release path. Deleting or force-updating an
+Only creation of a matching `v[0-9]*` tag starts automatic Gradle publication. Deleting or force-updating an
 existing tag does not publish. A mismatched or malformed version fails before the matrix; do not
 move or recreate a published tag. Concurrent runs for the same tag do not interrupt an in-progress
 upload. A failed run may be rerun for the same commit after fixing external configuration, but
 never try to overwrite artifacts already accepted by the Portal. This automation does not bypass
 the [Portal's initial manual review](https://plugins.gradle.org/docs/publish-plugin#approval).
 
-The two destinations are independent. If only one publisher fails, inspect remote status and
-rerun only that failed job for the same commit; never rerun a successful publication to overwrite
-immutable artifacts. See [partial-publication recovery](maven-central.md#release-and-recover-a-partial-publication).
+## Publish Maven later from the same tag
+
+The `workflow_dispatch` path publishes only Maven Central. Configure its environment when ready,
+then run **Publish ShardPilot** with the existing release tag as the workflow ref. From GitHub CLI:
+
+```shell
+gh workflow run publish.yml --repo sjacek/shardpilot --ref v0.3.0
+```
+
+Use the CLI command to select the tag explicitly. A manual run from `main` fails before checkout:
+branch refs are rejected even if a branch has a version-like name. The workflow must already be
+on the default branch and included in the release tag. See the
+[GitHub CLI ref option](https://cli.github.com/manual/gh_workflow_run).
+There is no separate version/tag input that could disagree with the selected checkout.
+
+Follow **Maven Central / v0.3.0**. This run checks out the tag's exact commit SHA, revalidates the
+version and reruns all 12 compatibility checks. It then signs the parent/core/adapter cohort,
+uploads it and waits for Central publication. The Gradle publisher is skipped. Verify ordinary
+Maven resolution in a fresh consumer without local candidate artifacts afterwards.
+
+The portals remain independent. A manual Maven publication does not rerun Gradle publication.
+On failure, inspect remote status and rerun only the failed job in the relevant run; never rerun
+a successful publication to overwrite immutable artifacts. See
+[partial-publication recovery](maven-central.md#release-and-recover-a-partial-publication).
 
 ## Prepare a release candidate
 

@@ -17,10 +17,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /** Structural YAML checks guard publication dependencies and credential isolation without Portal access. */
 class PublicationWorkflowTest {
     @Test
-    void releaseTagsRunTheSharedMatrixBeforePublicationWithoutBypassConditions() throws IOException {
+    void bothReleaseTriggersRequireTheSharedMatrixAndSelectExactlyOnePublisher() throws IOException {
         Map<?, ?> release = workflow("publish");
         Map<?, ?> events = mapping(release.get("on"));
-        assertEquals(Set.of("push"), events.keySet());
+        assertEquals(Set.of("push", "workflow_dispatch"), events.keySet());
         assertEquals(List.of("v[0-9]*"), mapping(events.get("push")).get("tags"));
         Map<?, ?> concurrency = mapping(release.get("concurrency"));
         assertEquals(false, concurrency.get("cancel-in-progress"));
@@ -28,7 +28,7 @@ class PublicationWorkflowTest {
 
         Map<?, ?> jobs = mapping(release.get("jobs"));
         Map<?, ?> validation = mapping(jobs.get("validate-tag"));
-        assertEquals("github.event.created == true && github.event.deleted == false", validation.get("if"));
+        assertEquals("github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.event.created == true && github.event.deleted == false)", validation.get("if"));
         Map<?, ?> guard = stepNamed(validation, "Validate the stable version tag");
         assertEquals("${{ github.ref_name }}", mapping(guard.get("env")).get("RELEASE_TAG"));
         assertTrue(guard.get("run").toString().contains("verifyReleaseTag -PreleaseTag=\"$RELEASE_TAG\""));
@@ -42,12 +42,38 @@ class PublicationWorkflowTest {
         for (String publisher : List.of("publish", "publish-maven")) {
             Map<?, ?> publication = mapping(jobs.get(publisher));
             assertEquals(List.of("validate-tag", "compatibility"), publication.get("needs"));
-            assertNull(publication.get("if"), "default success gating must not be replaced by always()");
+            String trigger = publisher.equals("publish") ? "push" : "workflow_dispatch";
+            assertEquals("github.event_name == '" + trigger + "'", publication.get("if"),
+                    "select one destination while retaining default prerequisite success gating");
             assertTestedCheckout(publication);
         }
         for (Object job : jobs.values()) {
             assertNull(mapping(job).get("continue-on-error"), "every release stage must be mandatory");
         }
+    }
+
+    @Test
+    void manualMavenPublicationRequiresAnExistingTagRefAndUsesItsImmutableCheckoutSha() throws IOException {
+        var release = workflow("publish");
+        var events = mapping(release.get("on"));
+        assertNull(events.get("workflow_dispatch"), "the selected workflow ref is the tag; no separate tag input may disagree with it");
+        var jobs = mapping(release.get("jobs"));
+        var validation = mapping(jobs.get("validate-tag"));
+        var refGuard = stepNamed(validation, "Require a tag reference");
+        assertEquals(Map.of("RELEASE_REF_TYPE", "${{ github.ref_type }}"), refGuard.get("env"));
+        String commands = refGuard.get("run").toString();
+        assertEquals("bash", refGuard.get("shell"));
+        assertTrue(commands.contains("set -euo pipefail"));
+        assertTrue(commands.contains("[[ \"$RELEASE_REF_TYPE\" != 'tag' ]]"));
+        assertTrue(commands.contains("exit 1"));
+        assertNull(refGuard.get("if"), "branches must be rejected on both release paths");
+        assertTrue(sequence(validation.get("steps")).indexOf(refGuard)
+                < sequence(validation.get("steps")).indexOf(stepNamed(validation, "Check out the tagged commit")));
+        for (String job : List.of("validate-tag", "publish", "publish-maven")) {
+            assertTestedCheckout(mapping(jobs.get(job)));
+        }
+        assertFalse(release.toString().contains("inputs."));
+        assertTrue(release.get("run-name").toString().contains("github.ref_name"));
     }
 
     @Test

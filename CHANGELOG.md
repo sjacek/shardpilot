@@ -16,7 +16,7 @@ No changes beyond the 0.3.0 release candidate.
   `pom.xml`; see the [Maven setup guide](docs/maven.md) and [runnable POMs](examples/maven/README.md).
 - Maven Central distribution includes source and Javadoc JARs for IDE navigation, signed together
   with the parent, core and adapter. Maintainers have a [token and signing-key setup guide](docs/maven-central.md)
-  and one version-tag workflow for both Maven Central and the Gradle Plugin Portal.
+  and one workflow that publishes Gradle on a version tag, then Maven Central manually from the same tag.
 - Optionally verify that every eligible class belongs to exactly one shard and each node's
   selected classes match the common plan. Fail the CI gate when selection evidence is missing
   or inconsistent, without rerunning tests. See [class-manifest verification](docs/shard-verification.md).

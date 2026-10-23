@@ -78,8 +78,9 @@ The [0.3.0 release notes](docs/releases/0.3.0.md) describe migration and the rem
 Versions [0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1) and
 [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0)
 are available from the Gradle Plugin Portal.
-The [tag publication workflow](.github/workflows/publish.yml) submits matching stable version tags
-to the Gradle Plugin Portal and Maven Central after the complete compatibility gate succeeds;
+The [publication workflow](.github/workflows/publish.yml) submits matching stable version tags
+to the Gradle Plugin Portal after the complete compatibility gate succeeds. Maven Central publication
+is started manually later from the same tag and reruns that gate without republishing Gradle;
 see [release setup](docs/releases.md#configure-github-publication) for both environments and
 [Central setup](docs/maven-central.md) for token/signing-key instructions.
 The [compatibility matrix](docs/testing.md#gradle-and-jdk-matrix) defines eight Linux CI targets across
