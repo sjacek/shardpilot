@@ -38,6 +38,13 @@ fail instead of being reduced to warnings.
 
 ## Test responsibilities
 
+TestKit verifies that optional process configuration leaves untouched settings intact and works
+with sharding disabled. Real worker probes check heap limits, sequential reuse, class-boundary
+replacement, and two concurrent processes. The probes execute again after strict configuration-cache
+restoration and verify invalidation when only the replacement limit changes. Groovy/provider and
+Kotlin DSL configuration, invalid values and fatal test failures are covered. These small fixtures
+do not reproduce an application's memory leak or prove that a configured heap prevents OOM.
+
 | Test class | Behavior covered |
 | --- | --- |
 | `DurationHistoryTest` | Comments, blank lines, CRLF, nested names, immutable results, malformed metadata and safe error messages. |
@@ -113,9 +120,13 @@ Neither regression test publishes anything or needs Portal credentials.
 
 ## Verified scope
 
-The original 46-test plugin suite passed all eight target pairs locally on Windows, with no
-failures or skipped tests. Release/workflow regressions are additional checks in the current suite.
-Linux results come from the compatibility workflow for each revision.
+The 0.2.0 candidate's complete 67-test suite passed all eight target pairs locally on Linux amd64
+in official Eclipse Temurin containers on 23 October 2026: 536 test executions, no failures or
+skipped tests. Every cell ran `check assemble`, including release/workflow regressions, actual
+runtime assertions and the test-process probes. All cells used the same source snapshot.
+Only release documentation changed after that matrix; the tag workflow still reruns every cell
+against the exact committed release revision before publication.
+The original 46-test plugin suite also passed all eight target pairs locally on Windows.
 Plugin classes target Java 17 bytecode. The fixtures currently use JUnit Jupiter 6.1.3, Spock 2.5 for Groovy 5.0, Groovy 5.1.3
 and TestNG 7.12.0 through Gradle's native TestNG adapter.
 These fixture versions document the test environment; they are not dependencies injected into

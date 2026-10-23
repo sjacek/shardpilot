@@ -4,10 +4,12 @@ ShardPilot splits the classes of an opted-in Gradle `Test` task between independ
 Each execution calculates ownership locally from the same inputs. There is no coordinator service
 or replacement test engine.
 
-This documentation describes the published
-[0.1.0 release](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0). Use the
+This checkout documents the upcoming 0.2.0 API. The published
+[0.1.0 release](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0) supports sharding
+without the new optional test-process block. Use the
 [root README](../README.md#getting-started) to apply it from the Gradle Plugin Portal, or the
 [local development setup](../README.md#local-plugin-development) to test a checkout explicitly.
+The [0.2.0 release notes](releases/0.2.0.md) contain migration examples and the publication checklist.
 
 ## Guides
 
@@ -24,10 +26,11 @@ This documentation describes the published
 | [Releases and upgrades](releases.md) | Configure protected publication credentials, release from a tested version tag and manage upgrades. |
 | [PlantUML diagrams](diagrams/README.md) | Find editable diagram sources and regenerate the committed previews. |
 
-## Boundaries of the initial version
+## Boundaries
 
-ShardPilot owns class assignment and candidate exclusion. The consumer owns test frameworks,
-source sets, lifecycle wiring, test parallelism, retries, containers and resource isolation.
+ShardPilot owns class assignment and candidate exclusion, and can optionally configure Gradle's
+test-process heap, parallelism and replacement limits. The consumer owns test frameworks,
+source sets, lifecycle wiring, framework threads, retries, containers and the total resource budget.
 CI owns launching every shard and deciding whether the complete pipeline has passed.
 
 Timing history is optional UTF-8 TSV. The plugin does not import JUnit XML, export updated timings,

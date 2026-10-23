@@ -15,7 +15,8 @@ shards. Gradle and the test framework still discover and execute tests.
 | Component | Responsibility |
 | --- | --- |
 | `ShardPilotPlugin` | Lazily configures `Test` tasks, attaches the task extension, inputs, exclusion spec and preparation action. |
-| `ShardPilotExtension` | Holds provider-backed enabled/count/index/history-file settings for one task. |
+| `ShardPilotExtension` | Holds per-task sharding properties and applies an explicit test-process configuration action. |
+| `TestProcessOptions` | Resolves and validates optional process settings at configuration time, then uses public Gradle `Test` setters and declares inputs. |
 | `DurationHistory` | Validates and parses timing records into immutable class-duration metadata. |
 | `ShardPlan` | Groups nested classes, packs measured families and resolves ownership for any binary class name. |
 | `ShardClassFilter` | Lazily obtains the plan and excludes non-owned candidate `.class` files. |
@@ -24,6 +25,11 @@ shards. Gradle and the test framework still discover and execute tests.
 The filter and action are serializable and do not capture a `Project` or `Test` instance. The
 filter caches its plan transiently; after configuration-cache restoration it can rebuild the
 plan from provider values. Plans are local to task execution, not shared through a remote service.
+
+The optional `testProcesses` action is executed during task configuration, independently of
+shard filtering. It changes only supplied process settings. There is no execution-time process
+configuration, replacement scheduler or captured task in an execution action. Gradle owns the
+actual JVMs and class-boundary recycling. Explicit process options are additional task inputs.
 
 ## Assignment algorithm
 
@@ -86,6 +92,9 @@ Each `Test` task declares these inputs: `shardpilot.enabled`, `shardpilot.count`
 `shardpilot.index` and `shardpilot.history`. The last is history **contents**, not an absolute path.
 They distinguish the task's shard configuration for up-to-date/build-cache checks. Consumers still
 decide whether tests depending on mutable external resources may reuse cached results.
+An explicit test-process block adds inputs for the supplied options:
+`shardpilot.testProcesses.maxHeapSize`, `shardpilot.testProcesses.maxParallelForks` and/or
+`shardpilot.testProcesses.forkEvery`. Omitted options add no process-policy input.
 
 When the preparation action runs, it emits a Gradle lifecycle message shaped as:
 

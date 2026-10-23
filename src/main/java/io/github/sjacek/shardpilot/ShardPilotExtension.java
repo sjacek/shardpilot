@@ -1,12 +1,41 @@
 package io.github.sjacek.shardpilot;
 
+import org.gradle.api.Action;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.testing.Test;
+
+import javax.inject.Inject;
 
 /** Per-Test-task settings. Applying the plugin never shards a task without explicit opt-in. */
 public abstract class ShardPilotExtension {
-    /** Creates settings managed and instantiated by Gradle. */
-    public ShardPilotExtension() { }
+    private final Test task;
+    private final ObjectFactory objects;
+
+    /**
+     * Creates per-task settings managed and instantiated by Gradle.
+     * @param task the owning test task
+     * @param objects Gradle's object factory
+     */
+    @Inject
+    public ShardPilotExtension(Test task, ObjectFactory objects) {
+        this.task = task;
+        this.objects = objects;
+    }
+
+    /**
+     * Explicitly configures Gradle's test processes, even when sharding is disabled.
+     * Only supplied values are changed. Providers are resolved after the action returns,
+     * during task configuration, before Gradle snapshots inputs or launches a process.
+     * Later native Test configuration can override these values in the usual Gradle order.
+     * @param action optional heap, parallel process count and process replacement settings
+     */
+    public void testProcesses(Action<? super TestProcessOptions> action) {
+        TestProcessOptions options = objects.newInstance(TestProcessOptions.class);
+        action.execute(options);
+        options.applyTo(task);
+    }
 
     /**
      * Controls opt-in for this task.

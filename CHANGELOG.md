@@ -1,9 +1,22 @@
 # Changelog
 
-Notable changes to ShardPilot are recorded here. Changes under **Unreleased** are not part of a
-published release. Release dates follow the version creation dates recorded by the Gradle Plugin Portal.
+Notable changes to ShardPilot are recorded here. Entries marked **Unreleased** or **publication
+pending** are not published releases. Release dates follow the version creation dates recorded
+by the Gradle Plugin Portal.
 
 ## Unreleased
+
+No changes beyond the 0.2.0 release candidate.
+
+## 0.2.0 — publication pending
+
+### Added
+
+- Optional per-task `testProcesses` configuration for Gradle's `maxHeapSize`, `maxParallelForks`
+  and `forkEvery`, independent of sharding. Omitted settings stay untouched; explicit settings
+  accept providers, validate at configuration time, and participate in test-task cache inputs.
+- Real TestKit worker probes for heap limits, process reuse/replacement, concurrency,
+  configuration-cache restoration and process-policy input changes, plus Kotlin DSL coverage.
 
 ### Changed
 
@@ -11,6 +24,16 @@ published release. Release dates follow the version creation dates recorded by t
   balancing and practical speedup limits. Project, Plugin Portal and Maven metadata share one summary.
 - Installation, CI and release guides now use the published `0.1.0` plugin by default, with
   composite builds reserved for explicit local plugin development and checkout-based examples.
+
+### Compatibility and migration
+
+- Existing sharding configuration, assignment and native test-process settings remain unchanged
+  unless the new `testProcesses` block explicitly configures a setting. Sharding can stay disabled
+  while process settings are used. Direct Gradle `Test` setters remain supported.
+- All eight Gradle/JDK target pairs passed locally on Linux amd64 on 23 October 2026: 67 tests per
+  pair, 536 executions, no failures or skips. The tag workflow reruns the complete matrix for the
+  exact release commit before publication.
+- See the [0.2.0 release notes](docs/releases/0.2.0.md) for upgrade examples and publication checks.
 
 ## [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0) - 2026-10-20
 
