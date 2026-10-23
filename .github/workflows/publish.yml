@@ -1,8 +1,11 @@
 name: Publish ShardPilot
+run-name: "${{ github.event_name == 'workflow_dispatch' && 'Maven Central' || 'Gradle Plugin Portal' }} / ${{ github.ref_name }}"
 
 on:
   push:
     tags: ['v[0-9]*']
+  # Select the existing release tag as the workflow ref to publish Maven later.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,11 +18,21 @@ concurrency:
 jobs:
   validate-tag:
     name: Verify release tag and build version
-    # Do not publish on deletion or a forced update of an existing tag.
-    if: github.event.created == true && github.event.deleted == false
+    # Tag pushes publish Gradle; manual runs publish Maven from the selected existing tag.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.event.created == true && github.event.deleted == false)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Require a tag reference
+        env:
+          RELEASE_REF_TYPE: ${{ github.ref_type }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$RELEASE_REF_TYPE" != 'tag' ]]; then
+            echo '::error::Select an existing release tag (for example v0.3.0) as the workflow ref.'
+            exit 1
+          fi
       - name: Check out the tagged commit
         uses: actions/checkout@v7
         with:
@@ -48,6 +61,7 @@ jobs:
   publish:
     name: Publish to Gradle Plugin Portal
     needs: [validate-tag, compatibility]
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: gradle-plugin-portal
@@ -84,6 +98,7 @@ jobs:
   publish-maven:
     name: Publish to Maven Central
     needs: [validate-tag, compatibility]
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     environment: maven-central

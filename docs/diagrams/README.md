@@ -11,7 +11,7 @@ preview together; do not edit an SVG by hand.
 | Components | [components.puml](components.puml) | [components.svg](components.svg) | Gradle integration, optional test-process settings and implementation responsibilities. |
 | Source modules | [modules.puml](modules.puml) | [modules.svg](modules.svg) | Shared core, sibling Gradle/Maven adapters and preserved artifact coordinates. |
 | Maven execution | [maven-execution.puml](maven-execution.puml) | [maven-execution.svg](maven-execution.svg) | Test compilation, native runner selection and standalone artifact verification. |
-| Release publication | [publication.puml](publication.puml) | [publication.svg](publication.svg) | Shared credential-free release gate, disposable signing verification and separate Gradle/Central publishers. |
+| Release publication | [publication.puml](publication.puml) | [publication.svg](publication.svg) | Automatic Gradle tag publication and later manual Maven publication from the same tag, each with a complete release gate. |
 | Assignment | [shard-assignment.puml](shard-assignment.puml) | [shard-assignment.svg](shard-assignment.svg) | Measured-family packing, hash fallback and candidate exclusion. |
 | CI execution | [ci-execution.puml](ci-execution.puml) | [ci-execution.svg](ci-execution.svg) | Independent jobs, consistent inputs and CI-owned result collection. |
 | Manifest tasks | [manifest-tasks.puml](manifest-tasks.puml) | [manifest-tasks.svg](manifest-tasks.svg) | Compilation dependencies, pre-worker evidence and aggregation ordering without reruns. |

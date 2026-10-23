@@ -1,5 +1,5 @@
 @startuml
-title ShardPilot: one release gate, two publication destinations
+title ShardPilot: Gradle first, Maven later from the same tag
 top to bottom direction
 skinparam backgroundColor #FFFFFF
 skinparam shadowing false
@@ -12,7 +12,9 @@ skinparam ArrowColor #475569
 skinparam noteBackgroundColor #FFFBEB
 skinparam noteBorderColor #D97706
 
-component "New immutable vMAJOR.MINOR.PATCH tag\nTag equals Gradle / Maven version" as tag
+component "Push a new immutable release tag\nAutomatic Gradle publication" as tag
+component "Later: manual workflow dispatch\nSelect the same existing tag with --ref\nMaven Central publication" as manual
+component "Require a tag ref\nTag equals Gradle / Maven version\nCheck out its exact commit SHA" as validate
 package "Required checks at the exact commit SHA - no release secrets" {
   component "8 Gradle / JDK cells\ncheck + assemble" as gradleChecks
   component "3 Maven / JDK jobs\nverify + native fixtures" as mavenChecks
@@ -24,20 +26,22 @@ component "maven-central environment\nCentral token + signing key\ncentral-relea
 cloud "Gradle Plugin Portal\nshardpilot + marker\nCore bundled in Gradle JAR" as portal
 cloud "Maven Central\nParent + core + Maven adapter\nSources + Javadoc + PGP" as central
 
-tag --> gradleChecks
-tag --> mavenChecks
-tag --> bundle
+tag --> validate
+manual --> validate
+validate --> gradleChecks
+validate --> mavenChecks
+validate --> bundle
 gradleChecks --> gate
 mavenChecks --> gate
 bundle --> gate
-gate --> gradlePublish
-gate --> mavenPublish
+gate --> gradlePublish : tag push only
+gate --> mavenPublish : manual run only
 gradlePublish --> portal
 mavenPublish --> central
 
 note bottom of gate
-  Publishers run independently after the shared gate.
-  A partial publication requires inspecting remote state
-  and retrying only the failed job, keeping the same tag.
+  Each run executes all 12 checks for the tag's SHA.
+  Manual Maven runs skip the Gradle publisher.
+  Retry only a failed publication after checking remote state.
 end note
 @enduml
