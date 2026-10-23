@@ -6,9 +6,20 @@ by the Gradle Plugin Portal.
 
 ## Unreleased
 
-No changes beyond the 0.2.0 release candidate.
+No changes beyond the 0.2.1 release candidate.
 
-## 0.2.0 — publication pending
+## 0.2.1 — publication pending
+
+### Changed
+
+- Expanded the Plugin Portal and Maven description to explain the purpose of parallel CI sharding,
+  duration-based balancing, existing test-framework support and optional test-process controls.
+  The README introduction now describes the same intended use.
+- Supersedes the unpublished 0.2.0 candidate. Test-process configuration and sharding behavior
+  are unchanged; the new version publishes the expanded description from a new immutable tag.
+- See the [0.2.1 release notes](docs/releases/0.2.1.md) for publication and consumer verification.
+
+## 0.2.0 — not published
 
 ### Added
 

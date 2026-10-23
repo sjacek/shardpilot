@@ -1,7 +1,10 @@
 # ShardPilot
 
-Duration-balanced, deterministic class-level test sharding for faster Gradle CI pipelines.
-No coordinator, CI vendor lock-in,
+ShardPilot helps shorten CI feedback for large JVM unit and integration test suites by splitting
+Gradle test tasks into deterministic class-level shards that run in parallel CI jobs.
+It can also configure per-task worker heap limits, parallel forks and process recycling.
+
+Works with existing JUnit Jupiter, Spock and TestNG tasks, with no coordinator, CI vendor lock-in,
 test-runner replacement, telemetry, or runtime dependencies outside the Gradle API.
 
 Plugin ID: `io.github.sjacek.shardpilot` · License: [MIT](LICENSE).
@@ -53,16 +56,17 @@ between jobs.
 - No telemetry or runtime dependencies outside the Gradle API.
 
 Your build retains control over test frameworks, source sets, containers, retries and failure
-handling. Version 0.2.0 adds optional [test-process settings](#optional-test-process-settings)
+handling. Version 0.2.1 includes optional [test-process settings](#optional-test-process-settings)
 using Gradle's existing process controls. ShardPilot assigns test classes; your CI launches every shard and
 collects the results. It does not create CI jobs or coordinate their completion.
 
 ## Status
 
-This checkout prepares **0.2.0**, including optional test-process configuration. Until that
+This checkout prepares **0.2.1**, including optional test-process configuration and an expanded
+Plugin Portal description. The unpublished 0.2.0 candidate is superseded. Until the new
 version is published, use the [explicit local development override](#local-plugin-development)
 to exercise the new API. Version 0.1.0 does not provide `testProcesses`.
-The [0.2.0 release notes](docs/releases/0.2.0.md) describe migration and the remaining publication steps.
+The [0.2.1 release notes](docs/releases/0.2.1.md) describe migration and the remaining publication steps.
 
 Version [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0)
 is available from the Gradle Plugin Portal.
@@ -181,9 +185,9 @@ The `shardPilot` extension belongs to each `Test` task, not to the root project.
 
 ### Optional test-process settings
 
-The **0.2.0 candidate** adds an explicit `testProcesses` block for Gradle's existing worker JVMs.
-Use the [local development override](#local-plugin-development) until 0.2.0 is published, then
-change the plugin version in the installation examples above to `0.2.0`:
+The **0.2.1 candidate** includes an explicit `testProcesses` block for Gradle's existing worker JVMs.
+Use the [local development override](#local-plugin-development) until 0.2.1 is published, then
+change the plugin version in the installation examples above to `0.2.1`:
 
 ```groovy
 tasks.named('integrationTest', Test) {

@@ -11,9 +11,15 @@ plugins {
 }
 
 project.setGroup('io.github.sjacek')
-project.setVersion('0.2.0')
+project.setVersion('0.2.1')
 // Keep the project, Plugin Portal and Maven publication summaries aligned.
-project.setDescription('Duration-balanced, deterministic class-level test sharding for faster Gradle CI pipelines, without a coordinator.')
+project.setDescription('ShardPilot helps shorten CI feedback for large JVM unit and integration test suites by splitting ' +
+        'Gradle Test tasks into deterministic, non-overlapping class-level shards for parallel CI jobs. ' +
+        'It balances shards using historical test durations, with deterministic hashing when timing data is unavailable. ' +
+        'Works with existing JUnit Jupiter, Spock and TestNG tasks, preserving nested test families and test filters. ' +
+        'Optional per-task controls configure worker heap size, parallel forks and process recycling. ' +
+        'Supports Gradle Configuration Cache and any CI provider, without a coordinator or replacement test runner. ' +
+        'Your CI launches every shard and collects the results.')
 
 apply from: 'gradle/release-verification.gradle'
 

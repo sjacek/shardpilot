@@ -2,7 +2,8 @@
 
 [Documentation index](README.md)
 
-This checkout prepares **0.2.0**, with [release notes and migration examples](releases/0.2.0.md).
+This checkout prepares **0.2.1**, with [release notes and migration examples](releases/0.2.1.md).
+It supersedes the unpublished 0.2.0 candidate and includes the expanded Plugin Portal description.
 Publication is still pending; the existing published version is
 [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0).
 The build uses `com.gradle.plugin-publish` 2.2.1 and produces plugin, source and Javadoc JARs,
@@ -70,15 +71,15 @@ It does not create tags, change the changelog or create a GitHub Release.
 
 ## Publish from a version tag
 
-1. Set `version` in `build.gradle` to a new release version: `0.2.0` for this candidate. Version `0.1.0`
+1. Set `version` in `build.gradle` to a new release version: `0.2.1` for this candidate. Version `0.1.0`
    is already published and must not be overwritten. Do not derive the version from a tag or source revision.
-2. Run local checks and `bash ./gradlew verifyReleaseTag -PreleaseTag=v0.2.0`. This offline guard
+2. Run local checks and `bash ./gradlew verifyReleaseTag -PreleaseTag=v0.2.1`. This offline guard
    accepts only `vMAJOR.MINOR.PATCH` with no leading zeroes, suffixes or build metadata, and checks
    equality with the evaluated `project.version`. Snapshots and prerelease tags are not released
    by this workflow.
 3. Commit and push the intended release revision, including both workflow files and
    `gradle/release-verification.gradle`. The maintainer then creates and pushes the immutable
-   tag `v0.2.0` on that revision. Future versions use the same `v` prefix and must match the build.
+   tag `v0.2.1` on that revision. Future versions use the same `v` prefix and must match the build.
 4. Follow **Actions → Publish Gradle plugin**. The job chain is tag validation → reusable eight-cell
    compatibility matrix → Portal validation (`--validate-only`) → publication. Any failed,
    cancelled or skipped prerequisite prevents publication. No separate tag-triggered matrix is
