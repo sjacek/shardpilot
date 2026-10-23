@@ -8,8 +8,9 @@ namespace registration is needed for ShardPilot. Namespace ownership, a publishi
 PGP signing key are separate prerequisites. Existing publisher keys can be reused if still valid
 and available; this guide also covers creating a key.
 
-The [tag workflow](../.github/workflows/publish.yml) publishes the parent POM, shared core and
-Maven adapter together. Gradle publication has its own job and credentials.
+The [publication workflow](../.github/workflows/publish.yml) publishes Gradle automatically on a
+release-tag push. Its later manual run from that same tag publishes the parent POM, shared core
+and Maven adapter together. Each destination uses its own job, credentials and complete release gate.
 
 The [publication descriptions](publication-descriptions.md) contain the full user-facing listing
 text for the adapter, core and parent, alongside the verified Gradle Portal description.
@@ -73,7 +74,8 @@ add these **environment secrets**:
 | `MAVEN_GPG_PASSPHRASE` | Passphrase protecting that signing key. |
 
 Retain the separate `gradle-plugin-portal` environment and its `GRADLE_PUBLISH_KEY` and
-`GRADLE_PUBLISH_SECRET`. Apply the [release tag restrictions](releases.md#configure-github-publication)
+`GRADLE_PUBLISH_SECRET`. Gradle can be published before Central credentials are configured.
+Apply the [release tag restrictions](releases.md#configure-github-publication)
 to both environments. Do not paste secret values into issues, documentation or chat.
 
 The workflow checks out the tested commit and makes the four secrets available only to the final
@@ -98,19 +100,27 @@ and must never be published. The same check is required in the compatibility wor
 
 The profile is inactive during ordinary Maven builds. Explicit activation adds source/Javadoc
 JARs and signing; `central.skipUpload=true` is its default, even for `deploy`. The bundle is written
-to `target/central-publishing/central-bundle.zip`. Only the credentialed tag job passes
+to `target/central-publishing/central-bundle.zip`. Only the credentialed manual Maven job passes
 `-Dcentral.skipUpload=false`. When uploading, the publisher automatically publishes after Central
 validation and waits up to 30 minutes for `published`, within a 45-minute job timeout. See the
 [Central Maven plugin guide](https://central.sonatype.org/publish/publish-portal-maven/).
 
 ## Release and recover a partial publication
 
-Follow the [version-tag procedure](releases.md#publish-from-a-version-tag) after configuring both
-environments. The required gate contains eight Gradle/JDK cells, three Maven/JDK jobs and the
-signed-bundle check. The Gradle and Maven publishers start only after that entire gate succeeds.
+Follow the [version-tag procedure](releases.md#publish-from-a-version-tag) to publish Gradle first.
+When Central credentials are ready, start **Publish ShardPilot** manually from the existing tag:
 
-The two portals are independent: publication cannot be atomic across them. If one job fails,
-inspect the remote deployment state and rerun **only the failed job** for the same commit. A
+```shell
+gh workflow run publish.yml --repo sjacek/shardpilot --ref v0.3.0
+```
+
+The CLI selects the existing `v0.3.0` tag, rather than `main`; no separate tag input is used. Branch refs are
+rejected. The workflow must be present on the default branch and in that release tag. The manual
+run uses the tag's commit SHA, reruns eight Gradle/JDK cells, three Maven/JDK jobs and the signed-bundle
+check, then publishes only Maven. See the [manual publication procedure](releases.md#publish-maven-later-from-the-same-tag).
+
+The two portals are independent: publication cannot be atomic across them. If a publication fails,
+inspect the remote deployment state and rerun **only the failed job** in that destination's run. A
 timeout may occur after a remote upload was accepted; check the Portal before retrying. Do not
 move the tag or republish a version already accepted by either portal. Once published, verify a
 fresh Maven consumer without Maven Local candidate installations; the parent, core and adapter

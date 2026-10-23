@@ -230,7 +230,7 @@ the native Maven fixtures and the Gradle compatibility regressions.
 
 ## Publishing ShardPilot itself
 
-The tag workflow publishes the parent, core and adapter to Maven Central through an explicit
-`central-release` profile. Consumers need neither that profile nor signing credentials. Maintainers
+The manual publication workflow run from an existing release tag publishes the parent, core and
+adapter to Maven Central through an explicit `central-release` profile. Consumers need neither that profile nor signing credentials. Maintainers
 can follow the [Central token/key setup](maven-central.md) and [shared release procedure](releases.md).
-The existing Gradle distribution and plugin marker are published by a separate job.
+The existing Gradle distribution and plugin marker are published first, by the automatic tag-push path.
