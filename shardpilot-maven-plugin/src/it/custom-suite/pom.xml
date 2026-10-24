@@ -15,7 +15,7 @@
   <build><plugins>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.14.0</version></plugin>
     <plugin>
-      <groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>0.3.0</version>
+      <groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>@project.version@</version>
       <configuration>
         <suite>privacy-catalog</suite>
         <directory>${project.build.directory}/custom evidence</directory>

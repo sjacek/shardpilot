@@ -4,13 +4,12 @@ ShardPilot splits the classes of an opted-in Gradle `Test` task between independ
 Each execution calculates ownership locally from the same inputs. The Maven adapter applies that
 same core to Surefire/Failsafe. There is no coordinator service or replacement test engine.
 
-This checkout documents [0.3.0](releases/0.3.0.md), including class-manifest verification and
-standalone JSON/HTML coverage reports and a Maven Surefire/Failsafe adapter over the shared core.
-Version [0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1) provides
-sharding and optional test-process controls. Use the
-[root README](../README.md#getting-started) to apply it from the Gradle Plugin Portal, or the
-[local development setup](../README.md#local-plugin-development) to test a checkout explicitly.
-The [0.3.0 release notes](releases/0.3.0.md) contain migration examples and the publication checklist.
+This checkout documents [0.3.1](releases/0.3.1.md), a patch that adds explicit homepage URLs to
+the Maven POMs and validates them before publication. Sharding, YAML manifests, standalone JSON/HTML
+reports and native Surefire/Failsafe behavior remain compatible with [0.3.0](releases/0.3.0.md),
+which is available from both portals. Current configuration examples target 0.3.1; use the
+[local development setup](../README.md#local-plugin-development) while preparing the release.
+The [0.3.1 release notes](releases/0.3.1.md) contain upgrade examples and the publication checklist.
 
 ## Guides
 

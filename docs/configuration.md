@@ -55,7 +55,7 @@ An explicit `shardPilot.testProcesses { ... }` block sets `maxHeapSize`, `maxPar
 and/or `forkEvery` on the owning Gradle `Test` task. See the
 [Groovy and Kotlin examples](../README.md#optional-test-process-settings).
 Version 0.1.0 does not provide this API; it is available in
-[0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1) and retained by 0.3.0.
+[0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1) and retained by 0.3.1.
 
 | Property | Gradle type | Meaning |
 | --- | --- | --- |
@@ -75,7 +75,7 @@ There is no automatic memory detection, memory-driven scheduling, retry or failu
 ```groovy
 plugins {
     id 'java'
-    id 'io.github.sjacek.shardpilot' version '0.1.0'
+    id 'io.github.sjacek.shardpilot' version '0.3.1'
 }
 
 tasks.named('test', Test) {
@@ -108,7 +108,7 @@ import io.github.sjacek.shardpilot.ShardPilotExtension
 
 plugins {
     java
-    id("io.github.sjacek.shardpilot") version "0.1.0"
+    id("io.github.sjacek.shardpilot") version "0.3.1"
 }
 
 tasks.test {
@@ -170,7 +170,7 @@ the same contents. History is read, not modified, by ShardPilot. Remove stale re
 own history maintenance process; they still influence packing even when their classes no longer
 belong to the suite. See the [assignment algorithm](architecture.md#assignment-algorithm).
 
-## Optional class manifests (0.3.0)
+## Optional class manifests (0.3.0 and later)
 
 `shardPilot.verification { ... }` adds preparation, actual-selection and aggregation tasks to one
 existing `Test` task. Supply `eligibleClasses` as an unsharded tree with the application's discovery

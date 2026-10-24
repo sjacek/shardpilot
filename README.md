@@ -10,7 +10,7 @@ test-runner replacement or telemetry. YAML manifests use SnakeYAML Engine in the
 
 Plugin ID: `io.github.sjacek.shardpilot` · License: [MIT](LICENSE).
 
-Maven coordinates: `io.github.sjacek:shardpilot-maven-plugin:0.3.0`. See the
+Maven coordinates: `io.github.sjacek:shardpilot-maven-plugin:0.3.1`. See the
 [Maven setup guide](docs/maven.md) and [example POMs](examples/maven/README.md). Gradle users retain
 the same plugin ID, public DSL, implementation coordinates and included-build entry point.
 
@@ -69,11 +69,14 @@ collects the results. It does not create CI jobs or coordinate their completion.
 
 ## Status
 
-Version **[0.3.0](docs/releases/0.3.0.md)** adds opt-in [class-manifest verification](#optional-class-manifest-verification),
-standalone HTML reports and a [Maven adapter](docs/maven.md) over a shared core. Use the
-[explicit local development setup](#local-plugin-development) to exercise this checkout.
-Version 0.1.0 does not provide `testProcesses`.
-The [0.3.0 release notes](docs/releases/0.3.0.md) describe migration and the remaining publication steps.
+This checkout prepares **[0.3.1](docs/releases/0.3.1.md)**, a metadata-only patch that declares
+the project homepage directly in each Maven publication. Existing sharding configuration,
+YAML manifests and JSON/HTML reports need no migration. The installation snippets target 0.3.1;
+use the [explicit local development setup](#local-plugin-development) before publishing it.
+
+Version **[0.3.0](docs/releases/0.3.0.md)** is available from both Gradle Plugin Portal and Maven Central.
+It introduced opt-in [class-manifest verification](#optional-class-manifest-verification), standalone
+HTML reports and the [Maven adapter](docs/maven.md). Version 0.1.0 does not provide `testProcesses`.
 
 Versions [0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1) and
 [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0)
@@ -113,7 +116,7 @@ In the consumer's `build.gradle`:
 ```groovy
 plugins {
     id 'java'
-    id 'io.github.sjacek.shardpilot' version '0.1.0'
+    id 'io.github.sjacek.shardpilot' version '0.3.1'
 }
 ```
 
@@ -122,7 +125,7 @@ Or, in `build.gradle.kts`:
 ```kotlin
 plugins {
     java
-    id("io.github.sjacek.shardpilot") version "0.1.0"
+    id("io.github.sjacek.shardpilot") version "0.3.1"
 }
 ```
 
@@ -173,7 +176,7 @@ import io.github.sjacek.shardpilot.ShardPilotExtension
 
 plugins {
     java
-    id("io.github.sjacek.shardpilot") version "0.1.0"
+    id("io.github.sjacek.shardpilot") version "0.3.1"
 }
 
 tasks.test {
@@ -198,8 +201,8 @@ The `shardPilot` extension belongs to each `Test` task, not to the root project.
 
 ### Optional test-process settings
 
-Version **0.3.0** retains the explicit `testProcesses` block for Gradle's existing worker JVMs.
-Set the plugin version in the installation examples above to `0.3.0`, or use the
+Version **0.3.1** retains the explicit `testProcesses` block for Gradle's existing worker JVMs.
+Set the plugin version in the installation examples above to `0.3.1`, or use the
 [local development override](#local-plugin-development) to verify this checkout:
 
 ```groovy
@@ -309,7 +312,7 @@ affect wall-clock balance; recorded seconds are not a promise of a particular sp
 
 ## Optional class-manifest verification
 
-Version **0.3.0** can prepare a common plan, record the real candidate
+Version **0.3.1** can prepare a common plan, record the real candidate
 selection before each test task and verify the artifacts collected from every CI shard. Configure
 it once on the owning `Test` task; existing builds gain no verification tasks or task dependencies until they opt in.
 
@@ -501,7 +504,7 @@ include the adapter and core. The plugin ID `io.github.sjacek.shardpilot` and im
 `io.github.sjacek:shardpilot` are unchanged by the source-module move.
 
 For Maven, run `./mvnw -B -ntp install -DskipITs` at the repository root, then build a consuming
-POM with `io.github.sjacek:shardpilot-maven-plugin:0.3.0`. This installs the Maven parent, core and
+POM with `io.github.sjacek:shardpilot-maven-plugin:0.3.1`. This installs the Maven parent, core and
 adapter locally; it does not publish remotely. Maven does not use Gradle's `includeBuild`.
 See the [runnable Maven commands](examples/maven/README.md) for both runners and the reactor.
 

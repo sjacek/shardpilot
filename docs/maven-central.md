@@ -111,10 +111,10 @@ Follow the [version-tag procedure](releases.md#publish-from-a-version-tag) to pu
 When Central credentials are ready, start **Publish ShardPilot** manually from the existing tag:
 
 ```shell
-gh workflow run publish.yml --repo sjacek/shardpilot --ref v0.3.0
+gh workflow run publish.yml --repo sjacek/shardpilot --ref v0.3.1
 ```
 
-The CLI selects the existing `v0.3.0` tag, rather than `main`; no separate tag input is used. Branch refs are
+The CLI selects the existing `v0.3.1` tag, rather than `main`; no separate tag input is used. Branch refs are
 rejected. The workflow must be present on the default branch and in that release tag. The manual
 run uses the tag's commit SHA, reruns eight Gradle/JDK cells, three Maven/JDK jobs and the signed-bundle
 check, then publishes only Maven. See the [manual publication procedure](releases.md#publish-maven-later-from-the-same-tag).

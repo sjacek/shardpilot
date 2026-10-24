@@ -209,11 +209,30 @@ publishers' dependencies, scoped credentials and the explicit upload override. I
 mutually exclusive tag-push/Gradle and manual/Maven routes, mandatory tag-ref guard and immutable
 checkout SHA shared with version validation. The standalone
 bundle checker's unit tests cover absent attachments, altered checksums, invalid metadata,
+missing or incorrect direct homepage fields despite valid inherited URLs,
 foreign entries, normalized ZIP paths/collisions and XML external-entity rejection. These tests
 use synthetic signature fixtures; the separate GnuPG check supplies cryptographic verification.
 
 See [Central setup](maven-central.md) for the real publisher's token and key. Neither the normal
 test suites nor the signed-bundle gate needs that publisher's secrets.
+
+## 0.3.1 local release verification
+
+On 24 October 2026, the 0.3.1 preparation passed these checks on Windows with Eclipse Temurin
+25.0.4.1, the Gradle 9.8.1 Wrapper and Maven 3.9.16:
+
+| Check | Result |
+| --- | --- |
+| `clean check assemble verifyReleaseTag -PreleaseTag=v0.3.1` | 158 cases: 74 core and 84 Gradle/publication cases; plugin validation and binary/source/Javadoc assembly passed. |
+| `mvnw -B -ntp verify` | 113 unit cases: the same 74 core cases and 39 Maven adapter cases; all five Invoker fixtures and both runnable example projects passed. |
+| `bash scripts/verify-maven-release.sh` | Nine artifacts, nine successful GnuPG signature checks and 54 bundle entries; direct homepage fields and inherited effective metadata passed. |
+| `publishPlugins --validate-only --no-configuration-cache --no-daemon` | Passed without uploading the release. |
+
+All test outcomes above had zero failures, errors and skips. The signed-bundle check used a
+disposable identity with upload disabled. These results do not constitute publication or replace
+the complete Linux compatibility matrix for the release commit. The 0.3.0 published-consumer
+smoke checks are evidence for that earlier version; repeat remote consumer resolution after 0.3.1
+is published. See the [0.3.1 release notes](releases/0.3.1.md) for the maintainer's next steps.
 
 ## Verified scope
 
