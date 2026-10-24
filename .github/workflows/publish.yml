@@ -30,7 +30,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "$RELEASE_REF_TYPE" != 'tag' ]]; then
-            echo '::error::Select an existing release tag (for example v0.3.0) as the workflow ref.'
+            echo '::error::Select an existing release tag (for example v0.3.1) as the workflow ref.'
             exit 1
           fi
       - name: Check out the tagged commit

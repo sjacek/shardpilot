@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <parent><groupId>io.github.sjacek</groupId><artifactId>shardpilot-parent</artifactId><version>0.3.0</version></parent>
+  <parent><groupId>io.github.sjacek</groupId><artifactId>shardpilot-parent</artifactId><version>0.3.1</version></parent>
   <artifactId>shardpilot-maven-plugin</artifactId>
   <packaging>maven-plugin</packaging>
   <name>ShardPilot Maven plugin</name>
@@ -16,6 +16,7 @@
     projects and parallel Maven reactor builds without a coordinator, replacement test runner or
     telemetry. Your build controls test JVMs and normal test outcomes; your CI launches every shard
     and collects the results. Class-selection verification complements the native test result checks.</description>
+  <url>https://github.com/sjacek/shardpilot</url>
   <prerequisites><maven>3.9.0</maven></prerequisites>
   <dependencies>
     <dependency><groupId>io.github.sjacek</groupId><artifactId>shardpilot-core</artifactId><version>${project.version}</version></dependency>

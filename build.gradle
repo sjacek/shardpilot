@@ -5,7 +5,7 @@ plugins {
 
 allprojects {
     group = 'io.github.sjacek'
-    version = '0.3.0'
+    version = '0.3.1'
 }
 
 // The Gradle adapter uses this text for both its Portal listing and publication POMs.

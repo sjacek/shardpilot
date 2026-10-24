@@ -5,7 +5,20 @@ recorded by the Gradle Plugin Portal.
 
 ## Unreleased
 
-No changes beyond the 0.3.0 release candidate.
+No unreleased changes.
+
+## [0.3.1](docs/releases/0.3.1.md)
+
+### Fixed
+
+- Maven Central artifacts explicitly include the project homepage in each published POM, so
+  artifact listings can find it without resolving the parent POM.
+
+- Release checks reject missing or incorrect homepage URLs in the uploaded POMs, even when
+  Maven's effective model inherits a valid URL from the parent.
+
+Existing sharding configuration, YAML manifests and JSON/HTML reports are unchanged.
+See the [0.3.1 release notes](docs/releases/0.3.1.md) for upgrade and verification steps.
 
 ## [0.3.0](docs/releases/0.3.0.md)
 

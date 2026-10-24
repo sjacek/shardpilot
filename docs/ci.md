@@ -59,7 +59,7 @@ aggregation detects missing/mismatched selection artifacts; it cannot identify r
 same-index downloads overwrite one another.
 The pipeline succeeds only after all required jobs succeed under the consumer's normal policy.
 
-## Optional class-selection gate (0.3.0)
+## Optional class-selection gate (0.3.0 and later)
 
 ![Compile, execution and aggregation artifact flow](diagrams/manifest-ci.svg)
 
