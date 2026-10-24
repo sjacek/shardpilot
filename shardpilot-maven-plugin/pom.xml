@@ -16,6 +16,7 @@
     projects and parallel Maven reactor builds without a coordinator, replacement test runner or
     telemetry. Your build controls test JVMs and normal test outcomes; your CI launches every shard
     and collects the results. Class-selection verification complements the native test result checks.</description>
+  <url>https://github.com/sjacek/shardpilot</url>
   <prerequisites><maven>3.9.0</maven></prerequisites>
   <dependencies>
     <dependency><groupId>io.github.sjacek</groupId><artifactId>shardpilot-core</artifactId><version>${project.version}</version></dependency>

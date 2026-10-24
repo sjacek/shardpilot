@@ -120,6 +120,9 @@ public final class VerifyReleaseArtifacts {
         require(text(coordinates, "groupId").equals("io.github.sjacek") && text(coordinates, "version").equals(version), "Published coordinates differ from release");
         require(text(pom, "name").equals(text(effective, "name")), "Published name differs from effective model");
         require(text(pom, "description").equals(text(effective, "description")), "Published description differs from effective model");
+        // Artifact listings may read the uploaded POM without resolving its parent model.
+        require(children(pom, "url").size() == 1 && text(pom, "url").equals(PROJECT_URL),
+                "Published project homepage is missing or incorrect: " + artifact);
         if (!artifact.equals("shardpilot-parent")) {
             require(text(coordinates, "artifactId").equals("shardpilot-parent"), "Published parent is missing from cohort");
         } else {

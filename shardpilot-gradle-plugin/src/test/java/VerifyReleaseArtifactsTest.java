@@ -69,6 +69,28 @@ class VerifyReleaseArtifactsTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = {"shardpilot-parent", "shardpilot-core", "shardpilot-maven-plugin"})
+    void inheritedHomepageCannotReplaceAnExplicitPublishedHomepage(String artifact) throws Exception {
+        String published = pom(artifact).replaceFirst("<url>https://github.com/sjacek/shardpilot</url>", "");
+        // Recompute checksums so the failure concerns raw POM metadata, not artifact corruption.
+        attach(prefix(artifact) + ".pom", bytes(published));
+        var failure = assertThrows(IllegalArgumentException.class,
+                () -> VerifyReleaseArtifacts.verify(bundle, VERSION, effective));
+        assertEquals("Published project homepage is missing or incorrect: " + artifact, failure.getMessage());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"shardpilot-parent", "shardpilot-core", "shardpilot-maven-plugin"})
+    void incorrectPublishedHomepageCannotPassWithAValidEffectiveModel(String artifact) throws Exception {
+        String published = pom(artifact).replaceFirst("<url>https://github.com/sjacek/shardpilot</url>",
+                "<url>https://github.com/sjacek/shardpilot/" + artifact + "</url>");
+        attach(prefix(artifact) + ".pom", bytes(published));
+        var failure = assertThrows(IllegalArgumentException.class,
+                () -> VerifyReleaseArtifacts.verify(bundle, VERSION, effective));
+        assertEquals("Published project homepage is missing or incorrect: " + artifact, failure.getMessage());
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = {"developer", "scm", "version"})
     void invalidEffectiveMetadataCannotPass(String kind) {
         String model = new String(effective, StandardCharsets.UTF_8);

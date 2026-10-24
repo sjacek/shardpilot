@@ -19,6 +19,12 @@ keep their own release metadata.
 | License | MIT |
 | Developer | [sjacek](https://github.com/sjacek) |
 
+The homepage is the POM's direct `project/url` field. The parent, core and Maven adapter each
+declare `https://github.com/sjacek/shardpilot` explicitly, because an artifact listing may read
+the uploaded POM without resolving inherited metadata. The release-bundle gate checks both the
+effective model and this direct field. The 0.3.0 core and adapter POMs inherited the URL only;
+the explicit-field correction applies to the next release, since published POMs are immutable.
+
 The POM `description` is plain text, ready for the artifact listing:
 
 > ShardPilot helps shorten CI feedback for large JVM unit and integration test suites by splitting Maven Surefire and Failsafe test classes into deterministic, non-overlapping shards for parallel CI jobs. It balances class families using historical test durations and uses stable hashing when timing data is unavailable. The plugin preserves native test execution and configured class include/exclude patterns, with independent suites for unit and integration tests. The prepare, select and verify goals produce readable YAML manifests and standalone JSON and HTML reports to compare planned class assignments with selections collected from every CI job. Supports single-module projects and parallel Maven reactor builds without a coordinator, replacement test runner or telemetry. Your build controls test JVMs and normal test outcomes; your CI launches every shard and collects the results. Class-selection verification complements the native test result checks.

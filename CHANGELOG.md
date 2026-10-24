@@ -5,7 +5,10 @@ recorded by the Gradle Plugin Portal.
 
 ## Unreleased
 
-No changes beyond the 0.3.0 release candidate.
+### Fixed
+
+- Maven Central artifacts explicitly include the project homepage in each published POM, so
+  artifact listings can find it without resolving the parent POM.
 
 ## [0.3.0](docs/releases/0.3.0.md)
 

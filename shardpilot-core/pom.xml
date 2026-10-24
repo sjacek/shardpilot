@@ -11,6 +11,7 @@
     non-overlapping class selections with standalone JSON and HTML reports. Contains the common
     planning and reporting logic without Gradle or Maven APIs; test execution and process settings
     belong to the build-tool adapters and native runners.</description>
+  <url>https://github.com/sjacek/shardpilot</url>
   <dependencies>
     <dependency><groupId>org.snakeyaml</groupId><artifactId>snakeyaml-engine</artifactId><version>3.2</version></dependency>
     <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
