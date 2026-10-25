@@ -181,6 +181,19 @@ CI runs on Linux and retains uniquely named HTML/JUnit reports for every cell, i
 It validates the Wrapper, uses read-only repository permissions and does not publish the plugin or
 require release credentials. The matrix does not run the Docker-backed examples.
 
+The release-artifacts job also runs the offline standard-library tests in
+`scripts/test_central_publication*.py` with Python 3.12. Unit tests exercise transient status errors,
+timeouts, authentication failures, release identity checks and resume without a second upload.
+The integration suite uses real checkpoint files and an ephemeral loopback HTTP server to check
+first upload, timeout recovery and rejected redirects. Only Maven execution and clock waits are
+simulated; no test contacts Central, launches a real Maven upload or reads publisher credentials.
+The fixture shuts its HTTP server down and restores its temporary working directory on exit.
+Run both suites locally with:
+
+```shell
+python3 -B -m unittest discover -s scripts -p 'test_central_publication*.py' -v
+```
+
 The [publication workflow](../.github/workflows/publish.yml) calls this same matrix at the tagged
 commit, after checking its version, and publishes only if the entire call succeeds. Workflow
 regressions are checked by parsing YAML 1.2 with SnakeYAML Engine, also used for manifest transport. Release

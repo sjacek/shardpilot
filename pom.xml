@@ -54,6 +54,7 @@
       <properties>
         <!-- Local release checks produce the exact bundle but never upload by default. -->
         <central.skipUpload>true</central.skipUpload>
+        <central.waitUntil>published</central.waitUntil>
       </properties>
       <build><plugins>
         <plugin>
@@ -83,7 +84,8 @@
           <configuration>
             <publishingServerId>central</publishingServerId>
             <skipUpload>${central.skipUpload}</skipUpload>
-            <autoPublish>true</autoPublish><waitUntil>published</waitUntil><waitMaxTime>1800</waitMaxTime>
+            <deploymentName>ShardPilot ${project.version}</deploymentName>
+            <autoPublish>true</autoPublish><waitUntil>${central.waitUntil}</waitUntil><waitMaxTime>1800</waitMaxTime>
           </configuration>
         </plugin>
       </plugins></build>

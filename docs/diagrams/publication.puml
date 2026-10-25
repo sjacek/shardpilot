@@ -22,7 +22,8 @@ package "Required checks at the exact commit SHA - no release secrets" {
 }
 component "All 12 checks pass" as gate #DCFCE7
 component "gradle-plugin-portal environment\nPortal credentials\nValidate + publishPlugins" as gradlePublish
-component "maven-central environment\nCentral token + signing key\ncentral-release / skipUpload=false" as mavenPublish
+component "maven-central environment\nUpload once; save deployment ID\ncentral-release / waitUntil=uploaded" as mavenPublish
+component "Poll the same deployment ID\nRetry transient status errors\nResume by ID without Maven upload" as status
 cloud "Gradle Plugin Portal\nshardpilot + marker\nCore bundled in Gradle JAR" as portal
 cloud "Maven Central\nParent + core + Maven adapter\nSources + Javadoc + PGP" as central
 
@@ -38,10 +39,13 @@ gate --> gradlePublish : tag push only
 gate --> mavenPublish : manual run only
 gradlePublish --> portal
 mavenPublish --> central
+mavenPublish --> status : accepted ID
+status --> central : status reads only
 
 note bottom of gate
   Each run executes all 12 checks for the tag's SHA.
   Manual Maven runs skip the Gradle publisher.
-  Retry only a failed publication after checking remote state.
+  Central recovery uses the accepted deployment ID.
+  Never upload an accepted bundle again.
 end note
 @enduml

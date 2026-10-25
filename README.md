@@ -86,6 +86,9 @@ to the Gradle Plugin Portal after the complete compatibility gate succeeds. Mave
 is started manually later from the same tag and reruns that gate without republishing Gradle;
 see [release setup](docs/releases.md#configure-github-publication) for both environments and
 [Central setup](docs/maven-central.md) for token/signing-key instructions.
+For future releases containing the updated workflow, temporary Central status errors are retried
+without repeating the upload. An accepted deployment can be resumed by ID; see
+[publication recovery](docs/maven-central.md#resume-an-accepted-central-deployment).
 The [compatibility matrix](docs/testing.md#gradle-and-jdk-matrix) defines eight Linux CI targets across
 Gradle 9.0.0, 9.1.0 and 9.8.1 with JDK 17, 21 and 25, excluding Gradle 9.0.0/JDK 25.
 For the 0.2.0 candidate, all eight pairs passed locally in Linux amd64 containers on 23 October 2026:
