@@ -14,7 +14,11 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Structural YAML checks guard publication dependencies and credential isolation without Portal access. */
+/**
+ * Structural YAML checks guard publication dependencies and credential isolation without Portal access.
+ * Python unit and loopback HTTP tests cover recovery behavior; these checks ensure CI actually runs
+ * them and retains only the checkpoint needed to resume an already accepted Central deployment.
+ */
 class PublicationWorkflowTest {
     @Test
     void bothReleaseTriggersRequireTheSharedMatrixAndSelectExactlyOnePublisher() throws IOException {
@@ -56,7 +60,10 @@ class PublicationWorkflowTest {
     void manualMavenPublicationRequiresAnExistingTagRefAndUsesItsImmutableCheckoutSha() throws IOException {
         var release = workflow("publish");
         var events = mapping(release.get("on"));
-        assertNull(events.get("workflow_dispatch"), "the selected workflow ref is the tag; no separate tag input may disagree with it");
+        var inputs = mapping(mapping(events.get("workflow_dispatch")).get("inputs"));
+        assertEquals(Set.of("maven_deployment_id"), inputs.keySet(), "only a resume ID is accepted; never a separate tag input");
+        assertEquals(false, mapping(inputs.get("maven_deployment_id")).get("required"));
+        assertEquals("string", mapping(inputs.get("maven_deployment_id")).get("type"));
         var jobs = mapping(release.get("jobs"));
         var validation = mapping(jobs.get("validate-tag"));
         var refGuard = stepNamed(validation, "Require a tag reference");
@@ -72,7 +79,8 @@ class PublicationWorkflowTest {
         for (String job : List.of("validate-tag", "publish", "publish-maven")) {
             assertTestedCheckout(mapping(jobs.get(job)));
         }
-        assertFalse(release.toString().contains("inputs."));
+        assertTrue(release.toString().contains("inputs.maven_deployment_id"));
+        assertFalse(release.toString().contains("inputs.tag"));
         assertTrue(release.get("run-name").toString().contains("github.ref_name"));
     }
 
@@ -187,12 +195,25 @@ class PublicationWorkflowTest {
         assertEquals(Map.of("MAVEN_CENTRAL_USERNAME", "${{ secrets.MAVEN_CENTRAL_USERNAME }}",
                 "MAVEN_CENTRAL_PASSWORD", "${{ secrets.MAVEN_CENTRAL_PASSWORD }}",
                 "MAVEN_GPG_KEY", "${{ secrets.MAVEN_GPG_KEY }}",
-                "MAVEN_GPG_PASSPHRASE", "${{ secrets.MAVEN_GPG_PASSPHRASE }}"), publishing.get("env"));
+                "MAVEN_GPG_PASSPHRASE", "${{ secrets.MAVEN_GPG_PASSPHRASE }}",
+                "MAVEN_DEPLOYMENT_ID", "${{ inputs.maven_deployment_id }}"), publishing.get("env"));
         String command = publishing.get("run").toString();
-        assertTrue(command.contains("-Pcentral-release clean deploy"));
-        assertTrue(command.contains("-Dcentral.skipUpload=false"));
+        assertTrue(command.contains("python3 -B scripts/central_publication.py"));
         assertTrue(command.contains("--settings \"$RUNNER_TEMP/shardpilot-maven/settings.xml\""));
-        assertTrue(command.contains("${!name:-}"), "all credentials must be checked before the build");
+        String publisher = Files.readString(Path.of("scripts/central_publication.py"));
+        assertTrue(publisher.contains("'-Dcentral.skipUpload=false'"));
+        assertTrue(publisher.contains("'-Dcentral.waitUntil=uploaded'"));
+        assertTrue(publisher.contains("MAVEN_GPG_PASSPHRASE"));
+        var evidence = stepNamed(central, "Retain Central deployment identity and status");
+        assertEquals("always()", evidence.get("if"));
+        var retained = mapping(evidence.get("with"));
+        assertEquals("build/central-publication/state.json", retained.get("path"));
+        assertEquals("central-publication-${{ github.ref_name }}", retained.get("name"));
+        assertEquals(30, retained.get("retention-days"));
+        assertEquals("warn", retained.get("if-no-files-found"), "a failed preflight may not create a checkpoint");
+        var python = mapping(stepUsing(central, "actions/setup-python@").get("with"));
+        assertEquals("3.12", python.get("python-version"));
+        assertNull(python.get("cache"));
         assertFalse(command.contains("gpg.skip"));
         assertFalse(command.contains("set -x"));
         for (Object step : sequence(central.get("steps"))) {
@@ -209,6 +230,13 @@ class PublicationWorkflowTest {
         assertTestedCheckout(gate);
         assertFalse(gate.toString().contains("secrets."));
         assertEquals("bash scripts/verify-maven-release.sh", stepNamed(gate, "Verify the signed release with a disposable key").get("run"));
+        var recovery = stepNamed(gate, "Verify resilient Central status polling without publication credentials");
+        // The wildcard includes the loopback integration suite, not just the unit-test module.
+        assertEquals("python3 -B -m unittest discover -s scripts -p 'test_central_publication*.py' -v", recovery.get("run"));
+        assertNull(recovery.get("if"), "recovery regressions must be a required part of the release gate");
+        assertNull(recovery.get("continue-on-error"));
+        assertNull(recovery.get("env"), "fixtures use dummy credentials rather than publisher secrets");
+        assertEquals("3.12", mapping(stepUsing(gate, "actions/setup-python@").get("with")).get("python-version"));
         String verification = Files.readString(Path.of("scripts/verify-maven-release.sh"));
         assertTrue(verification.contains("-Dcentral.skipUpload=true"));
         assertTrue(verification.contains("--quick-generate-key"));
@@ -234,7 +262,9 @@ class PublicationWorkflowTest {
         assertEquals("true", xpath.evaluate(central + "/extensions", pom));
         assertEquals("${central.skipUpload}", xpath.evaluate(central + "/configuration/skipUpload", pom));
         assertEquals("true", xpath.evaluate(central + "/configuration/autoPublish", pom));
-        assertEquals("published", xpath.evaluate(central + "/configuration/waitUntil", pom));
+        assertEquals("${central.waitUntil}", xpath.evaluate(central + "/configuration/waitUntil", pom));
+        assertEquals("published", xpath.evaluate(profile + "/properties/central.waitUntil", pom));
+        assertEquals("ShardPilot ${project.version}", xpath.evaluate(central + "/configuration/deploymentName", pom));
         assertEquals("jar-no-fork", xpath.evaluate(plugins + "[artifactId='maven-source-plugin']/executions/execution/goals/goal", pom));
         assertEquals("jar", xpath.evaluate(plugins + "[artifactId='maven-javadoc-plugin']/executions/execution/goals/goal", pom));
         String gpg = plugins + "[artifactId='maven-gpg-plugin']";

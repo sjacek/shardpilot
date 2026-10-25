@@ -77,6 +77,10 @@ test {
             rootProject.file('shardpilot-maven-plugin/pom.xml'), rootProject.file('.mvn/wrapper/maven-wrapper.properties'))
             .withPropertyName('mavenReactorConfiguration')
     inputs.file(rootProject.file('scripts/verify-maven-release.sh')).withPropertyName('signedMavenReleaseCheck')
+    inputs.file(rootProject.file('scripts/central_publication.py')).withPropertyName('centralPublicationHelper')
+    // NormalizeSvgTest inspects committed previews; changed renders must invalidate cached results.
+    inputs.files(rootProject.fileTree('docs/diagrams') { include '*.puml', '*.svg' })
+            .withPropertyName('documentationDiagramPreviews')
     // Check the actual publication model, including the marker, rather than only a composite classpath.
     def metadataTasks = tasks.matching { it.name in ['generatePomFileForPluginMavenPublication',
             'generatePomFileForShardpilotPluginMarkerMavenPublication', 'generateMetadataFileForPluginMavenPublication'] }

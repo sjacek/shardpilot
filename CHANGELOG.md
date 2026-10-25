@@ -5,7 +5,11 @@ recorded by the Gradle Plugin Portal.
 
 ## Unreleased
 
-No unreleased changes.
+### Fixed
+
+- Maven Central publication retries temporary status-check failures without uploading the
+  bundle again. Maintainers can resume an accepted deployment by ID after a timeout;
+  the workflow retains its release identity and last observed status for recovery.
 
 ## [0.3.1](docs/releases/0.3.1.md)
 

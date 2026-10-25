@@ -6,6 +6,11 @@ on:
     tags: ['v[0-9]*']
   # Select the existing release tag as the workflow ref to publish Maven later.
   workflow_dispatch:
+    inputs:
+      maven_deployment_id:
+        description: 'Resume an accepted Central deployment without uploading again (optional UUID)'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -117,23 +122,27 @@ jobs:
           server-username-env-var: MAVEN_CENTRAL_USERNAME
           server-password-env-var: MAVEN_CENTRAL_PASSWORD
           settings-path: ${{ runner.temp }}/shardpilot-maven
+      - name: Set up Python for resilient Central status polling
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
       - name: Publish the signed Maven release
         env:
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           MAVEN_GPG_KEY: ${{ secrets.MAVEN_GPG_KEY }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+          MAVEN_DEPLOYMENT_ID: ${{ inputs.maven_deployment_id }}
         shell: bash
         run: |
           set -euo pipefail
-          for name in MAVEN_CENTRAL_USERNAME MAVEN_CENTRAL_PASSWORD MAVEN_GPG_KEY MAVEN_GPG_PASSPHRASE; do
-            if [[ -z "${!name:-}" ]]; then
-              echo "::error::Configure $name in the maven-central environment."
-              exit 1
-            fi
-          done
-          # The compatibility gate has tested this exact revision, including a complete signed bundle.
-          # Only this credentialed step overrides the release profile's local-bundle default.
-          bash ./mvnw -B -ntp -Pcentral-release clean deploy \
-            --settings "$RUNNER_TEMP/shardpilot-maven/settings.xml" \
-            -DskipTests -DskipITs -Dcentral.skipUpload=false
+          python3 -B scripts/central_publication.py \
+            --settings "$RUNNER_TEMP/shardpilot-maven/settings.xml"
+      - name: Retain Central deployment identity and status
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: central-publication-${{ github.ref_name }}
+          path: build/central-publication/state.json
+          if-no-files-found: warn
+          retention-days: 30

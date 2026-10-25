@@ -101,8 +101,9 @@ and must never be published. The same check is required in the compatibility wor
 The profile is inactive during ordinary Maven builds. Explicit activation adds source/Javadoc
 JARs and signing; `central.skipUpload=true` is its default, even for `deploy`. The bundle is written
 to `target/central-publishing/central-bundle.zip`. Only the credentialed manual Maven job passes
-`-Dcentral.skipUpload=false`. When uploading, the publisher automatically publishes after Central
-validation and waits up to 30 minutes for `published`, within a 45-minute job timeout. See the
+`-Dcentral.skipUpload=false`. The default local wait target remains `published`. In CI, Maven
+uploads once with `central.waitUntil=uploaded`, then the Python helper waits up to 30 minutes for
+publication within the 45-minute job timeout. Central automatically publishes after validation. See the
 [Central Maven plugin guide](https://central.sonatype.org/publish/publish-portal-maven/).
 
 ## Release and recover a partial publication
@@ -119,9 +120,43 @@ rejected. The workflow must be present on the default branch and in that release
 run uses the tag's commit SHA, reruns eight Gradle/JDK cells, three Maven/JDK jobs and the signed-bundle
 check, then publishes only Maven. See the [manual publication procedure](releases.md#publish-maven-later-from-the-same-tag).
 
-The two portals are independent: publication cannot be atomic across them. If a publication fails,
-inspect the remote deployment state and rerun **only the failed job** in that destination's run. A
-timeout may occur after a remote upload was accepted; check the Portal before retrying. Do not
+The two portals are independent: publication cannot be atomic across them. Do not
 move the tag or republish a version already accepted by either portal. Once published, verify a
 fresh Maven consumer without Maven Local candidate installations; the parent, core and adapter
 must all resolve. The Gradle consumer must resolve its unchanged plugin marker separately.
+
+### Resume an accepted Central deployment
+
+The recovery helper applies to **future tags containing this workflow change**. Published
+`v0.3.1` retains its original workflow: do not move that tag or upload its artifacts again.
+
+For a new release, leave the optional `maven_deployment_id` input empty for the first upload.
+Maven prints the accepted `deploymentId`; the helper immediately saves it with the version,
+tag, commit SHA and last observed status in `build/central-publication/state.json`. The workflow
+retains this small file as the `central-publication-TAG` artifact for 30 days, including on failure.
+It does not retain signing keys, credentials, HTTP bodies or Maven output in that artifact.
+
+Status reads retry HTTP 429, 500, 502, 503 and 504 and temporary transport errors with bounded
+backoff. These retries always use the same deployment ID and never invoke Maven again.
+Authentication failures, rejected validation, malformed responses and a mismatched release fail
+immediately. Success requires `PUBLISHED` and the expected parent/core/adapter coordinates.
+
+After a timeout, retrieve the ID from the artifact or the accepted-upload log and inspect that
+deployment in the Portal. Start a **new manual run from the same tag**, supplying its ID:
+
+```shell
+gh workflow run publish.yml --repo sjacek/shardpilot --ref vX.Y.Z \
+  -f maven_deployment_id=ACCEPTED_DEPLOYMENT_UUID
+```
+
+Replace both placeholders. The full compatibility gate still runs; the final step only checks
+the existing deployment and skips Maven, bundling, signing and upload. Only the Central token is
+required by the helper in resume mode. Rerunning an upload run with an empty ID is deliberately
+refused. A fresh dispatch with an empty ID is still a new upload, so always inspect the earlier
+run before dispatching again. If upload failed before an ID was recorded, inspect the Portal
+first: the server may have accepted the bundle even when its response was lost. Do not blindly
+retry an ambiguous upload. A `FAILED` deployment needs investigation of Portal validation errors.
+
+GitHub installs Python 3.12 for this maintainer helper and its offline regression tests; neither
+published plugin requires Python. The helper uses only the Python standard library. See the
+[Central status API](https://central.sonatype.org/publish/publish-portal-api/).

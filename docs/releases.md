@@ -135,9 +135,12 @@ uploads it and waits for Central publication. The Gradle publisher is skipped. V
 Maven resolution in a fresh consumer without local candidate artifacts afterwards.
 
 The portals remain independent. A manual Maven publication does not rerun Gradle publication.
-On failure, inspect remote status and rerun only the failed job in the relevant run; never rerun
-a successful publication to overwrite immutable artifacts. See
+On failure, inspect remote status. For Central, resume an accepted deployment with the optional
+`maven_deployment_id` input; the helper polls its status without uploading again. An upload-run
+rerun without that ID is refused. Never rerun a successful publication to overwrite immutable artifacts. See
 [partial-publication recovery](maven-central.md#release-and-recover-a-partial-publication).
+This recovery path requires a future tag containing the updated workflow; existing published
+tags, including `v0.3.1`, remain unchanged.
 
 ## Prepare a release candidate
 
