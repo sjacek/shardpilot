@@ -1,0 +1,8 @@
+package example
+
+/** TestKit instantiates this template under the generated project's Groovy test source root. */
+@spock.lang.Ignore('F0 ignored-spec measurement')
+class IgnoredSpec extends spock.lang.Specification {
+    def 'first'() { expect: false }
+    def 'second'() { expect: false }
+}

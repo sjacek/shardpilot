@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- F0 measurement only: this standalone build is deliberately outside the release reactor. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example.shardpilot.spike</groupId><artifactId>junit-xml-invoker</artifactId><version>1</version>
+  <packaging>pom</packaging>
+  <properties><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding></properties>
+  <build><plugins><plugin>
+    <groupId>org.apache.maven.plugins</groupId><artifactId>maven-invoker-plugin</artifactId><version>3.9.1</version>
+    <configuration>
+      <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+      <goals><goal>clean</goal><goal>verify</goal></goals>
+      <postBuildHookScript>verify</postBuildHookScript>
+      <streamLogsOnFailures>true</streamLogsOnFailures>
+    </configuration>
+    <dependencies><dependency>
+      <groupId>org.apache.groovy</groupId><artifactId>groovy</artifactId><version>4.0.29</version>
+    </dependency></dependencies>
+    <executions>
+      <execution><id>with-retries</id><goals><goal>run</goal></goals></execution>
+      <execution><id>nested-control-without-retries</id><goals><goal>run</goal></goals>
+        <configuration>
+          <cloneProjectsTo>${project.build.directory}/it-no-retry</cloneProjectsTo>
+          <goals>
+            <goal>clean</goal><goal>verify</goal><goal>-Dspike.reruns=0</goal>
+            <goal>-Dtest=OuterTest,DisabledClassTest,DisabledMethodsTest</goal>
+            <goal>-Dit.test=OuterTest,DisabledClassTest,DisabledMethodsTest</goal>
+          </goals>
+        </configuration>
+      </execution>
+    </executions>
+  </plugin></plugins></build>
+</project>
