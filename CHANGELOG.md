@@ -5,6 +5,13 @@ recorded by the Gradle Plugin Portal.
 
 ## Unreleased
 
+### Added
+
+- Opt-in Gradle `history {}` configuration and `refresh<Task>ShardDurations` tasks create a
+  candidate TSV from existing JUnit XML reports without rerunning tests or modifying versioned history.
+- Shared refresh logic normalizes complete class families, excludes skipped/retried/ambiguous
+  measurements and reports coverage plus before/after recorded shard loads in JSON, including data failures.
+
 ### Fixed
 
 - Maven Central publication retries temporary status-check failures without uploading the

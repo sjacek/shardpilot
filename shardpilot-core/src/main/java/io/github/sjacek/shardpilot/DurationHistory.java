@@ -2,6 +2,9 @@ package io.github.sjacek.shardpilot;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.TreeMap;
 
 /** Reads portable, class-level timing metadata, never test output or executable build code. */
 public final class DurationHistory {
@@ -22,7 +25,7 @@ public final class DurationHistory {
             String line = lines[index].strip();
             if (line.isEmpty() || line.startsWith("#")) continue;
             String[] fields = line.split("\t", -1);
-            if (fields.length != 2 || !validClassName(fields[0])) {
+            if (fields.length != 2 || invalidClassName(fields[0])) {
                 throw malformed(index, "expected <binary.class.Name><TAB><seconds>");
             }
             double seconds;
@@ -41,16 +44,45 @@ public final class DurationHistory {
         return Map.copyOf(durations);
     }
 
-    private static boolean validClassName(String name) {
+    /**
+     * Formats a validated history deterministically, independent of locale and map iteration order.
+     * @param history finite nonnegative timings keyed by binary class name
+     * @param precision number of fractional decimal digits, from zero to six
+     * @return UTF-8-compatible TSV text with a comment header and LF line endings
+     */
+    public static String format(Map<String, Double> history, int precision) {
+        if (precision < 0 || precision > 6) throw new IllegalArgumentException("ShardPilot precision must be between 0 and 6");
+        var text = new StringBuilder("# ShardPilot duration history: binary class name<TAB>seconds\n");
+        for (var entry : new TreeMap<>(history).entrySet()) {
+            if (invalidClassName(entry.getKey()) || entry.getValue() == null
+                    || !Double.isFinite(entry.getValue()) || entry.getValue() < 0) {
+                throw new IllegalArgumentException("ShardPilot history requires binary names and finite nonnegative timings");
+            }
+            text.append(entry.getKey()).append('\t').append(rounded(entry.getValue(), precision).toPlainString()).append('\n');
+        }
+        return text.toString();
+    }
+
+    static BigDecimal rounded(double seconds, int precision) {
+        return BigDecimal.valueOf(seconds).setScale(precision, RoundingMode.HALF_UP);
+    }
+
+    static String family(String name) {
+        int nested = name.indexOf('$');
+        return nested < 0 ? name : name.substring(0, nested);
+    }
+
+    static boolean invalidClassName(String name) {
+        if (name == null || name.isEmpty()) return true;
         for (String part : name.split("\\.", -1)) {
-            if (part.isEmpty() || !Character.isJavaIdentifierStart(part.codePointAt(0))) return false;
+            if (part.isEmpty() || !Character.isJavaIdentifierStart(part.codePointAt(0))) return true;
             for (int offset = Character.charCount(part.codePointAt(0)); offset < part.length();) {
                 int point = part.codePointAt(offset);
-                if (!Character.isJavaIdentifierPart(point)) return false;
+                if (!Character.isJavaIdentifierPart(point)) return true;
                 offset += Character.charCount(point);
             }
         }
-        return true;
+        return false;
     }
 
     private static IllegalArgumentException malformed(int index, String reason) {

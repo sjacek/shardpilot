@@ -14,6 +14,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +29,112 @@ import static org.junit.jupiter.api.Assertions.*;
 class ShardPilotFunctionalTest {
     @TempDir
     Path directory;
+
+    /** F0.1–F0.2 probe on the existing fixture; retain XML before @TempDir cleanup. */
+    @Test
+    void recordsJupiterAndSpockXmlTimingEvidence() throws Exception {
+        fixture(true);
+        write("src/test/java/example/AlphaTest.java", """
+                package example;
+                import java.nio.file.*;
+                class AlphaTest {
+                    static void pause(String phase, long millis) throws Exception {
+                        long start = System.nanoTime();
+                        Thread.sleep(millis);
+                        Files.writeString(Path.of("build/timing-phases.tsv"),
+                                phase + "\\t" + (System.nanoTime() - start) / 1_000_000_000.0 + "\\n",
+                                StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                    }
+                    @org.junit.jupiter.api.Test void outer() throws Exception { pause("outer", 200); }
+                    @org.junit.jupiter.api.Nested class Nested {
+                        @org.junit.jupiter.api.Test void nested() throws Exception { pause("nested", 700); }
+                    }
+                }
+                """);
+        write("src/test/groovy/example/EchoSpec.groovy", """
+                package example
+                import java.nio.file.*
+                class EchoSpec extends spock.lang.Specification {
+                    private static void pause(String phase, long millis) {
+                        long start = System.nanoTime()
+                        Thread.sleep(millis)
+                        Files.writeString(Path.of('build/timing-phases.tsv'),
+                                phase + '\\t' + ((System.nanoTime() - start) / 1_000_000_000.0) + '\\n',
+                                StandardOpenOption.CREATE, StandardOpenOption.APPEND)
+                    }
+                    def setupSpec() { pause('setupSpec', 500) }
+                    @spock.lang.Unroll
+                    def 'row #code'() {
+                        when: pause('spock-' + code, 100)
+                        then: code > 0
+                        where: code << [1, 2, 3]
+                    }
+                }
+                """);
+        BuildResult result = run("test");
+        assertEquals(SUCCESS, testOutcome(result));
+        Set<String> identities = cases("test");
+        assertEquals(9, identities.size());
+        assertTrue(identities.stream().anyMatch(name -> name.startsWith("example.AlphaTest$Nested#")));
+        assertEquals(3, identities.stream().filter(name -> name.startsWith("example.EchoSpec#")).count());
+        assertEquals(6, Files.readAllLines(directory.resolve("build/timing-phases.tsv")).size());
+        retainXmlTimingEvidence("jupiter-spock", result);
+    }
+
+    /** Includes a measurable setup cost to distinguish suite time from testcase body time. */
+    @Test
+    void recordsTestNgXmlTimingEvidence() throws Exception {
+        testNgFixture();
+        write("src/test/java/example/AlphaTest.java", """
+                package example;
+                import java.nio.file.*;
+                import org.testng.annotations.*;
+                import static org.testng.Assert.*;
+                public class AlphaTest {
+                    private boolean initialized;
+                    private static void pause(String phase, long millis) throws Exception {
+                        long start = System.nanoTime();
+                        Thread.sleep(millis);
+                        Files.writeString(Path.of("build/timing-phases.tsv"),
+                                phase + "\\t" + (System.nanoTime() - start) / 1_000_000_000.0 + "\\n",
+                                StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                    }
+                    @BeforeClass public void initialize() throws Exception {
+                        pause("beforeClass", 600);
+                        initialized = true;
+                    }
+                    @DataProvider(name = "codes", parallel = false, propagateFailureAsTestFailure = true)
+                    public static Object[][] codes() { return new Object[][] {{"first"}, {"second"}}; }
+                    @Test(dataProvider = "codes") public void row(String code) throws Exception {
+                        assertTrue(initialized);
+                        pause("testng-" + code, 100);
+                    }
+                    @Test public void ordinary() throws Exception {
+                        assertTrue(initialized);
+                        pause("ordinary", 200);
+                    }
+                }
+                """);
+        BuildResult result = run("test");
+        assertEquals(SUCCESS, testOutcome(result));
+        assertEquals(4, cases("test").size());
+        assertEquals(4, Files.readAllLines(directory.resolve("build/timing-phases.tsv")).size());
+        retainXmlTimingEvidence("testng", result);
+    }
+
+    private void retainXmlTimingEvidence(String fixtureName, BuildResult result) throws IOException {
+        Path destination = Path.of("build/spikes/junit-xml-timings", fixtureName);
+        Files.createDirectories(destination);
+        try (var files = Files.list(directory.resolve("build/test-results/test"))) {
+            for (Path file : files.filter(path -> path.getFileName().toString().startsWith("TEST-")
+                    && path.getFileName().toString().endsWith(".xml")).toList()) {
+                Files.copy(file, destination.resolve(file.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
+        Files.copy(directory.resolve("build/timing-phases.tsv"), destination.resolve("timing-phases.tsv"),
+                StandardCopyOption.REPLACE_EXISTING);
+        Files.writeString(destination.resolve("build-output.txt"), result.getOutput());
+    }
 
     @Test
     void distributableGradleJarIncludesCoreWithoutASeparateCoreArtifact() throws Exception {

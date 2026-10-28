@@ -13,6 +13,9 @@ public abstract class ShardPilotExtension {
     private final Test task;
     private final ObjectFactory objects;
     private boolean verificationConfigured;
+    private boolean historyConfigured;
+    private final RegularFileProperty verificationBaseline;
+    private final Property<Integer> verificationShardCount;
 
     /**
      * Creates per-task settings managed and instantiated by Gradle.
@@ -23,6 +26,8 @@ public abstract class ShardPilotExtension {
     public ShardPilotExtension(Test task, ObjectFactory objects) {
         this.task = task;
         this.objects = objects;
+        this.verificationBaseline = objects.fileProperty();
+        this.verificationShardCount = objects.property(Integer.class);
     }
 
     /**
@@ -62,7 +67,35 @@ public abstract class ShardPilotExtension {
                 .map(Boolean::parseBoolean).orElse(true));
         options.getRequireNonEmptyShards().convention(true);
         action.execute(options);
+        verificationBaseline.set(options.getPlannedDirectory().file("baseline.yaml"));
+        verificationShardCount.set(options.getShardCount());
         ShardVerification.configure(task, this, options);
+    }
+
+    /**
+     * Registers an explicit, cacheable refresh task using already available reports and bytecode.
+     * Configure once, outside a deferred TaskProvider.configure action, like verification().
+     * No test or compilation dependency is added; callers download or prepare evidence explicitly.
+     * Verification conventions are resolved lazily, irrespective of the order of these two blocks.
+     * @param action reports, eligibility source, output locations and conservative refresh policies
+     */
+    public void history(Action<? super ShardHistoryOptions> action) {
+        if (historyConfigured) throw new IllegalStateException("ShardPilot history is already configured for " + task.getName());
+        historyConfigured = true;
+        ShardHistoryOptions options = objects.newInstance(ShardHistoryOptions.class);
+        var layout = task.getProject().getLayout();
+        String directory = "shardpilot/" + task.getName();
+        options.getReports().from(task.getReports().getJunitXml().getOutputLocation());
+        options.getOutputFile().convention(layout.getBuildDirectory().file(directory + "/durations.tsv"));
+        options.getReportFile().convention(layout.getBuildDirectory().file(directory + "/durations.json"));
+        options.getMinimumSeconds().convention(.1);
+        options.getPrecision().convention(1);
+        options.getIncludeFailedSuites().convention(false);
+        options.getDuplicates().convention(DurationHistoryRefresh.Duplicates.FAIL);
+        options.getMinimumCoverage().convention(0.0);
+        options.getPruning().convention(ShardHistoryOptions.Pruning.AUTO);
+        action.execute(options);
+        ShardHistory.configure(task, this, options, verificationBaseline, verificationShardCount);
     }
 
     /**
