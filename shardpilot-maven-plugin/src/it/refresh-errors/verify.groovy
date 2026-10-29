@@ -1,0 +1,18 @@
+assert !new File(basedir, 'target/shardpilot/unit/durations.tsv').exists()
+def json = new File(basedir, 'target/shardpilot/unit/durations.json').getText('UTF-8')
+assert json.contains('"status":"FAILED"')
+assert json.contains('"reason":"DUPLICATE_SUITE"')
+assert new File(basedir, 'target/summed.tsv').text.contains('example.AlphaTest\t2')
+assert new File(basedir, 'target/summed.json').text.contains('"status":"PASSED"')
+assert new File(basedir, 'build.log').text.contains('INVALID_BASELINE')
+assert new File(basedir, 'history.tsv').readLines('UTF-8') == ['example.AlphaTest\t6']
+assert !new File(basedir, 'target/alias.json').exists()
+assert !new File(basedir, 'target/xml.tsv').exists()
+def xmlFailure = new File(basedir, 'target/xml.json').getText('UTF-8')
+assert xmlFailure.contains('"reason":"INVALID_XML"')
+assert !xmlFailure.contains('PRIVATE_XML_PAYLOAD')
+assert !new File(basedir, 'build.log').text.contains('PRIVATE_XML_PAYLOAD')
+assert !new File(basedir, 'target/test-classes').exists()
+assert !new File(basedir, 'target/surefire-reports').exists()
+assert !new File(basedir, 'target/shardpilot/unit/plan').exists()
+return true

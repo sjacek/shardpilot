@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example.shardpilot</groupId><artifactId>refresh-reactor</artifactId><version>1</version>
+  <packaging>pom</packaging>
+  <modules><module>first</module><module>second</module></modules>
+  <build><plugins><plugin>
+    <groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>@project.version@</version>
+    <configuration>
+      <!-- Each child must resolve inherited expressions against its own project. -->
+      <durationsFile>${project.basedir}/history.tsv</durationsFile>
+      <plannedDirectory>${project.basedir}/evidence/plan</plannedDirectory>
+      <reports><report>${project.basedir}/evidence/reports</report></reports>
+    </configuration>
+  </plugin></plugins></build>
+</project>
