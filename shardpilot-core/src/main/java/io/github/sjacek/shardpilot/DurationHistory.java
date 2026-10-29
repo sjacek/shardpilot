@@ -67,6 +67,7 @@ public final class DurationHistory {
         return BigDecimal.valueOf(seconds).setScale(precision, RoundingMode.HALF_UP);
     }
 
+    /** Shared outer-class identity for planning and refresh, including deeply nested binary names. */
     static String family(String name) {
         int nested = name.indexOf('$');
         return nested < 0 ? name : name.substring(0, nested);

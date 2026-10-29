@@ -67,6 +67,19 @@ class ShardPlanTest {
     }
 
     @Test
+    void recordedLoadsStayIdenticalWhenRenamingFamiliesPreservesTheirOrderAndWeights() {
+        var results = new HashSet<Double>();
+        // Positive decimal samples from the CI failure expose encounter-order rounding in sum().
+        // Renaming the common prefix preserves lexical order and weights but changes map hashes.
+        for (int prefix = 0; prefix < 32; prefix++) {
+            String family = "example.P" + prefix;
+            var plan = ShardPlan.create(Map.of(family + "A", .051, family + "B", .004), 1);
+            results.add(plan.recordedSeconds(1));
+        }
+        assertEquals(1, results.size(), "A shard's reported load must not depend on map hash positions: " + results);
+    }
+
+    @Test
     void coldStartAndNewClassesUseFloorModEvenForTheMinimumIntegerHash() {
         String minimumHash = "polygenelubricants";
         assertEquals(Integer.MIN_VALUE, minimumHash.hashCode());

@@ -16,6 +16,8 @@ recorded by the Gradle Plugin Portal.
 
 ### Fixed
 
+- Duration refresh reports remain identical across JVMs, avoiding intermittent differences
+  in recorded shard loads when comparing reports from the same timing inputs.
 - Maven Central publication retries temporary status-check failures without uploading the
   bundle again. Maintainers can resume an accepted deployment by ID after a timeout;
   the workflow retains its release identity and last observed status for recovery.
