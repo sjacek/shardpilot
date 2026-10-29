@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example.shardpilot</groupId><artifactId>refresh-errors</artifactId><version>1</version>
+  <properties><shardpilot.reports>reports/good</shardpilot.reports></properties>
+  <build><plugins>
+    <!-- No native runner or test sources: refresh must consume evidence without a lifecycle fork. -->
+    <plugin><groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>@project.version@</version></plugin>
+  </plugins></build>
+  <profiles><profile>
+    <id>duplicates</id>
+    <properties><shardpilot.reports>reports/good,reports/copy</shardpilot.reports></properties>
+  </profile><profile>
+    <id>invalid-xml</id>
+    <properties><shardpilot.reports>reports/malformed</shardpilot.reports></properties>
+  </profile></profiles>
+</project>

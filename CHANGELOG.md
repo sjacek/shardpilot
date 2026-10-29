@@ -7,6 +7,8 @@ recorded by the Gradle Plugin Portal.
 
 ### Added
 
+- Maven `refresh-durations` creates candidate TSV/JSON artifacts from existing Surefire or
+  Failsafe reports and suite eligibility, without rerunning tests or modifying maintained history.
 - Opt-in Gradle `history {}` configuration and `refresh<Task>ShardDurations` tasks create a
   candidate TSV from existing JUnit XML reports without rerunning tests or modifying versioned history.
 - Shared refresh logic normalizes complete class families, excludes skipped/retried/ambiguous
@@ -14,6 +16,8 @@ recorded by the Gradle Plugin Portal.
 
 ### Fixed
 
+- Duration refresh reports remain identical across JVMs, avoiding intermittent differences
+  in recorded shard loads when comparing reports from the same timing inputs.
 - Maven Central publication retries temporary status-check failures without uploading the
   bundle again. Maintainers can resume an accepted deployment by ID after a timeout;
   the workflow retains its release identity and last observed status for recovery.

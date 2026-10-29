@@ -11,7 +11,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 /**
- * Project-local parameters shared by planning, native selection and artifact verification.
+ * Project-local parameters shared by planning, selection, verification and history refresh.
  * Path defaults are derived lazily from this invocation's runner/suite, so parallel reactor
  * projects never publish selection through mutable MavenSession properties. Explicit goals use
  * common plugin configuration; a named selection execution's overrides are not global defaults.
@@ -39,7 +39,7 @@ public abstract class AbstractShardMojo extends AbstractMojo {
     @Parameter(property = "shardpilot.count", defaultValue = "1")
     protected int shardCount = 1;
 
-    /** One-based current node; preparation/verification only require count. */
+    /** One-based current node; preparation, verification and history refresh only require count. */
     @Parameter(property = "shardpilot.index", defaultValue = "1")
     protected int shardIndex = 1;
 

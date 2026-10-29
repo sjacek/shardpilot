@@ -36,7 +36,7 @@ public final class ShardPlan {
         // Floating-point addition depends on order. Sort nested records before merging so every JVM
         // computes identical weights, even when an immutable map randomizes its iteration order.
         measuredSeconds.entrySet().stream().sorted(Map.Entry.comparingByKey())
-                .forEach(entry -> families.merge(family(entry.getKey()), entry.getValue(), Double::sum));
+                .forEach(entry -> families.merge(DurationHistory.family(entry.getKey()), entry.getValue(), Double::sum));
         if (families.values().stream().anyMatch(seconds -> !Double.isFinite(seconds))) {
             throw new IllegalArgumentException("ShardPilot class family duration overflow");
         }
@@ -66,12 +66,14 @@ public final class ShardPlan {
      * @return one-based shard index
      */
     public int shardFor(String className) {
-        String name = family(className);
+        String name = DurationHistory.family(className);
         return assignments.getOrDefault(name, Math.floorMod(name.hashCode(), shardCount) + 1);
     }
 
     /**
      * Reports known work only; excludes unmeasured classes and JVM/container startup.
+     * Family names define the summation order so randomized immutable-map iteration cannot
+     * change the last bits of a recorded load between JVMs or the resulting report JSON.
      * @param shardIndex one-based shard index
      * @return total recorded duration in seconds
      */
@@ -79,6 +81,7 @@ public final class ShardPlan {
         validateShard(shardCount, shardIndex);
         return durations.entrySet().stream()
                 .filter(entry -> assignments.get(entry.getKey()) == shardIndex)
+                .sorted(Map.Entry.comparingByKey())
                 .mapToDouble(Map.Entry::getValue).sum();
     }
 
@@ -101,10 +104,5 @@ public final class ShardPlan {
             throw new IllegalArgumentException("ShardPilot shard index must be between 1 and shard count (count="
                     + shardCount + ", index=" + shardIndex + ")");
         }
-    }
-
-    private static String family(String className) {
-        int nested = className.indexOf('$');
-        return nested < 0 ? className : className.substring(0, nested);
     }
 }

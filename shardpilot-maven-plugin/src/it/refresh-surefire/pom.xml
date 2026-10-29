@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example.shardpilot</groupId><artifactId>refresh-surefire</artifactId><version>1</version>
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <shardpilot.index>1</shardpilot.index>
+  </properties>
+  <dependencies>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>6.1.3</version><scope>test</scope></dependency>
+  </dependencies>
+  <build><plugins>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.14.0</version></plugin>
+    <plugin>
+      <groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>@project.version@</version>
+      <configuration>
+        <runner>SUREFIRE</runner>
+        <durationsFile>${project.basedir}/history.tsv</durationsFile>
+      </configuration>
+      <executions><execution><id>select</id><goals><goal>select</goal></goals></execution></executions>
+    </plugin>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>3.5.4</version>
+      <configuration>
+        <excludesFile>${project.build.directory}/shardpilot/unit/excludes.txt</excludesFile>
+        <reportsDirectory>${project.build.directory}/surefire-reports/shard-${shardpilot.index}</reportsDirectory>
+        <argLine>-Xmx256m</argLine>
+      </configuration>
+    </plugin>
+  </plugins></build>
+  <profiles><profile>
+    <id>collected</id>
+    <properties><shardpilot.reports>target/surefire-reports/shard-1,target/surefire-reports/shard-2</shardpilot.reports></properties>
+  </profile></profiles>
+</project>
