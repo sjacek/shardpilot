@@ -1,0 +1,57 @@
+# Consumer example: one non-aggregator module with native Surefire select/excludesFile wiring.
+# Its maintained durationsFile is configured at plugin level. Failsafe uses a separate suite.
+# Standalone example; HistoryRefreshCiExamplesTest validates every local job reference.
+# Narrow UndefinedJob suppressions work around false positives in IntelliJ's pre-commit analysis.
+image: eclipse-temurin:21-jdk
+stages: [prepare, test, aggregate]
+
+plan:
+  stage: prepare
+  script:
+    - bash ./mvnw -B -ntp test-compile shardpilot:prepare -Dshardpilot.count=3
+  artifacts:
+    paths: [target/shardpilot/unit/plan/]
+
+test:
+  stage: test
+  parallel: 3
+  # Short local references download their artifacts by default (GitLab needs:artifacts).
+  #noinspection UndefinedJob
+  needs: [plan]
+  script:
+    - bash ./mvnw -B -ntp test -Dshardpilot.count=3 -Dshardpilot.index="$CI_NODE_INDEX"
+  after_script:
+    # Artifact names alone do not isolate extracted files; preserve an indexed directory as well.
+    - mkdir -p "collected/unit/shard-$CI_NODE_INDEX"
+    - if [ -d target/surefire-reports ]; then cp -R target/surefire-reports/. "collected/unit/shard-$CI_NODE_INDEX/"; fi
+  artifacts:
+    when: always
+    name: "unit-$CI_COMMIT_SHA-$CI_NODE_INDEX"
+    paths:
+      - collected/unit/
+      - target/shardpilot/unit/actual/
+
+coverage:
+  stage: aggregate
+  # Retain diagnostics even after native failure; the native test job must remain required.
+  when: always
+  #noinspection UndefinedJob
+  needs: [plan, test]
+  script:
+    - bash ./mvnw -B -ntp shardpilot:verify -Dshardpilot.count=3
+  artifacts:
+    when: always
+    paths: [target/shardpilot/unit/coverage.json, target/shardpilot/unit/coverage.html]
+
+durations:
+  stage: aggregate
+  when: always
+  #noinspection UndefinedJob
+  needs: [plan, test]
+  script:
+    # No lifecycle prefix: clean erases downloads and test/verify could rerun native producers.
+    # This goal uses the unit baseline and a distinct collected XML tree, not another suite's reports.
+    - bash ./mvnw -B -ntp shardpilot:refresh-durations -Dshardpilot.count=3 -Dshardpilot.reports=collected/unit -Dshardpilot.minimumCoverage=0.8
+  artifacts:
+    when: always
+    paths: [target/shardpilot/unit/durations.tsv, target/shardpilot/unit/durations.json]

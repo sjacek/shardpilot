@@ -99,11 +99,13 @@ public abstract class AbstractShardMojo extends AbstractMojo {
      * @return baseline/planned manifest directory
      */
     protected Path planDirectory() { return plannedDirectory == null ? namespace().resolve("plan") : plannedDirectory.toPath(); }
+
     /**
      * Stores one index-specific selection per node; never used as a source of eligibility.
      * @return actual-manifest directory
      */
     protected Path selectionDirectory() { return actualDirectory == null ? namespace().resolve("actual") : actualDirectory.toPath(); }
+
     /**
      * Generated output consumed by the native runner, distinct from maintained consumer exclusions.
      * @return native runner's generated exclusion file

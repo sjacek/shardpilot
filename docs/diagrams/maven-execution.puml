@@ -30,9 +30,13 @@ end
 artifacts -> aggregate : Common plan + all actual-i.yaml
 aggregate -> aggregate : shardpilot:verify\nNo compilation / test rerun / plan replacement
 aggregate -> artifacts : coverage.json + standalone coverage.html
+artifacts -> aggregate : Baseline + all shard XML + immutable previous TSV
+aggregate -> aggregate : shardpilot:refresh-durations\nShared family rules; no producer reruns
+aggregate -> artifacts : Candidate durations.tsv + diagnostic durations.json
 note over runner,aggregate
   Require every native test outcome AND coverage success.
   A selection match does not prove test-method success.
   Empty selections use deny-all; bypassing overrides fail early.
+  Candidate history is adopted only after review, in a later run.
 end note
 @enduml

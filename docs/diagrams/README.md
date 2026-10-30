@@ -13,6 +13,9 @@ preview together; do not edit an SVG by hand.
 | Maven execution | [maven-execution.puml](maven-execution.puml) | [maven-execution.svg](maven-execution.svg) | Test compilation, native runner selection and standalone artifact verification. |
 | Release publication | [publication.puml](publication.puml) | [publication.svg](publication.svg) | Automatic Gradle tag publication and later manual Maven publication from the same tag, each with a complete release gate. |
 | Assignment | [shard-assignment.puml](shard-assignment.puml) | [shard-assignment.svg](shard-assignment.svg) | Measured-family packing, hash fallback and candidate exclusion. |
+| History refresh | [history-refresh.puml](history-refresh.puml) | [history-refresh.svg](history-refresh.svg) | One report cohort, shared normalization, success/failure artifacts and reviewed adoption. |
+| History pruning | [history-pruning.puml](history-pruning.puml) | [history-pruning.svg](history-pruning.svg) | Explicit source precedence, adapter defaults, disabled pruning and missing-source failure. |
+| History recovery | [history-recovery.puml](history-recovery.puml) | [history-recovery.svg](history-recovery.svg) | Valid class selections with missing XML, candidate cleanup, same-cohort restoration and independent native gates. |
 | CI execution | [ci-execution.puml](ci-execution.puml) | [ci-execution.svg](ci-execution.svg) | Independent jobs, consistent inputs and CI-owned result collection. |
 | Manifest tasks | [manifest-tasks.puml](manifest-tasks.puml) | [manifest-tasks.svg](manifest-tasks.svg) | Compilation dependencies, pre-worker evidence and aggregation ordering without reruns. |
 | Manifest CI flow | [manifest-ci.puml](manifest-ci.puml) | [manifest-ci.svg](manifest-ci.svg) | Common planning artifacts, every actual node selection and required CI outcomes. |
@@ -28,7 +31,8 @@ Use a local Java runtime, a PlantUML JAR and Graphviz `dot` available on `PATH`.
 documentation tool, not a ShardPilot runtime/build dependency. No renderer JAR or machine-specific
 installation path is committed to this repository. No diagram uses remote includes or a rendering
 service. The initial previews were rendered with PlantUML 1.2026.8; the 0.3.0 manifest diagrams
-and refreshed component/CI diagrams use PlantUML 1.2026.9.
+and refreshed component/CI diagrams use PlantUML 1.2026.9. The 0.4.0 history diagrams and updated
+module/Maven flow previews use the same 1.2026.9 renderer.
 
 From the repository root, set `PLANTUML_JAR` to your local JAR path. With the current PlantUML CLI:
 

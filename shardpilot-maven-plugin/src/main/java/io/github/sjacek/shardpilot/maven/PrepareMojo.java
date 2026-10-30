@@ -15,6 +15,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 public final class PrepareMojo extends AbstractShardMojo {
     /** Creates the container-managed planning goal. */
     public PrepareMojo() { }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skipAggregator()) return;

@@ -1,0 +1,48 @@
+plugins {
+    id 'java'
+    id 'io.github.sjacek.shardpilot'
+}
+repositories { mavenCentral() }
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+tasks.withType(JavaCompile).configureEach { options.release = 17 }
+dependencies {
+    testImplementation platform('org.junit:junit-bom:6.1.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    // Match the baseline's outer-class candidates; Jupiter discovers nested tests from their owner.
+    include '**/*Test.class'
+    exclude '**/*$*.class'
+    // This local demonstration preserves both runs. Real CI uses isolated workspaces.
+    // Read the invocation's CLI property during configuration; Configuration Cache tracks this input.
+    String nodeIndex = providers.gradleProperty('shardpilot.index').getOrElse('')
+    String reportDirectory = nodeIndex.isEmpty() ? 'results/full' : 'results/shard-' + nodeIndex
+    reports.junitXml.outputLocation.fileValue(layout.buildDirectory.dir(reportDirectory).get().asFile)
+    shardPilot {
+        enabled = true
+        durationsFile = layout.projectDirectory.file('durations.tsv')
+    }
+}
+// Register sibling tasks outside deferred owner configuration. History can precede verification.
+tasks.named('test', Test).get().shardPilot.history {
+    // Read both node directories recursively. Never mix full-run or older-cohort XML into this tree.
+    reports.setFrom(layout.buildDirectory.dir('results'))
+    // Missing either node is a data failure instead of a partially accepted demonstration candidate.
+    minimumCoverage = 1.0
+    // Tiny methods may report zero seconds; apply a positive family floor at this precision.
+    precision = 3
+    minimumSeconds = 0.001
+}
+tasks.named('test', Test).get().shardPilot.verification {
+    // Eligibility must describe the same outer-class selection as the native task above.
+    eligibleClasses.from(sourceSets.test.output.classesDirs.asFileTree.matching {
+        include '**/*Test.class'
+        exclude '**/*$*.class'
+    })
+    shardCount = 2
+}

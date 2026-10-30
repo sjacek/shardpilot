@@ -1,7 +1,3 @@
-import org.gradle.api.plugins.ExtensionAware
-import org.gradle.api.publish.maven.MavenPom
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.plugin.devel.PluginDeclaration
 import org.gradle.plugin.compatibility.CompatibilityExtension
 
 plugins {
@@ -81,6 +77,12 @@ test {
     // NormalizeSvgTest inspects committed previews; changed renders must invalidate cached results.
     inputs.files(rootProject.fileTree('docs/diagrams') { include '*.puml', '*.svg' })
             .withPropertyName('documentationDiagramPreviews')
+    // Example tests consume real repository files; edits must invalidate up-to-date/build-cache hits.
+    inputs.files(rootProject.fileTree('examples/ci') { include '*/.gitlab-ci.yml' })
+            .withPropertyName('historyRefreshCiExamples')
+    inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/duration-history') {
+        include 'build.gradle', 'settings.gradle', 'gradle.properties', 'durations.tsv', 'src/**'
+    }).withPropertyName('historyRefreshConsumerExample')
     // Check the actual publication model, including the marker, rather than only a composite classpath.
     def metadataTasks = tasks.matching { it.name in ['generatePomFileForPluginMavenPublication',
             'generatePomFileForShardpilotPluginMarkerMavenPublication', 'generateMetadataFileForPluginMavenPublication'] }

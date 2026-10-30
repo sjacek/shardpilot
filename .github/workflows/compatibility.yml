@@ -24,7 +24,7 @@ jobs:
       # Keep all results even if one supported runtime regresses.
       fail-fast: false
       matrix:
-        gradle: ['9.0.0', '9.1.0', '9.8.1']
+        gradle: ['9.0.0', '9.1.0', '9.8.2']
         java: ['17', '21', '25']
         exclude:
           # Running Gradle on JDK 25 is supported starting with Gradle 9.1.0.
@@ -46,7 +46,7 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
       - name: Verify the plugin against the consumer runtime
-        # The Wrapper stays fixed; every TestKit consumer uses matrix.gradle and the selected JDK.
+        # The Wrapper builds the plugin; each TestKit consumer uses matrix.gradle and the selected JDK.
         # Invoke through Bash because Windows checkouts may track gradlew without its executable bit.
         run: >-
           bash ./gradlew check assemble

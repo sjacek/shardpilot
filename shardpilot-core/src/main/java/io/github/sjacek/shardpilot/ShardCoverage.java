@@ -76,6 +76,7 @@ public final class ShardCoverage {
     public record Manifest(Set<String> classes, Exception failure) {
         /** Copies the supplied names so the snapshot cannot be changed through its input collection. */
         public Manifest { classes = Set.copyOf(classes); }
+
         Set<String> require() throws IOException {
             if (failure instanceof IOException exception) throw exception;
             if (failure instanceof IllegalArgumentException exception) throw exception;

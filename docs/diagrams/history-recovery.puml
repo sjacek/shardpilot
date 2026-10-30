@@ -1,0 +1,41 @@
+@startuml
+title History refresh: missing XML and recovery
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam ArrowColor #475569
+skinparam sequenceParticipantBackgroundColor #EFF6FF
+skinparam sequenceParticipantBorderColor #2563EB
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+hide footbox
+
+actor "Maintainer" as owner
+collections "Aggregation workspace\nOne pipeline cohort" as files
+participant "Selection verification" as selection
+participant "History refresh" as refresh
+
+files -> selection : Complete baseline + planned + actual manifests
+selection --> files : coverage.json / HTML: PASSED
+files -> refresh : Same baseline + previous TSV\nOne node's XML is missing
+note right of refresh
+  Two-node example: minimumCoverage = 1.0.
+  One family can still be measured;
+  valid selections do not prove XML delivery.
+end note
+refresh --> files : FAILED: MINIMUM_COVERAGE\nWrite JSON; remove stale candidate TSV
+owner -> files : Restore missing XML from the original cohort\nKeep indexed paths and maintained history
+files -> refresh : Repeat only the artifact aggregation
+note right of refresh
+  No compilation, tests or plan regeneration.
+  Changed XML invalidates old task results;
+  Configuration Cache can still be reused.
+end note
+refresh --> files : PASSED: deterministic candidate TSV + JSON
+files --> owner : Review the candidate for a later history commit
+note over owner,refresh
+  Require native test outcomes independently.
+  A new test run forms a new timing cohort.
+end note
+@enduml

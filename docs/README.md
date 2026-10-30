@@ -4,12 +4,11 @@ ShardPilot splits the classes of an opted-in Gradle `Test` task between independ
 Each execution calculates ownership locally from the same inputs. The Maven adapter applies that
 same core to Surefire/Failsafe. There is no coordinator service or replacement test engine.
 
-This checkout documents [0.3.1](releases/0.3.1.md), a patch that adds explicit homepage URLs to
-the Maven POMs and validates them before publication. Sharding, YAML manifests, standalone JSON/HTML
-reports and native Surefire/Failsafe behavior remain compatible with [0.3.0](releases/0.3.0.md),
-which is available from both portals. Current configuration examples target 0.3.1; use the
-[local development setup](../README.md#local-plugin-development) while preparing the release.
-The [0.3.1 release notes](releases/0.3.1.md) contain upgrade examples and the publication checklist.
+This checkout prepares [0.4.0](releases/0.4.0.md): opt-in history refresh for both adapters,
+with candidate TSV and diagnostic JSON from existing JUnit XML. Existing sharding configuration,
+YAML manifests and selection reports remain compatible. Current snippets target 0.4.0; use the
+[local development setup](../README.md#local-plugin-development) before release. The
+[release notes](releases/0.4.0.md) separate local checks from the release-commit CI/publication gates.
 
 ## Guides
 
@@ -19,6 +18,8 @@ The [0.3.1 release notes](releases/0.3.1.md) contain upgrade examples and the pu
 | [Maven adapter](maven.md) | Configure `pom.xml`, native runner filters, suite namespaces and Maven lifecycle/CI artifact goals. |
 | [Gradle/Maven configuration map](configuration.md#gradle-and-maven-configuration-map) | Translate count/index, eligibility, output paths and process controls between adapters. |
 | [Architecture and assignment](architecture.md) | Understand components, class-family ownership, balancing and task inputs. |
+| [History refresh](history-refresh.md) | Generate candidate TSV/JSON, choose pruning, interpret coverage and review timing policies. |
+| [History recovery](history-refresh.md#recover-a-missing-shard-download) | Diagnose missing shard XML, distinguish the three outcome gates and restore the original report cohort. |
 | [CI integration](ci.md) | Run all shards with consistent inputs, isolated workspaces and separate reports. |
 | [Class manifests and coverage](shard-verification.md) | Configure artifact gates, read HTML assignment statuses, expose a GitLab MR link and distinguish selection from test completion. |
 | [PostgreSQL and RabbitMQ example](testcontainers-example.md) | Run a JUnit Jupiter integration suite with shared worker-local Testcontainers fixtures and isolated test data. |
@@ -40,11 +41,13 @@ The consumer owns report publication and artifact access as well as test framewo
 source sets, lifecycle wiring, framework threads, retries, containers and the total resource budget.
 CI owns launching every shard and deciding whether the complete pipeline has passed.
 
-Timing history is optional UTF-8 TSV. The plugin does not import JUnit XML, export updated timings,
-fetch history remotely or update a versioned history file. A history producer is a separate concern.
+Timing history is optional UTF-8 TSV. Opt-in refresh reads existing JUnit XML and writes a
+candidate TSV plus JSON evidence. It never runs producers, fetches history remotely or adopts a
+candidate into versioned history. CI collects one cohort; the consumer reviews and commits it.
 
 The [compatibility matrix](testing.md#gradle-and-jdk-matrix) defines eight Linux CI targets for
-Gradle 9.0.0, 9.1.0 and 9.8.1 with JDK 17, 21 and 25. Local verification also uses Windows.
+Gradle 9.0.0, 9.1.0 and 9.8.2 with JDK 17, 21 and 25. Local verification also uses Windows.
+The repository Wrapper pins Gradle 9.8.2; the CI matrix selects TestKit consumers independently.
 Java 17 plugin bytecode alone is not a compatibility claim; support requires passing matrix
 results for the release revision. See the [verification scope](testing.md#verified-scope).
 The same workflow requires Maven 3.9.16 on JDK 17, 21 and 25. Gradle framework fixtures and
@@ -57,6 +60,7 @@ currently exercise JUnit Jupiter with Surefire/Failsafe 3.5.4.
 - [Source-module development](../CONTRIBUTING.md#source-layout-and-local-development): both build entry points, IDE import and distribution boundaries.
 - [Changelog](../CHANGELOG.md): released changes, upcoming work and limitations.
 - [Contribution guidelines](../CONTRIBUTING.md): implementation and review expectations.
+- [Coding standards](CODING_STANDARDS.md): declaration layout, CI example validation and inspection suppressions.
 - [MIT license](../LICENSE) and [third-party notices](../THIRD_PARTY_NOTICES.md): distribution terms.
 
 No service-specific application configuration or backend migration is required by these guides.

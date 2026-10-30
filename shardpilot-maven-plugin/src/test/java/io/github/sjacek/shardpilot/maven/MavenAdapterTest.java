@@ -33,7 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Model-level edge cases complement Invoker's real native-runner builds. No mocked Maven APIs. */
 class MavenAdapterTest {
-    @TempDir Path directory;
+    @TempDir
+    Path directory;
     SelectMojo select;
     Plugin nativePlugin;
     Xpp3Dom configuration;

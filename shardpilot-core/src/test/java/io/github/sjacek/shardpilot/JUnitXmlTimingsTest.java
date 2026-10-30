@@ -10,9 +10,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class JUnitXmlTimingsTest {
-    @TempDir Path directory;
+    @TempDir
+    Path directory;
 
-    @Test void readsBothRootsWithMetadataButWithoutDiagnosticPayloads() throws Exception {
+    @Test
+    void readsBothRootsWithMetadataButWithoutDiagnosticPayloads() throws Exception {
         Path first = xml("first/TEST-a.xml", """
                 <testsuite name="example.Outer" tests="0" time="0.9">
                   <testcase classname="example.Outer" name="outer"/>
@@ -35,7 +37,8 @@ class JUnitXmlTimingsTest {
         assertEquals(2, JUnitXmlTimings.read(List.of(second, first.getParent(), first)).size());
     }
 
-    @ParameterizedTest @ValueSource(strings = {"NaN", "Infinity", "-1", "secret-not-a-number"})
+    @ParameterizedTest
+    @ValueSource(strings = {"NaN", "Infinity", "-1", "secret-not-a-number"})
     void rejectsInvalidTimesWithoutEchoingValues(String time) throws Exception {
         Path file = xml("TEST-invalid.xml", "<testsuite name=\"example.Bad\" time=\"" + time + "\"/>");
         var failure = assertThrows(JUnitXmlTimings.ReadFailure.class, () -> JUnitXmlTimings.read(List.of(file)));
@@ -45,7 +48,8 @@ class JUnitXmlTimingsTest {
         assertNull(failure.getCause());
     }
 
-    @ParameterizedTest @ValueSource(strings = {
+    @ParameterizedTest
+    @ValueSource(strings = {
             "<testsuite name='example.Valid'/>",
             "<testsuite name='invalid/name' time='1'/>",
             "<testsuite name='example.Valid' time='1' tests='-1'/>",
@@ -57,7 +61,8 @@ class JUnitXmlTimingsTest {
         assertThrows(JUnitXmlTimings.ReadFailure.class, () -> JUnitXmlTimings.read(List.of(file)));
     }
 
-    @ParameterizedTest @ValueSource(strings = {
+    @ParameterizedTest
+    @ValueSource(strings = {
             "<!DOCTYPE testsuite [<!ENTITY secret 'SECRET'>]>",
             "<!DOCTYPE testsuite SYSTEM 'file:///SECRET'>",
             "<!DOCTYPE testsuite [<!ENTITY secret SYSTEM 'http://127.0.0.1:1/SECRET'>]>"})
@@ -68,7 +73,8 @@ class JUnitXmlTimingsTest {
         assertNull(failure.getCause());
     }
 
-    @Test void classifiesSkippedAndAmbiguousCasesAndRetainsCompletedSuitesOnParseFailure() throws Exception {
+    @Test
+    void classifiesSkippedAndAmbiguousCasesAndRetainsCompletedSuitesOnParseFailure() throws Exception {
         Path good = xml("TEST-a.xml", """
                 <testsuites>
                   <testsuite name="example.Skipped" tests="2" time="0.01">
@@ -90,12 +96,14 @@ class JUnitXmlTimingsTest {
         assertFalse(failure.getMessage().contains("SECRET"));
     }
 
-    @Test void ignoresUnrelatedXmlAndMissingReportDirectories() throws Exception {
+    @Test
+    void ignoresUnrelatedXmlAndMissingReportDirectories() throws Exception {
         xml("other.xml", "not XML");
         assertTrue(JUnitXmlTimings.read(List.of(directory, directory.resolve("missing"))).isEmpty());
     }
 
-    @ParameterizedTest @ValueSource(strings = {"flakyFailure", "flakyError", "rerunFailure", "rerunError"})
+    @ParameterizedTest
+    @ValueSource(strings = {"flakyFailure", "flakyError", "rerunFailure", "rerunError"})
     void everyRetryMarkerExcludesTheSampleEvenWhenFailureInclusionIsEnabled(String marker) throws Exception {
         Path file = xml("TEST-retry.xml", "<testsuite name='example.Retry' tests='1' time='1'>"
                 + "<testcase name='same'><" + marker + " message='SECRET'/></testcase></testsuite>");
@@ -108,12 +116,14 @@ class JUnitXmlTimingsTest {
         assertFalse(result.report().json().contains("SECRET"));
     }
 
-    @Test void aggregateSuiteNestingIsRejectedRatherThanDoubleCounted() throws Exception {
+    @Test
+    void aggregateSuiteNestingIsRejectedRatherThanDoubleCounted() throws Exception {
         Path file = xml("TEST-aggregate.xml", "<testsuite name='example.Outer' time='2'><testsuite name='example.Outer$Inner' time='1'/></testsuite>");
         assertThrows(JUnitXmlTimings.ReadFailure.class, () -> JUnitXmlTimings.read(List.of(file)));
     }
 
-    @Test void ignoresStructuredPayloadsThatImitateSuiteCaseAndRetryMetadata() throws Exception {
+    @Test
+    void ignoresStructuredPayloadsThatImitateSuiteCaseAndRetryMetadata() throws Exception {
         Path file = xml("TEST-payload.xml", """
                 <testsuite name="example.Real" time="2" tests="1">
                   <properties><testcase classname="invalid/name" name="PAYLOAD_SECRET"/></properties>
@@ -138,7 +148,8 @@ class JUnitXmlTimingsTest {
         assertFalse(suites.toString().contains("PAYLOAD_SECRET"));
     }
 
-    @Test void malformedTailRetainsOnlyCompletelyClosedSuitesFromTheSameFile() throws Exception {
+    @Test
+    void malformedTailRetainsOnlyCompletelyClosedSuitesFromTheSameFile() throws Exception {
         Path file = xml("TEST-partial.xml", """
                 <testsuites>
                   <testsuite name="example.Complete" tests="1" time="1"><testcase name="ok"/></testsuite>
@@ -153,7 +164,8 @@ class JUnitXmlTimingsTest {
         assertThrows(UnsupportedOperationException.class, () -> failure.partial().clear());
     }
 
-    @Test void acceptsNamespacedReportsAndSnapshotsTestcaseMetadata() throws Exception {
+    @Test
+    void acceptsNamespacedReportsAndSnapshotsTestcaseMetadata() throws Exception {
         Path file = xml("TEST-namespace.xml", """
                 <testsuites xmlns="urn:fixture">
                   <testsuite name="example.Żółć" tests="1" time="0.5">

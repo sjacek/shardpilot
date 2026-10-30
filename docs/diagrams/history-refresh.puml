@@ -1,0 +1,35 @@
+@startuml
+title Duration refresh: evidence to reviewed history
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam ArrowColor #475569
+skinparam rectangleBackgroundColor #EFF6FF
+skinparam rectangleBorderColor #2563EB
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+left to right direction
+rectangle "CI collects one cohort\nProject + suite + revision\nKeep shard directories" as ci
+rectangle "Existing TEST-*.xml\nEligibility baseline / bytecode\nImmutable previous TSV" as inputs
+rectangle "Gradle refresh task\nor Maven standalone goal\nNo producer dependencies" as adapter
+rectangle "Shared core\nSecure XML metadata\nComplete class families\nPrune, merge, floor, round" as core
+rectangle "Candidate durations.tsv\ndurations.json: PASSED" as success
+rectangle "durations.json: FAILED\nRemove stale candidate TSV\nFail task / goal" as failure
+rectangle "Human review\nAdopt in a later commit\nNext pipeline uses one snapshot" as review
+ci --> inputs
+inputs --> adapter
+adapter --> core
+core --> success : Accepted evidence
+core --> failure : Invalid / insufficient data
+success --> review
+note bottom of adapter
+  Invalid configuration: reject before parsing.
+  I/O errors fail the build; writes are not atomic.
+end note
+note bottom of review
+  Keep native test and selection-coverage gates.
+  Recorded loads are not wall-clock predictions.
+  Refresh never overwrites maintained history.
+end note
+@enduml

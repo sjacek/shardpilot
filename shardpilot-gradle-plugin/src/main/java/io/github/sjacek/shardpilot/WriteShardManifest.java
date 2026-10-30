@@ -22,30 +22,37 @@ import org.gradle.api.tasks.TaskAction;
 public abstract class WriteShardManifest extends DefaultTask {
     /** Creates a Gradle-managed task. */
     public WriteShardManifest() { }
+
     /**
      * Supplies actual candidate bytecode.
      * @return the configured value
      */
-    @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public abstract ConfigurableFileCollection getClasses();
+
     /**
      * Supplies bytecode roots.
      * @return the configured value
      */
-    @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public abstract ConfigurableFileCollection getClassDirectories();
+
     /**
      * Supplies current execution partition size.
      * @return the configured value
      */
     @Input
     public abstract Property<Integer> getShardCount();
+
     /**
      * Supplies one-based execution index.
      * @return the configured value
      */
     @Input
     public abstract Property<Integer> getShardIndex();
+
     /**
      * Supplies index-specific output artifact.
      * @return the configured value

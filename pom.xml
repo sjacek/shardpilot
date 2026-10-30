@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.sjacek</groupId>
   <artifactId>shardpilot-parent</artifactId>
-  <version>0.3.1</version>
+  <version>0.4.0</version>
   <packaging>pom</packaging>
   <name>ShardPilot build parent</name>
   <description>ShardPilot helps shorten CI feedback by splitting JVM test classes into deterministic,
@@ -14,7 +14,8 @@
     standalone JSON and HTML reports for verifying class selections. This parent POM supplies shared
     dependency and build configuration for shardpilot-core and shardpilot-maven-plugin. Consumers
     configure the appropriate build-tool adapter; class-selection verification complements normal
-    test result checks.</description>
+    test result checks. Opt-in history refresh creates candidate TSV and JSON from existing JUnit XML
+    without rerunning tests or modifying maintained history.</description>
   <url>https://github.com/sjacek/shardpilot</url>
   <licenses><license><name>MIT License</name><url>https://opensource.org/license/mit</url></license></licenses>
   <developers>

@@ -27,48 +27,58 @@ import org.gradle.work.DisableCachingByDefault;
 public abstract class VerifyShardManifests extends DefaultTask {
     /** Creates an always-running verification gate. */
     public VerifyShardManifests() { getOutputs().upToDateWhen(task -> false); }
+
     /**
      * Supplies directory of immutable planning evidence.
      * @return the configured value
      */
     @Internal
     public abstract DirectoryProperty getPlannedDirectory();
+
     /**
      * Supplies directory of actual candidate evidence.
      * @return the configured value
      */
     @Internal
     public abstract DirectoryProperty getActualDirectory();
+
     /**
      * Supplies planning inputs; missing files are reported by the action, including a failure JSON.
      * @return the configured value
      */
-    @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public FileTree getPlannedFiles() { return getPlannedDirectory().getAsFileTree(); }
+
     /**
      * Supplies execution inputs; filenames retain the CI index.
      * @return the configured value
      */
-    @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public FileTree getActualFiles() { return getActualDirectory().getAsFileTree(); }
+
     /**
      * Supplies expected number of partitions.
      * @return the configured value
      */
     @Input
     public abstract Property<Integer> getShardCount();
+
     /**
      * Supplies whether to check downloaded actual selections.
      * @return the configured value
      */
     @Input
     public abstract Property<Boolean> getVerifyActual();
+
     /**
      * Supplies policy for empty individual partitions.
      * @return the configured value
      */
     @Input
     public abstract Property<Boolean> getRequireNonEmptyShards();
+
     /**
      * Supplies report retained on success and failure.
      * @return the configured value

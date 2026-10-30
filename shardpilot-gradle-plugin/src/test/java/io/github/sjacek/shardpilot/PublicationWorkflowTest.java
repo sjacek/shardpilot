@@ -94,6 +94,8 @@ class PublicationWorkflowTest {
         assertTrue(mapping(compatibility.get("concurrency")).get("group").toString().startsWith("compatibility-"));
 
         Map<?, ?> matrixJob = mapping(mapping(compatibility.get("jobs")).get("compatibility"));
+        // Required status contexts use these exact labels; matrix upgrades must update the live ruleset too.
+        assertEquals("Gradle ${{ matrix.gradle }} / JDK ${{ matrix.java }}", matrixJob.get("name"));
         Map<?, ?> strategy = mapping(matrixJob.get("strategy"));
         assertEquals(false, strategy.get("fail-fast"));
         assertNull(matrixJob.get("continue-on-error"));
@@ -107,7 +109,7 @@ class PublicationWorkflowTest {
             assertTrue(cells.remove(pair.get("gradle") + "/" + pair.get("java")));
         }
         assertEquals(Set.of("9.0.0/17", "9.0.0/21", "9.1.0/17", "9.1.0/21", "9.1.0/25",
-                "9.8.1/17", "9.8.1/21", "9.8.1/25"), cells);
+                "9.8.2/17", "9.8.2/21", "9.8.2/25"), cells);
         String checks = stepNamed(matrixJob, "Verify the plugin against the consumer runtime").get("run").toString();
         assertTrue(checks.contains("check assemble"));
         assertTrue(checks.contains("-PtestGradleVersion=${{ matrix.gradle }}"));
@@ -155,6 +157,9 @@ class PublicationWorkflowTest {
     @Test
     void sharedReleaseGateAlsoRequiresEveryMavenRuntimeAndRealInvokerBuilds() throws IOException {
         var maven = mapping(mapping(workflow("compatibility").get("jobs")).get("maven"));
+        assertEquals("Maven 3.9.16 / JDK ${{ matrix.java }}", maven.get("name"));
+        assertEquals("Signed Maven release bundle (no upload)",
+                mapping(mapping(workflow("compatibility").get("jobs")).get("release-artifacts")).get("name"));
         assertEquals(List.of("17", "21", "25"), mapping(mapping(maven.get("strategy")).get("matrix")).get("java"));
         assertEquals(false, mapping(maven.get("strategy")).get("fail-fast"));
         assertNull(maven.get("if"));

@@ -38,6 +38,7 @@ public final class DurationHistoryRefresh {
         DISABLED("disabled");
         private final String label;
         Source(String label) { this.label = label; }
+
         /**
          * Stable JSON source name.
          * @return stable JSON source name
@@ -63,11 +64,13 @@ public final class DurationHistoryRefresh {
             if (source == Source.DISABLED && !names.isEmpty()) throw new IllegalArgumentException("Disabled pruning has no eligible set");
             families = Set.copyOf(names);
         }
+
         /**
          * Explicit no-pruning eligibility.
          * @return explicit no-pruning eligibility
          */
         public static Eligibility disabled() { return new Eligibility(Source.DISABLED, Set.of()); }
+
         /**
          * Checks family participation without treating a configured empty set as disabled pruning.
          * @param family outer family name
@@ -100,6 +103,7 @@ public final class DurationHistoryRefresh {
             java.util.Objects.requireNonNull(duplicates);
             ShardPlan.validateShard(shardCount, 1);
         }
+
         /**
          * Conservative default options.
          * @return conservative default options
@@ -115,6 +119,7 @@ public final class DurationHistoryRefresh {
     public record Result(Map<String, Double> history, HistoryRefreshReport report) {
         /** Makes the successful history immutable. */
         public Result { history = Map.copyOf(history); }
+
         /**
          * Whether the candidate TSV may be written.
          * @return whether the candidate TSV may be written
@@ -268,6 +273,7 @@ public final class DurationHistoryRefresh {
         double seconds;
         int tests, skipped, failures, errors;
         Combined(String name) { this.name = name; }
+
         void add(JUnitXmlTimings.Suite suite) {
             tests = Math.addExact(tests, suite.tests()); skipped = Math.addExact(skipped, suite.skipped());
             failures = Math.addExact(failures, suite.failures()); errors = Math.addExact(errors, suite.errors());
@@ -275,8 +281,10 @@ public final class DurationHistoryRefresh {
             if (!Double.isFinite(seconds)) throw new ArithmeticException();
             raw.add(suite);
         }
+
         boolean executed() { return raw.stream().allMatch(suite -> suite.cases().isEmpty())
                 ? tests > 0 && skipped != tests : raw.stream().anyMatch(JUnitXmlTimings.Suite::executed); }
+
         boolean failed() { return failures > 0 || errors > 0 || raw.stream().anyMatch(JUnitXmlTimings.Suite::failed); }
     }
 
@@ -289,9 +297,11 @@ public final class DurationHistoryRefresh {
         boolean classified, normalizing, merged;
         final Map<Reason, Integer> diagnostics = new EnumMap<>(Reason.class);
         Statistics(Eligibility eligibility, Options options) { this.eligibility = eligibility; this.options = options; }
+
         Result failure(Reason reason, String detail, List<Double> oldLoads, List<Double> newLoads) {
             return new Result(Map.of(), report(Status.FAILED, reason, detail, oldLoads, newLoads));
         }
+
         HistoryRefreshReport report(Status status, Reason reason, String detail, List<Double> oldLoads, List<Double> newLoads) {
             return new HistoryRefreshReport(status, reason, detail,
                     new HistoryRefreshReport.Counts(normalizing ? measured : null, normalizing ? measuredSuites : null,

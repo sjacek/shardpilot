@@ -10,7 +10,7 @@ test-runner replacement or telemetry. YAML manifests use SnakeYAML Engine in the
 
 Plugin ID: `io.github.sjacek.shardpilot` · License: [MIT](LICENSE).
 
-Maven coordinates: `io.github.sjacek:shardpilot-maven-plugin:0.3.1`. See the
+Maven coordinates: `io.github.sjacek:shardpilot-maven-plugin:0.4.0`. See the
 [Maven setup guide](docs/maven.md) and [example POMs](examples/maven/README.md). Gradle users retain
 the same plugin ID, public DSL, implementation coordinates and included-build entry point.
 
@@ -69,14 +69,16 @@ collects the results. It does not create CI jobs or coordinate their completion.
 
 ## Status
 
-This checkout prepares **[0.3.1](docs/releases/0.3.1.md)**, a metadata-only patch that declares
-the project homepage directly in each Maven publication. Existing sharding configuration,
-YAML manifests and JSON/HTML reports need no migration. The installation snippets target 0.3.1;
-use the [explicit local development setup](#local-plugin-development) before publishing it.
+This checkout prepares **[0.4.0](docs/releases/0.4.0.md)** with opt-in duration-history refresh
+for Gradle and Maven. Generate a candidate TSV and diagnostic JSON from existing JUnit XML,
+review the result, then adopt it for a later pipeline. Existing sharding settings and YAML
+manifests remain compatible. Installation snippets target 0.4.0; use the
+[local development setup](#local-plugin-development) to try this checkout before release.
 
-Version **[0.3.0](docs/releases/0.3.0.md)** is available from both Gradle Plugin Portal and Maven Central.
-It introduced opt-in [class-manifest verification](#optional-class-manifest-verification), standalone
-HTML reports and the [Maven adapter](docs/maven.md). Version 0.1.0 does not provide `testProcesses`.
+Version **[0.3.1](docs/releases/0.3.1.md)** is available from both Gradle Plugin Portal and Maven Central
+and includes the explicit Maven homepage fix. Version [0.3.0](docs/releases/0.3.0.md) introduced
+opt-in [class-manifest verification](#optional-class-manifest-verification), standalone HTML reports
+and the [Maven adapter](docs/maven.md). Version 0.1.0 does not provide `testProcesses`.
 
 Versions [0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1) and
 [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0)
@@ -90,7 +92,8 @@ For future releases containing the updated workflow, temporary Central status er
 without repeating the upload. An accepted deployment can be resumed by ID; see
 [publication recovery](docs/maven-central.md#resume-an-accepted-central-deployment).
 The [compatibility matrix](docs/testing.md#gradle-and-jdk-matrix) defines eight Linux CI targets across
-Gradle 9.0.0, 9.1.0 and 9.8.1 with JDK 17, 21 and 25, excluding Gradle 9.0.0/JDK 25.
+Gradle 9.0.0, 9.1.0 and 9.8.2 with JDK 17, 21 and 25, excluding Gradle 9.0.0/JDK 25.
+The repository's build Wrapper uses Gradle 9.8.2; CI selects the consumer runtimes independently.
 For the 0.2.0 candidate, all eight pairs passed locally in Linux amd64 containers on 23 October 2026:
 67 tests per pair, 536 executions, no failures or skips. The tag workflow reruns the matrix for the
 release commit before publication. Plugin bytecode targets
@@ -119,7 +122,7 @@ In the consumer's `build.gradle`:
 ```groovy
 plugins {
     id 'java'
-    id 'io.github.sjacek.shardpilot' version '0.3.1'
+    id 'io.github.sjacek.shardpilot' version '0.4.0'
 }
 ```
 
@@ -128,7 +131,7 @@ Or, in `build.gradle.kts`:
 ```kotlin
 plugins {
     java
-    id("io.github.sjacek.shardpilot") version "0.3.1"
+    id("io.github.sjacek.shardpilot") version "0.4.0"
 }
 ```
 
@@ -179,7 +182,7 @@ import io.github.sjacek.shardpilot.ShardPilotExtension
 
 plugins {
     java
-    id("io.github.sjacek.shardpilot") version "0.3.1"
+    id("io.github.sjacek.shardpilot") version "0.4.0"
 }
 
 tasks.test {
@@ -204,8 +207,8 @@ The `shardPilot` extension belongs to each `Test` task, not to the root project.
 
 ### Optional test-process settings
 
-Version **0.3.1** retains the explicit `testProcesses` block for Gradle's existing worker JVMs.
-Set the plugin version in the installation examples above to `0.3.1`, or use the
+Version **0.4.0** retains the explicit `testProcesses` block for Gradle's existing worker JVMs.
+Set the plugin version in the installation examples above to `0.4.0`, or use the
 [local development override](#local-plugin-development) to verify this checkout:
 
 ```groovy
@@ -302,7 +305,8 @@ distort balance until the history is refreshed.
 
 All jobs **must use the same revision, history, shard count and test selection**. Do not rewrite
 the history while shards are running. ShardPilot does not fetch data remotely or automatically
-modify versioned history. Automatic JUnit XML history export is not part of this initial version.
+modify versioned history. Opt-in [history refresh](docs/history-refresh.md) creates candidate artifacts
+from existing JUnit XML; adoption remains a reviewed consumer change.
 
 Sharding intersects the task's original file includes/excludes; it never widens the suite.
 Framework discovery and `--tests` still belong to Gradle. An explicit selection can match nothing
@@ -313,9 +317,35 @@ Only classes are distributed. Methods stay together, and framework parallelism i
 enabled or disabled. Startup, container reuse, Spring context locality and unknown classes can
 affect wall-clock balance; recorded seconds are not a promise of a particular speedup.
 
+## Refresh duration history (0.4.0)
+
+Register the refresh task once, outside a deferred owner configuration action:
+
+```groovy
+tasks.named('test', Test).get().shardPilot.history {
+    minimumCoverage = 0.8
+}
+```
+
+After running the complete suite or downloading all shard reports and the prepared baseline:
+
+```shell
+./gradlew refreshTestShardDurations -Pshardpilot.count=3
+```
+
+This writes `build/shardpilot/test/durations.tsv` and `durations.json`. It does not run tests,
+compile classes or overwrite `durationsFile`. With verification configured, AUTO uses its
+baseline; otherwise it uses existing owning-task bytecode. Maven provides the standalone
+`shardpilot:refresh-durations` goal and defaults to its prepared baseline. Collect a complete
+cohort first; a green refresh does not replace native test or manifest-coverage gates.
+
+See the [policy and option reference](docs/history-refresh.md),
+[CI artifact examples](docs/ci.md#refresh-history-from-collected-reports) and
+[Docker-free Gradle example](examples/gradle/junit-jupiter/duration-history/README.md).
+
 ## Optional class-manifest verification
 
-Version **0.3.1** can prepare a common plan, record the real candidate
+Version **0.4.0** can prepare a common plan, record the real candidate
 selection before each test task and verify the artifacts collected from every CI shard. Configure
 it once on the owning `Test` task; existing builds gain no verification tasks or task dependencies until they opt in.
 
@@ -507,7 +537,7 @@ include the adapter and core. The plugin ID `io.github.sjacek.shardpilot` and im
 `io.github.sjacek:shardpilot` are unchanged by the source-module move.
 
 For Maven, run `./mvnw -B -ntp install -DskipITs` at the repository root, then build a consuming
-POM with `io.github.sjacek:shardpilot-maven-plugin:0.3.1`. This installs the Maven parent, core and
+POM with `io.github.sjacek:shardpilot-maven-plugin:0.4.0`. This installs the Maven parent, core and
 adapter locally; it does not publish remotely. Maven does not use Gradle's `includeBuild`.
 See the [runnable Maven commands](examples/maven/README.md) for both runners and the reactor.
 

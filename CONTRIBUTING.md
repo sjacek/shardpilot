@@ -4,10 +4,14 @@ ShardPilot is MIT-licensed. Only submit code and examples that you have the righ
 Preserve third-party attribution and license requirements; do not copy application-specific code,
 credentials, customer data, private repository addresses or captured application logs into fixtures.
 
+Follow the [coding standards](docs/CODING_STANDARDS.md) for declaration layout, CI example validation
+and handling IDE diagnostics or inspection suppressions.
+
 ## Source layout and local development
 
 The sibling modules are `shardpilot-core`, `shardpilot-gradle-plugin` and `shardpilot-maven-plugin`.
-Keep assignment, YAML encoding and report semantics in the core; it has no Gradle/Maven API imports.
+Keep assignment, YAML encoding, XML timing normalization, history refresh and report semantics in
+the core; it has no Gradle/Maven API imports.
 Keep build-tool lifecycle, selection filters and runner configuration in the corresponding adapter.
 See the [module diagram](docs/architecture.md#source-modules-and-artifact-compatibility).
 
@@ -16,9 +20,15 @@ See the [module diagram](docs/architecture.md#source-modules-and-artifact-compat
 | Root `settings.gradle` / `build.gradle` | Core and Gradle adapter; separate module `build/` directories. |
 | Root `pom.xml` | Core and Maven adapter; separate module `target/` directories. |
 | `examples/gradle/<framework>/testcontainers` | Independent Gradle consumers using the repository-root composite. |
+| `examples/gradle/junit-jupiter/duration-history` | Docker-free consumer; its build/test inputs also run through TestKit in the Gradle adapter suite. |
 | `examples/maven/junit-jupiter` / `reactor` | Independent Maven consumers; Invoker clones them into isolated test outputs. |
 
 Import the root Gradle settings for Gradle development and the root POM for Maven development.
+In IntelliJ IDEA, use the root Gradle Wrapper and a supported Gradle JVM, then synchronize
+the Gradle project after a wrapper update. Gradle API imports in build scripts come from that
+imported Gradle model. Independent examples are not root subprojects: link the example's
+`settings.gradle` separately when editing it, using the root Wrapper's Gradle distribution
+for examples without their own wrapper. See [IDE troubleshooting](docs/troubleshooting.md#gradle-api-imports-in-intellij-idea).
 Both builds compile the same core sources, using separate outputs. Run Gradle verification
 sequentially in one checkout: concurrent TestKit/example/composite builds can overwrite the same
 plugin outputs. Maven reactor `-T` support concerns independent project namespaces, not concurrent
@@ -62,7 +72,26 @@ existing test filters, task opt-in and failed test propagation. Update both Groo
 when changing the public extension. Do not advertise a compatibility combination without testing it.
 
 History is untrusted metadata: reject malformed numbers and identities, and do not print raw lines.
-If XML history import is added, disable DTDs and external entities and read timing metadata only.
+The XML timing reader disables DTDs and external entities and reads timing metadata only. Preserve
+that boundary when extending it; retry/failure payloads and arbitrary parser diagnostics must not
+leak into lifecycle messages or refresh JSON. Shared rules belong in the core; each adapter owns
+source selection, input/output protection and build-tool failure handling. See the
+[refresh contract](docs/history-refresh.md) for complete-family merging and candidate cleanup.
+
+For changes to the runnable history example or its CI transport, focused checks are:
+
+```shell
+./gradlew :shardpilot-gradle-plugin:test --tests 'io.github.sjacek.shardpilot.HistoryRefreshExampleFunctionalTest' --tests 'io.github.sjacek.shardpilot.HistoryRefreshCiExamplesTest'
+./mvnw -B -ntp verify -Dinvoker.test=junit-jupiter
+```
+
+The first command runs the actual Gradle example through TestKit plus structural CI checks.
+The second runs core/Maven unit tests and selects the Jupiter example, including Surefire and
+Failsafe, from Invoker. It does not run the other native fixtures or reactor example; retain
+the full checks above for shared implementation/release verification. Quote dotted `-D`/`-P`
+arguments in PowerShell. Example source/configuration files are declared Gradle test inputs;
+keep that input set aligned when adding files the functional example test reads. Generated
+`build/` or `target/` evidence must never become a fixture input.
 
 For manifest changes, update the [YAML schema and artifact lifecycle](docs/shard-verification.md).
 Test wrong schemas/types, duplicate keys/names, canonical hashes, missing/stale/swapped evidence

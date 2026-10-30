@@ -5,6 +5,8 @@ recorded by the Gradle Plugin Portal.
 
 ## Unreleased
 
+## [0.4.0](docs/releases/0.4.0.md)
+
 ### Added
 
 - Maven `refresh-durations` creates candidate TSV/JSON artifacts from existing Surefire or
@@ -13,6 +15,20 @@ recorded by the Gradle Plugin Portal.
   candidate TSV from existing JUnit XML reports without rerunning tests or modifying versioned history.
 - Shared refresh logic normalizes complete class families, excludes skipped/retried/ambiguous
   measurements and reports coverage plus before/after recorded shard loads in JSON, including data failures.
+- Runnable history-refresh examples and CI collection flows for Gradle and Maven, with
+  option references, diagnostic contracts and diagrams for reviewed history adoption.
+
+### Compatibility and upgrade
+
+- Existing sharding DSL, native Maven selection and YAML manifests remain compatible.
+  Enable Gradle `history {}` or invoke Maven `refresh-durations` to use the new feature;
+  review and adopt the generated candidate separately for the next pipeline.
+
+### Build tooling
+
+- Build ShardPilot with Gradle 9.8.2 through the regenerated, checksum-verified Wrapper.
+  CI tests 9.8.2 on JDK 17/21/25, replacing the three 9.8.1 cells while retaining eight
+  required consumer runtime combinations.
 
 ### Fixed
 

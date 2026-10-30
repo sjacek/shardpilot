@@ -19,9 +19,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** Sequential real builds verify cache contracts, producer isolation and both supported DSLs. */
 class HistoryRefreshFunctionalTest {
-    @TempDir Path directory;
+    @TempDir
+    Path directory;
 
-    @Test void defaultReportsDoNotScheduleTestOrCompilationProducers() throws Exception {
+    @Test
+    void defaultReportsDoNotScheduleTestOrCompilationProducers() throws Exception {
         fixture();
         xml("build/test-results/test/TEST-a.xml", 1);
         history("pruning = ShardHistoryOptions.Pruning.DISABLED");
@@ -31,7 +33,8 @@ class HistoryRefreshFunctionalTest {
         assertTrue(json().contains("\"pruning\":\"disabled\""));
     }
 
-    @Test void reusesConfigurationAndBuildCacheWithoutProducers() throws Exception {
+    @Test
+    void reusesConfigurationAndBuildCacheWithoutProducers() throws Exception {
         fixture(); inputs();
         history("reports.setFrom(files('downloaded')); classDirectories.from(files('classes'))");
         BuildResult first = run("refreshTestShardDurations", "--build-cache");
@@ -47,7 +50,8 @@ class HistoryRefreshFunctionalTest {
         assertEquals(expected, Files.readString(output())); assertEquals(report, json());
     }
 
-    @ParameterizedTest @ValueSource(booleans = {true, false})
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
     void verificationConventionIsLazyInEitherBlockOrder(boolean historyFirst) throws Exception {
         fixture(); inputs();
         write("plan/baseline.yaml", "schemaVersion: 1\nclasses:\n  - example.AlphaTest\n");
@@ -62,7 +66,8 @@ class HistoryRefreshFunctionalTest {
         assertTrue(json().contains("\"pruning\":\"baseline\""));
     }
 
-    @ParameterizedTest @ValueSource(strings = {"baseline", "classes", "disabled"})
+    @ParameterizedTest
+    @ValueSource(strings = {"baseline", "classes", "disabled"})
     void explicitAutoSourceOverridesMissingVerificationBaseline(String source) throws Exception {
         fixture(); inputs(); verification();
         write("explicit.yaml", "schemaVersion: 1\nclasses:\n  - example.AlphaTest\n");
@@ -74,7 +79,8 @@ class HistoryRefreshFunctionalTest {
         assertTrue(json().contains("\"pruning\":\"" + (source.equals("baseline") ? "baseline" : source.equals("classes") ? "classDirectories" : "disabled") + "\""));
     }
 
-    @ParameterizedTest @ValueSource(strings = {"BASELINE", "CLASS_DIRECTORIES", "DISABLED"})
+    @ParameterizedTest
+    @ValueSource(strings = {"BASELINE", "CLASS_DIRECTORIES", "DISABLED"})
     void acceptsEveryExplicitPruningMode(String mode) throws Exception {
         fixture(); inputs();
         write("baseline.yaml", "schemaVersion: 1\nclasses:\n  - example.AlphaTest\n");
@@ -88,7 +94,8 @@ class HistoryRefreshFunctionalTest {
         assertTrue(json().contains("\"status\":\"PASSED\""));
     }
 
-    @ParameterizedTest @ValueSource(strings = {"AUTO", "CLASS_DIRECTORIES"})
+    @ParameterizedTest
+    @ValueSource(strings = {"AUTO", "CLASS_DIRECTORIES"})
     void fallsBackToExistingOwningTaskClassDirectoriesWithoutRecompiling(String mode) throws Exception {
         fixture();
         run("testClasses"); // The caller deliberately prepares bytecode in an earlier invocation.
@@ -99,7 +106,8 @@ class HistoryRefreshFunctionalTest {
         assertTrue(json().contains("\"pruning\":\"classDirectories\""));
     }
 
-    @ParameterizedTest @ValueSource(strings = {
+    @ParameterizedTest
+    @ValueSource(strings = {
             "baselineFile = layout.projectDirectory.file('baseline.yaml'); classDirectories.from(files('classes'))",
             "pruning = ShardHistoryOptions.Pruning.BASELINE",
             "pruning = ShardHistoryOptions.Pruning.BASELINE; baselineFile = layout.projectDirectory.file('baseline.yaml'); classDirectories.from(files('classes'))",
@@ -120,7 +128,8 @@ class HistoryRefreshFunctionalTest {
         assertEquals(original, Files.readString(directory.resolve("durations.tsv")));
     }
 
-    @ParameterizedTest @ValueSource(strings = {"missing", "empty", "duplicate", "skipped", "invalidXml", "coverage",
+    @ParameterizedTest
+    @ValueSource(strings = {"missing", "empty", "duplicate", "skipped", "invalidXml", "coverage",
             "invalidHistory", "invalidBaseline", "missingClasses"})
     void dataFailureWritesJsonAndRemovesStaleCandidate(String failure) throws Exception {
         fixture(); inputs();
@@ -165,7 +174,8 @@ class HistoryRefreshFunctionalTest {
         assertEquals(FAILED, refreshOutcome(result));
     }
 
-    @Test void protectsHistoryWhenAnOtherwiseValidResultWasAlreadyCached() throws Exception {
+    @Test
+    void protectsHistoryWhenAnOtherwiseValidResultWasAlreadyCached() throws Exception {
         fixture(); inputs();
         history("reports.setFrom(files('downloaded')); classDirectories.from(files('classes'))");
         run("refreshTestShardDurations", "--build-cache");
@@ -175,7 +185,8 @@ class HistoryRefreshFunctionalTest {
         assertEquals(original, Files.readString(directory.resolve("durations.tsv")));
     }
 
-    @Test void explicitTestOutputProvidersAreAlsoDetachedFromProducerDependencies() throws Exception {
+    @Test
+    void explicitTestOutputProvidersAreAlsoDetachedFromProducerDependencies() throws Exception {
         fixture();
         xml("build/test-results/test/TEST-a.xml", 1);
         history("reports.setFrom(tasks.named('test')); pruning = ShardHistoryOptions.Pruning.DISABLED");
@@ -183,7 +194,8 @@ class HistoryRefreshFunctionalTest {
         assertTrue(json().contains("\"measured\":1"));
     }
 
-    @Test void aLaterDataFailureReplacesPreviousSuccessEvidenceWithoutCachingFailure() throws Exception {
+    @Test
+    void aLaterDataFailureReplacesPreviousSuccessEvidenceWithoutCachingFailure() throws Exception {
         fixture(); inputs();
         history("reports.setFrom(files('downloaded')); classDirectories.from(files('classes'))");
         run("refreshTestShardDurations", "--build-cache");
@@ -196,7 +208,8 @@ class HistoryRefreshFunctionalTest {
         }
     }
 
-    @Test void customTestTaskGetsItsOwnNamespaceAndOrderingWithoutSchedulingIt() throws Exception {
+    @Test
+    void customTestTaskGetsItsOwnNamespaceAndOrderingWithoutSchedulingIt() throws Exception {
         fixture(); inputs();
         append("""
                 tasks.register('customIntegration', Test) { testClassesDirs = files('classes') }
@@ -208,7 +221,8 @@ class HistoryRefreshFunctionalTest {
         assertFalse(Files.exists(output()));
     }
 
-    @Test void runsThroughKotlinDsl() throws Exception {
+    @Test
+    void runsThroughKotlinDsl() throws Exception {
         fixture(); inputs();
         Files.delete(directory.resolve("build.gradle"));
         write("build.gradle.kts", """
@@ -229,14 +243,16 @@ class HistoryRefreshFunctionalTest {
         assertEquals(Map.of("example.AlphaTest", 1.0), DurationHistory.parse(Files.readString(output())));
     }
 
-    @Test void acceptsGroovyDecimalLiteralsForMinimumAndCoverage() throws Exception {
+    @Test
+    void acceptsGroovyDecimalLiteralsForMinimumAndCoverage() throws Exception {
         fixture(); inputs();
         history("reports.setFrom(files('downloaded')); classDirectories.from(files('classes')); minimumSeconds = 2.0; precision = 0; minimumCoverage = 0.75");
         noProducers(run("refreshTestShardDurations"));
         assertEquals(Map.of("example.AlphaTest", 2.0), DurationHistory.parse(Files.readString(output())));
     }
 
-    @Test void noHistoryBlockAddsNoRefreshTaskAndASecondBlockIsRejected() throws Exception {
+    @Test
+    void noHistoryBlockAddsNoRefreshTaskAndASecondBlockIsRejected() throws Exception {
         fixture();
         assertFalse(run("tasks", "--all").getOutput().contains("refreshTestShardDurations"));
         history("pruning = ShardHistoryOptions.Pruning.DISABLED");
@@ -244,7 +260,8 @@ class HistoryRefreshFunctionalTest {
         assertTrue(runner("tasks").buildAndFail().getOutput().contains("history is already configured"));
     }
 
-    @Test void twoRealShardsRefreshHistoryAndChangeTheNextPlan() throws Exception {
+    @Test
+    void twoRealShardsRefreshHistoryAndChangeTheNextPlan() throws Exception {
         fixture();
         append("""
                 tasks.named('test', Test).get().shardPilot.verification {
@@ -278,7 +295,8 @@ class HistoryRefreshFunctionalTest {
         assertFalse(after.contains("example.GammaTest"));
     }
 
-    @Test void changedXmlHistoryAndBytecodeInvalidateCachedResultsIndependently() throws Exception {
+    @Test
+    void changedXmlHistoryAndBytecodeInvalidateCachedResultsIndependently() throws Exception {
         fixture(); inputs();
         history("reports.setFrom(files('downloaded')); classDirectories.from(files('classes'))");
         noProducers(run("refreshTestShardDurations", "--build-cache"));
@@ -306,7 +324,8 @@ class HistoryRefreshFunctionalTest {
         assertTrue(json().contains("\"eligible\":2")); assertTrue(json().contains("\"kept\":1"));
     }
 
-    @Test void changedBaselineContentInvalidatesCacheWithoutPreparingAnotherPlan() throws Exception {
+    @Test
+    void changedBaselineContentInvalidatesCacheWithoutPreparingAnotherPlan() throws Exception {
         fixture(); inputs();
         write("baseline.yaml", "schemaVersion: 1\nclasses: [example.AlphaTest]\n");
         history("reports.setFrom(files('downloaded')); baselineFile = layout.projectDirectory.file('baseline.yaml')");
@@ -319,7 +338,8 @@ class HistoryRefreshFunctionalTest {
         assertTrue(json().contains("\"coverage\":0.5"));
     }
 
-    @Test void cacheArtifactsCanBeRestoredInAnotherCheckoutDirectory() throws Exception {
+    @Test
+    void cacheArtifactsCanBeRestoredInAnotherCheckoutDirectory() throws Exception {
         Path root = directory;
         Path sharedCache = root.resolve("shared-cache");
         directory = root.resolve("first-checkout");
@@ -341,7 +361,8 @@ class HistoryRefreshFunctionalTest {
         assertEquals(tsv, Files.readString(output())); assertEquals(report, json());
     }
 
-    @ParameterizedTest @ValueSource(strings = {"reportHistory", "outputBaseline", "reportBaseline"})
+    @ParameterizedTest
+    @ValueSource(strings = {"reportHistory", "outputBaseline", "reportBaseline"})
     void protectsBothVersionedInputsFromEitherOutputAlias(String alias) throws Exception {
         fixture(); inputs();
         String baseline = "schemaVersion: 1\nclasses: [example.AlphaTest]\n";
@@ -359,7 +380,8 @@ class HistoryRefreshFunctionalTest {
         assertEquals(baseline, Files.readString(directory.resolve("baseline.yaml")));
     }
 
-    @Test void aDifferentFilenameHardLinkedToHistoryIsStillProtected() throws Exception {
+    @Test
+    void aDifferentFilenameHardLinkedToHistoryIsStillProtected() throws Exception {
         fixture(); inputs();
         Path original = directory.resolve("durations.tsv");
         String previous = Files.readString(original);
@@ -403,27 +425,39 @@ class HistoryRefreshFunctionalTest {
         write("classes/example/AlphaTest.class", "");
         xml("downloaded/TEST-a.xml", 1);
     }
+
     private void xml(String path, double time) throws IOException {
         write(path, "<testsuite name='example.AlphaTest' tests='1' time='" + time + "'/>");
     }
+
     private void history(String configuration) throws IOException { append("tasks.named('test', Test).get().shardPilot.history { " + configuration + " }\n"); }
+
     private void verification() throws IOException { append("tasks.named('test', Test).get().shardPilot.verification { eligibleClasses.from(fileTree('classes')); plannedDirectory = layout.projectDirectory.dir('plan'); shardCount = 3 }\n"); }
+
     private Path output() { return directory.resolve("build/shardpilot/test/durations.tsv"); }
+
     private Path report() { return directory.resolve("build/shardpilot/test/durations.json"); }
+
     private String json() throws IOException { return Files.readString(report()); }
+
     private static org.gradle.testkit.runner.TaskOutcome refreshOutcome(BuildResult result) {
         return java.util.Objects.requireNonNull(result.task(":refreshTestShardDurations"),
                 "Expected refresh task was not scheduled").getOutcome();
     }
+
     private void noProducers(BuildResult result) {
         assertNull(result.task(":test")); assertNull(result.task(":compileJava")); assertNull(result.task(":compileTestJava"));
         assertNull(result.task(":testClasses"));
     }
+
     private void write(String path, String contents) throws IOException {
         Path file = directory.resolve(path); Files.createDirectories(file.getParent()); Files.writeString(file, contents);
     }
+
     private void append(String contents) throws IOException { Files.writeString(directory.resolve("build.gradle"), contents, java.nio.file.StandardOpenOption.APPEND); }
+
     private BuildResult run(String... arguments) { return runner(arguments).build(); }
+
     private GradleRunner runner(String... arguments) {
         var args = new ArrayList<>(List.of(arguments));
         args.addAll(List.of("--console=plain", "--stacktrace", "-Dorg.gradle.java.home=" + System.getProperty("java.home")));

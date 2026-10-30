@@ -36,21 +36,25 @@ public abstract class ShardHistoryOptions {
         minimumSeconds = objects.property(Double.class);
         minimumCoverage = objects.property(Double.class);
     }
+
     /**
      * Report roots, defaulting to the owning task's JUnit XML output directory.
      * @return report roots, defaulting to the owning task's JUnit XML output directory
      */
     public abstract ConfigurableFileCollection getReports();
+
     /**
      * Task-owned candidate TSV, never the versioned durationsFile.
      * @return task-owned candidate TSV, never the versioned durationsFile
      */
     public abstract RegularFileProperty getOutputFile();
+
     /**
      * JSON evidence written on success and data failures.
      * @return JSON evidence written on success and data failures
      */
     public abstract RegularFileProperty getReportFile();
+
     /**
      * Minimum accepted family time in seconds, default 0.1.
      * @return minimum accepted family time in seconds, default 0.1
@@ -63,21 +67,25 @@ public abstract class ShardHistoryOptions {
      */
     @SuppressWarnings("unused") // Groovy property assignment calls this setter dynamically; covered by TestKit.
     public void setMinimumSeconds(Number seconds) { getMinimumSeconds().set(seconds.doubleValue()); }
+
     /**
      * Decimal fractional digits, 0–6, default 1.
      * @return decimal fractional digits, 0–6, default 1
      */
     public abstract Property<Integer> getPrecision();
+
     /**
      * Whether non-retried failed suites can be measured; default false.
      * @return whether non-retried failed suites can be measured; default false
      */
     public abstract Property<Boolean> getIncludeFailedSuites();
+
     /**
      * Exact suite-name duplicate policy, default FAIL.
      * @return exact suite-name duplicate policy, default FAIL
      */
     public abstract Property<DurationHistoryRefresh.Duplicates> getDuplicates();
+
     /**
      * Minimum family coverage, 0–1, default 0.
      * @return minimum family coverage, 0–1, default 0
@@ -90,16 +98,19 @@ public abstract class ShardHistoryOptions {
      */
     @SuppressWarnings("unused") // Groovy property assignment calls this setter dynamically; covered by TestKit.
     public void setMinimumCoverage(Number coverage) { getMinimumCoverage().set(coverage.doubleValue()); }
+
     /**
      * Source-selection policy, default AUTO.
      * @return source-selection policy, default AUTO
      */
     public abstract Property<Pruning> getPruning();
+
     /**
      * Explicit manifest override, without a verification convention.
      * @return explicit manifest override, without a verification convention
      */
     public abstract RegularFileProperty getBaselineFile();
+
     /**
      * Explicit bytecode roots; empty means use source-selection defaults.
      * @return explicit bytecode roots; empty means use source-selection defaults

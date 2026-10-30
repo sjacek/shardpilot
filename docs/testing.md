@@ -32,10 +32,16 @@ For a focused iteration:
 ./gradlew :shardpilot-core:test --tests 'io.github.sjacek.shardpilot.ShardPlanTest'
 ./gradlew :shardpilot-gradle-plugin:test --tests 'io.github.sjacek.shardpilot.ShardPilotFunctionalTest'
 ./gradlew :shardpilot-core:test --tests 'io.github.sjacek.shardpilot.ClassManifestTest' --tests 'io.github.sjacek.shardpilot.ShardCoverageTest'
+./gradlew :shardpilot-gradle-plugin:test --tests 'io.github.sjacek.shardpilot.HistoryRefreshExampleFunctionalTest' --tests 'io.github.sjacek.shardpilot.HistoryRefreshCiExamplesTest'
+./mvnw -B -ntp verify -Dinvoker.test=junit-jupiter
 ```
 
 The plugin's own test task is not configured to shard itself. These selectors run normal Gradle
 tests. Run the complete `check assemble` before handing off a change.
+
+The focused Maven command still runs core/adapter unit tests, but only the selected Jupiter
+Invoker example. Its two native suites cover Surefire and Failsafe; it excludes the other
+native fixtures and reactor example. Use full Maven `verify` for shared-core/Maven release checks.
 
 Gradle reports live under each source module's `build/reports/tests/test/index.html` and
 `build/test-results/test/`; distribution JARs are under `shardpilot-gradle-plugin/build/libs/`.
@@ -56,6 +62,12 @@ do not reproduce an application's memory leak or prove that a configured heap pr
 | Test class | Behavior covered |
 | --- | --- |
 | `DurationHistoryTest` | Comments, blank lines, CRLF, nested names, immutable results, malformed metadata and safe error messages. |
+| `JUnitXmlTimingsTest` | Secure suite/testcase metadata parsing, executed nested cases with zero header counts, retry/ambiguity markers, repeated paths and incomplete-read evidence. |
+| `DurationHistoryRefreshTest` | Complete/disjoint/inclusive family normalization, duplicate policy, pruning, retained/replaced/dropped records, floor/rounding and coverage failures. |
+| `HistoryRefreshFunctionalTest` | Real Gradle opt-in tasks, source precedence, both DSLs, no producer scheduling, failed artifacts, Configuration Cache/build cache and history-driven plan changes. |
+| `HistoryRefreshExampleFunctionalTest` | Actual documented consumer sources, disjoint native nodes/nested methods, YAML/HTML, immutable history, cache reuse, missing-node XML rejection and deterministic recovery. |
+| `HistoryRefreshCiExamplesTest` | Parsed Gradle/Maven GitLab examples retain every native gate, index their extracted XML paths, download all dependencies and keep producer-free aggregation/report namespaces separate. |
+| `RefreshDurationsMojoTest`, `RefreshDurationsEvidenceTest`, `RefreshDurationsDescriptorTest` | Maven defaults, descriptor without lifecycle forks, project isolation, eligibility, conservative measurements, output/input protection and safe failure/I/O evidence. |
 | `ShardPlanTest` | Deterministic packing/ties, nested aggregation, floating-point order, hash fallback, complete ownership, invalid settings and overflow. |
 | `ClassManifestTest` | Canonical YAML round trips, schema/types/duplicate keys, CRLF/comments/flow sequences, nested/Unicode/default-package names, root normalization, collisions, empty-class policy and malformed-document rejection. |
 | `ShardCoverageTest` | Complete/disjoint/index-matching evidence, canonical hashes, empty policy, missing/stale/duplicate/foreign records, plan-only mode and JSON escaping. |
@@ -123,6 +135,95 @@ Gradle TestKit also loads only the shipped Gradle JAR and SnakeYAML runtime to e
 planning/verification, excluding development core-output paths. This guards distribution compatibility
 after extraction, in addition to the existing Groovy/Kotlin DSL and Configuration Cache checks.
 
+## History-refresh integration coverage
+
+The Maven `refresh-surefire` and `refresh-failsafe` Invoker projects execute two real native
+nodes, then refresh default/multi-root artifacts, compare deterministic JSON across Maven JVMs,
+reject insufficient coverage and invalid configurations, and confirm refresh did not rerun tests
+or mutate maintained history. `refresh-errors` exercises missing baseline, malformed/XXE XML,
+duplicate FAIL/SUM and protected inputs. `refresh-reactor` checks identical class names with
+different timings in two parallel, independent child namespaces without compiling/test execution.
+These four fixtures join the five existing native fixtures and two runnable Maven examples.
+The Jupiter example additionally refreshes both suite histories through its Invoker hook. The
+hook checks every candidate value against native XML (including inclusive nested timing, the
+default floor/precision), merge/coverage counters, suite isolation and unchanged maintained weights.
+
+The [Docker-free Gradle example](../examples/gradle/junit-jupiter/duration-history/README.md)
+demonstrates native outer/nested execution, two-node YAML/HTML verification and candidate TSV/JSON.
+Its four-step sequence is also exercised automatically by `HistoryRefreshExampleFunctionalTest`,
+which copies the actual example inputs and substitutes only plugin resolution through TestKit.
+It removes one node's XML after success: selection coverage still passes, while history refresh
+must reject incomplete measurements, remove the stale candidate and recover deterministically
+when the same XML returns. The CI YAML has structural tests for dependency/failure/transport
+boundaries; it still needs a configured consuming repository and live runner for GitLab execution.
+
+The tested missing-download scenario is also documented as an
+[operator recovery procedure](history-refresh.md#recover-a-missing-shard-download), with its own
+[sequence diagram](diagrams/history-recovery.svg). TestKit substitutes plugin resolution for
+the example's included build; ordinary example execution retains the documented included-build
+entry point. The fixture asserts native testcase identities and class manifests separately,
+uses the original XML to prove deterministic recovery and checks that maintained history stays
+byte-for-byte unchanged. Those checks do not predict timings for a newly executed cohort.
+
+## 0.4.0 release verification
+
+The initial release-preparation results below used Gradle Wrapper 9.8.1 and Maven Wrapper 3.9.16
+with Eclipse Temurin 25.0.4.1 on Windows. The subsequent [Wrapper upgrade](#gradle-982-wrapper-verification)
+uses Gradle 9.8.2. Run `clean check assemble verifyReleaseTag -PreleaseTag=v0.4.0`, Maven `verify`
+plus strict Javadoc, the disposable signed-bundle check and the 33 local Central-recovery tests.
+Generate local implementation/marker POMs and module metadata without uploading. Also check the
+Docker-free example, Markdown links, CI YAML, rendered/normalized diagrams and the updated wiki.
+
+Local checks on 29 October 2026 passed:
+
+| Check | Result |
+| --- | --- |
+| Gradle `check assemble`, metadata generation and `verifyReleaseTag` | 268 cases: 128 core + 140 Gradle/publication; no failures/errors/skips; plugin validation and binary/source/Javadoc assembly passed. |
+| Maven `verify` and strict Javadoc | 250 cases: the same 128 core + 122 Maven; no failures/errors/skips; all 9 native Invoker projects and 2 runnable examples passed. |
+| Disposable signed Maven release bundle | 9 artifacts, 9 valid signatures, 54 bundle entries; version/homepage/descriptor/checksum validation passed, upload disabled. |
+| Gradle Portal `publishPlugins --validate-only` | Passed; no upload. |
+| Central recovery tests | 33 unit/loopback HTTP cases passed without publication credentials. |
+| Docker-free history example | Both native nodes, 3 unique testcases including nested execution, YAML/HTML coverage, 2 measured families, coverage 1.0, 1 removed old record; maintained history unchanged; strict Configuration Cache reused on repeated aggregation. |
+| Documentation | Local links/anchors and both CI YAML examples checked; 4 diagram previews rendered, normalized and visually reviewed; wiki's 31 tests, strict MkDocs build and 287-page validator passed. |
+
+The F4 follow-up added seven automated cases: six CI-structure checks and one actual consumer
+flow with missing-node rejection and recovery. The complete Gradle suite then passed with
+268 cases. Maven's 250 unit cases and the changed Jupiter Invoker example (both Surefire and
+Failsafe) were rerun successfully with `-Dinvoker.test=junit-jupiter`; the earlier full native
+fixture run remains recorded above. Follow-up evidence is in `output/shardpilot-f4-expanded-*`.
+
+Core cases above run through both adapters; they are not distinct additional tests. Evidence
+logs and the machine-readable summary are under the maintainer workspace's `output/shardpilot-f4-*`;
+they are local records, not bundled runtime resources. A local JDK 25 run does not establish all
+Linux targets: the exact release commit must pass the 12 required CI jobs
+before a tag is created. Tag creation and publication remain separate maintainer actions. A
+published-consumer smoke test can only run after both portals provide 0.4.0. Earlier verification
+records below describe their own versions and do not replace this release gate.
+
+## Gradle 9.8.2 Wrapper verification
+
+The repository Wrapper pins Gradle 9.8.2. Its distribution SHA-256 is taken from the
+[official versioned checksum](https://services.gradle.org/distributions/gradle-9.8.2-bin.zip.sha256)
+and configured in both the `wrapper` task and generated properties. The JAR also matches its
+[official checksum](https://services.gradle.org/distributions/gradle-9.8.2-wrapper.jar.sha256).
+The Wrapper task is run twice so scripts/JAR are generated by the selected runtime as well.
+Historical records below retain the versions they tested.
+
+The Wrapper runs the plugin build locally and in CI. Without `testGradleVersion`, TestKit uses
+that runtime too. The CI matrix now selects 9.8.2 for JDK 17/21/25, replacing the three 9.8.1
+cells. It still has eight required combinations. Their changed status names must also match the
+[repository ruleset](releases.md#keep-required-checks-aligned-with-the-matrix). The Wrapper upgrade
+is verified locally with full `check assemble` and the release-tag guard.
+
+On 29 October 2026, `check assemble verifyReleaseTag -PreleaseTag=v0.4.0` passed on Windows /
+Temurin 25.0.4.1 with Gradle 9.8.2: **268 cases** (128 core + 140 Gradle/publication), zero
+failures/errors/skips, plugin validation and binary/source/Javadoc assembly. Default TestKit
+consumers also used 9.8.2. The regenerated Wrapper JAR and distribution pin were independently
+checked against the official versioned SHA-256 files. The task regenerated all Wrapper files;
+scripts/JAR remained byte-identical, while properties changed URL/checksum together. Evidence
+is recorded locally in `output/shardpilot-gradle-9.8.2-verification.json`. This local run does
+not replace the eight consumer CI targets or the exact release-commit publication gate.
+
 ## Gradle and JDK matrix
 
 The [compatibility workflow](../.github/workflows/compatibility.yml) runs on branch pushes, pull
@@ -134,13 +235,14 @@ are required; failures do not cancel the others.
 | --- | --- | --- | --- |
 | 9.0.0 | Required | Required | Not supported by Gradle |
 | 9.1.0 | Required | Required | Required |
-| 9.8.1 | Required | Required | Required |
+| 9.8.2 | Required | Required | Required |
 
 These eight pairs are the compatibility targets for this version. A green workflow run for the
 revision being released is required before claiming support. Intermediate releases, Gradle 8.x,
 other JDK versions and other JDK vendors are not covered by this matrix.
-Gradle 9.0.0 is the lower test boundary, 9.1.0 introduces JDK 25 runtime support, and 9.8.1 matches
-the repository Wrapper. The JDK 25 exclusion follows the
+Gradle 9.0.0 is the lower test boundary, 9.1.0 introduces JDK 25 runtime support, and 9.8.2 is the
+newest pinned consumer matrix target, matching the repository Wrapper.
+The JDK 25 exclusion follows the
 [Gradle Java runtime compatibility table](https://docs.gradle.org/current/userguide/compatibility.html).
 
 The same required reusable workflow also runs Maven Wrapper 3.9.16 on JDK 17, 21 and 25. Every
@@ -148,7 +250,7 @@ Maven job runs the complete native reactor verification, including Invoker/examp
 publication waits for the entire workflow, so a failed Maven job cannot be bypassed by successful
 Gradle cells. These are declared CI targets; local results do not establish a green Linux matrix.
 
-The Wrapper always builds and validates the plugin with Gradle 9.8.1. The `testGradleVersion`
+The Wrapper always builds and validates the plugin with Gradle 9.8.2. The `testGradleVersion`
 property selects the distribution used by **every functional TestKit consumer**, independently
 of the build Wrapper. CI installs the matrix Temurin JDK for the outer build, nested Gradle daemon
 and test workers. A runtime regression test checks the actual consumer Gradle/JDK and worker JDK

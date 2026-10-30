@@ -10,6 +10,26 @@ The task/DSL and cache diagnostics below describe Gradle. For Maven, record the 
 runner (`SUREFIRE`/`FAILSAFE`), suite and module as well; use the
 [native-runner checklist](#maven-native-runner-checklist).
 
+## Gradle API imports in IntelliJ IDEA
+
+`ExtensionAware`, `MavenPom`, `MavenPublication`, `PluginDeclaration` and `Provider` are
+Gradle API types supplied by the Gradle distribution. If build scripts report unresolved
+imports while the Wrapper build succeeds, check the IDE's Gradle model before changing code:
+
+1. Link the repository-root `settings.gradle` as a Gradle project, even if the Maven reactor
+   is already imported. Select the Wrapper and a supported Gradle JVM in Gradle settings.
+2. Synchronize the linked Gradle projects after changing the Wrapper. Wait for dependency
+   resolution and indexing, and inspect any synchronization failure in the Build window.
+3. Independent example directories are not root subprojects. Link the example's own
+   `settings.gradle` separately; if it has no Wrapper, select the local Gradle installation
+   downloaded by the root Wrapper rather than an empty local-distribution setting.
+4. Rerun the inspection after synchronization. A previous Code Analysis result is a snapshot
+   and can still list errors from before the model was refreshed.
+
+Keep machine-specific JDK, Gradle installation and linked-project paths in local IDE settings,
+outside version control. The command-line check remains `./gradlew check assemble`; removing
+valid API imports or suppressing unresolved references does not repair an IDE model.
+
 ## Selection and execution
 
 | Symptom | Likely cause | Check |
@@ -40,6 +60,27 @@ the history producer counted nested durations twice or recorded zeros for every 
 The lifecycle message reports **all measured families** and only the **selected shard's recorded
 seconds**. It is not the selected test count or a wall-clock forecast. An up-to-date, cached or
 no-source task can skip the logging action entirely.
+
+## Duration refresh
+
+Start with the process exit status and the new `durations.json`, using the
+[failure/output contract](history-refresh.md#failure-and-adoption-contract). Refresh JSON uses
+`PASSED`/`FAILED`; it is separate from class-selection `coverage.json` and `coverage.html`.
+
+| Symptom / reason | Check and next action |
+| --- | --- |
+| Coverage passes but refresh reports `MINIMUM_COVERAGE` | Actual class manifests can be complete while XML is missing or excluded. Compare indexed node directories and `measured`/`eligible` family counts; follow [same-cohort recovery](history-refresh.md#recover-a-missing-shard-download). |
+| `INVALID_BASELINE` | Supply the selected manifest or bytecode roots. A missing selected source never falls back to another source or compiles it automatically. Maven AUTO defaults to the prepared suite baseline. |
+| `DUPLICATE_SUITE` | Check for repeated downloads, full-run XML mixed with node XML or another pipeline in the report tree. Retain distinct paths; `SUM` is explicit policy, not proof that two samples are independent. |
+| `NO_MEASUREMENTS` | Inspect report roots and exclusion counters. Only skipped, retried or ambiguous families can leave no accepted sample, even with `minimumCoverage=0`. |
+| Failed refresh leaves no candidate TSV | Data rejection removes an earlier successful candidate and writes FAILED JSON. Recover the input problem and evaluate a new successful result. |
+| A stale JSON remains after a rejected request | Invalid configuration creates no new report. Check invocation exit status and precision/source/output settings before reusing any artifact. |
+| Refresh is up-to-date or uses Configuration Cache | Unchanged complete inputs can reuse valid outputs. Restoring missing XML changes task inputs; Configuration Cache reuse does not skip the changed refresh action. |
+| A JSON exists but output writing failed | Writes are not an atomic TSV/JSON transaction. Honor the failed build outcome; an existing report alone does not authorize adoption. |
+
+Do not compare testcase totals with `minimumCoverage`: that ratio counts complete eligible
+families. Keep native test jobs, selection verification and refresh policy as independent gates,
+then review the candidate for a future history commit.
 
 ## Cache and reports
 

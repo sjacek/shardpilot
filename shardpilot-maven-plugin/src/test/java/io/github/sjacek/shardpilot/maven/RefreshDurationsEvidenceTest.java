@@ -26,7 +26,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** Cross-phase contracts: source selection, family exclusions, diagnostic privacy and filesystem failures. */
 class RefreshDurationsEvidenceTest {
-    @TempDir Path directory;
+    @TempDir
+    Path directory;
     private RefreshDurationsMojo goal;
     private Path reports;
     private Path baseline;
@@ -225,6 +226,7 @@ class RefreshDurationsEvidenceTest {
     }
 
     private Map<String, Double> history() throws IOException { return DurationHistory.parse(Files.readString(candidate)); }
+
     private String json() throws IOException { return Files.readString(report); }
 
     private void set(String name, Object value) throws ReflectiveOperationException {
@@ -248,6 +250,7 @@ class RefreshDurationsEvidenceTest {
     /** Retains only the adapter's lifecycle channel without printing synthetic payloads to the console. */
     private static final class RecordingLog extends SystemStreamLog {
         private final List<String> lines = new ArrayList<>();
-        @Override public void info(CharSequence content) { lines.add(content.toString()); }
+        @Override
+        public void info(CharSequence content) { lines.add(content.toString()); }
     }
 }

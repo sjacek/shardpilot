@@ -15,7 +15,7 @@ the build tool and test framework still discover and execute tests.
 
 | Source module | Responsibilities / distribution |
 | --- | --- |
-| `shardpilot-core` | Java 17 code with no Gradle/Maven APIs: TSV history, ownership, YAML encoding, shared preparation, validation snapshots and JSON/HTML reports. |
+| `shardpilot-core` | Java 17 code with no Gradle/Maven APIs: TSV history, secure JUnit XML timing import, complete-family refresh, ownership, YAML encoding, shared preparation, validation snapshots and reports. |
 | `shardpilot-gradle-plugin` | Gradle `Test` integration, process options, lazy filters and managed artifact tasks. Publishes the existing `io.github.sjacek:shardpilot` implementation and unchanged plugin marker. Core classes are bundled into this JAR with their original Java package. |
 | `shardpilot-maven-plugin` | Native Maven goals and effective Surefire/Failsafe class-filter adapter. Resolves `shardpilot-core` as a normal plugin dependency; no Gradle libraries are needed. |
 
@@ -145,6 +145,21 @@ The runtime classpath stays intact, so superclass and helper-class loading remai
 After candidate filtering, the existing Gradle/framework selection still applies. No test method
 is moved independently of its class family, no retry is added, and no test failure or explicit
 no-matching-tests error is suppressed.
+
+## History refresh boundary
+
+![History evidence, conservative normalization and reviewed adoption](diagrams/history-refresh.svg)
+
+[PlantUML source](diagrams/history-refresh.puml)
+
+`JUnitXmlTimings` reads local `TEST-*.xml` metadata securely; `DurationHistoryRefresh` applies
+shared family/duplicate/pruning rules and produces `HistoryRefreshReport` plus candidate records.
+The Gradle `RefreshShardDurations` task and Maven `RefreshDurationsMojo` only adapt paths, source
+selection, failures and output I/O. Neither copies normalization logic or schedules producers.
+The Gradle task is opt-in/cacheable; Maven's standalone goal is thread-safe and module-local.
+The consumer owns cohort provenance and reviewed adoption. Refresh JSON measures recorded
+history loads, while manifest JSON/HTML describes class selections; neither proves tests passed.
+See the [refresh contracts](history-refresh.md) and [CI flow](ci.md#refresh-history-from-collected-reports).
 
 ## Inputs, cache and logs
 

@@ -24,30 +24,37 @@ import org.gradle.api.tasks.TaskAction;
 public abstract class PrepareShardManifests extends DefaultTask {
     /** Creates a Gradle-managed task. */
     public PrepareShardManifests() { }
+
     /**
      * Supplies eligible unsharded bytecode.
      * @return the configured value
      */
-    @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public abstract ConfigurableFileCollection getClasses();
+
     /**
      * Supplies bytecode roots.
      * @return the configured value
      */
-    @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public abstract ConfigurableFileCollection getClassDirectories();
+
     /**
      * Supplies positive partition size.
      * @return the configured value
      */
     @Input
     public abstract Property<Integer> getShardCount();
+
     /**
      * Supplies exactly the history used by the owning task's filter.
      * @return the configured value
      */
     @Input
     public abstract Property<String> getHistory();
+
     /**
      * Supplies task-owned plan directory.
      * @return the configured value

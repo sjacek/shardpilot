@@ -26,7 +26,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** Artifact contracts and configuration edge cases complement real Surefire/Failsafe Invoker runs. */
 class RefreshDurationsMojoTest {
-    @TempDir Path directory;
+    @TempDir
+    Path directory;
     private RefreshDurationsMojo mojo;
     private Path reports;
     private Path output;

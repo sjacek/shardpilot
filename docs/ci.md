@@ -164,18 +164,60 @@ to CI tooling; ShardPilot does not merge XML or generate a combined test-executi
 
 ## History maintenance
 
-A cold start is valid: omit `durationsFile` and the plugin uses deterministic hashing. To introduce
-history, prepare the [TSV format](configuration.md#timing-history) outside the plugin, validate it
-and make a fixed version available to all jobs in the next run.
+A cold start is valid: omit `durationsFile` and assignment uses deterministic hashing. In 0.4.0,
+opt-in [history refresh](history-refresh.md) reads collected XML and creates a candidate TSV/JSON.
+Use one complete project/suite/revision cohort, retain shard paths, review coverage and recorded
+loads, then adopt the candidate for a future run. Keep maintained history immutable during a run.
+Refresh never reruns tests, uploads remotely or commits the candidate. A failed shard remains a
+failed native-test gate, even if other families supplied enough measurements for refresh to pass.
 
-If your own tooling derives history from JUnit XML, account for nested-class records and the
-reporter's timing semantics. Adding an already aggregated outer duration to nested durations can
-double-count work. ShardPilot adds the supplied records; it does not infer whether a value was
-inclusive. Review outliers and stale classes before replacing the shared history snapshot.
+## Refresh history from collected reports
 
-Do not make a failing shard silently publish partial timing data as the next authoritative history.
-Choose and document a retention/update policy in the consuming repository. Automatic XML import,
-history export and remote history storage are not implemented in this version.
+The [complete Gradle](../examples/ci/gradle/.gitlab-ci.yml) and
+[Maven](../examples/ci/maven/.gitlab-ci.yml) GitLab examples implement this three-node flow:
+
+| Stage / required job | Evidence consumed | Action / retained evidence |
+| --- | --- | --- |
+| Prepare | Same revision, maintained history, compiled eligibility | One baseline and all planned YAML partitions. |
+| Shards 1..3 | Immutable common inputs; unique index | Native tests; actual-I.yaml and XML under distinct shard directories, even after failure. |
+| Coverage | Common plan and all actual manifests | Selection JSON and standalone HTML; no producer reruns. |
+| Durations | Common baseline and all XML roots | Candidate TSV and diagnostic JSON; no producer reruns or adoption. |
+
+For Gradle, configure `verification { shardCount = 3 }` and register `history` with
+`reports.setFrom(layout.projectDirectory.dir('collected/test'))`. AUTO uses the prepared baseline.
+Run `refreshTestShardDurations -Pshardpilot.count=3` after downloading the complete cohort.
+For Maven, configure the native runner and maintained `durationsFile`, then invoke only
+`shardpilot:refresh-durations -Dshardpilot.count=3 -Dshardpilot.reports=collected/unit`.
+
+![Normalization, candidate artifacts and reviewed adoption](diagrams/history-refresh.svg)
+
+The examples preserve `collected/<suite>/shard-N/TEST-*.xml`. An artifact name containing the index
+alone is insufficient: GitLab extracts artifact contents into the workspace, so the paths must
+also be distinct. Never flatten multiple nodes' identically named reports, combine previous runs,
+or use SUM to hide duplicated copies. Preserve the module prefix in multi-project/reactor builds.
+
+Aggregation uses `when: always` to run diagnostics after failed nodes and `artifacts: when: always`
+to upload failed-data JSON. Retain native job failures, coverage failures and refresh failures as
+independent outcomes; do not use `allow_failure` or `|| true` to approve partial histories.
+No `clean`, tests, compilation or preparation belongs in either artifact-only command. Refresh
+may succeed with partial measurements under its configured threshold, so CI must independently
+establish cohort completeness. For a failed pipeline, any candidate remains diagnostic evidence.
+
+Use a separate suite/job for Failsafe, passing `-Dshardpilot.runner=FAILSAFE` and collecting its
+own baseline plus `target/failsafe-reports`. Maven's standalone goal does not infer customized
+native `reportsDirectory`: set `shardpilot.reports`. Gradle defaults to its owner's XML location;
+`reports.setFrom` replaces that root when reading downloads instead.
+
+Review `durations.json` coverage, ignored/foreign counts and recorded-load changes, and diff TSV
+against maintained history. Only a separate approved adoption changes the next pipeline's input.
+Refresh JSON is not the selection HTML report; expose existing `coverage.html` through the
+[MR artifact-link pattern](shard-verification.md#finding-a-class-assignment-in-gitlab).
+
+When a node's report download is missing, selection verification may still pass because its
+actual manifest arrived. The [recovery procedure and diagram](history-refresh.md#recover-a-missing-shard-download)
+show how to restore the original cohort and rerun aggregation. Check native outcomes, selection
+coverage and the refresh threshold independently. A threshold below 1.0 can accept partial
+measurements; it is not a check that every CI artifact was transported.
 
 ## Cache and parallelism
 
