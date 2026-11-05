@@ -229,6 +229,26 @@ scripts/JAR remained byte-identical, while properties changed URL/checksum toget
 is recorded locally in `output/shardpilot-gradle-9.8.2-verification.json`. This local run does
 not replace the eight consumer CI targets or the exact release-commit publication gate.
 
+## Maven 3.10.0 Wrapper verification
+
+On 5 November 2026, the Maven Wrapper upgrade from 3.9.16 to 3.10.0 passed locally on
+Windows / Temurin 25.0.5. The downloaded ZIP matched Apache's published SHA-512 before its
+SHA-256 was pinned in `.mvn/wrapper/maven-wrapper.properties`; `mvnw --version` confirmed
+the actual Maven 3.10.0 runtime.
+
+- `mvnw -B -ntp clean verify`: **302 unit tests** (165 core + 137 Maven adapter),
+  **15 Invoker fixtures** and **2 runnable examples**, with no unexpected failures or skips.
+- `gradlew check assemble`: **325 cases** (165 core + 160 Gradle/publication), no failures,
+  errors or skips, plus plugin validation and binary/source/Javadoc assembly.
+- `bash scripts/verify-maven-release.sh`: the upload-disabled release profile passed on
+  Maven 3.10.0, with all **9 artifacts and 9 signatures** verified using a disposable key.
+
+Local logs are under `build/maven-3.10.0-verification/`. Shared core tests appear in both
+build totals. These results do not establish the Linux JDK 17/21/25 matrix for a new release
+revision; push that revision and align the three Maven names in the
+[required-check ruleset](releases.md#keep-required-checks-aligned-with-the-matrix) before merge.
+Provided Maven API dependencies and the declared minimum version are unchanged.
+
 ## Gradle and JDK matrix
 
 The [compatibility workflow](../.github/workflows/compatibility.yml) runs on branch pushes, pull
@@ -250,7 +270,7 @@ newest pinned consumer matrix target, matching the repository Wrapper.
 The JDK 25 exclusion follows the
 [Gradle Java runtime compatibility table](https://docs.gradle.org/current/userguide/compatibility.html).
 
-The same required reusable workflow also runs Maven Wrapper 3.9.16 on JDK 17, 21 and 25. Every
+The same required reusable workflow also runs Maven Wrapper 3.10.0 on JDK 17, 21 and 25. Every
 Maven job runs the complete native reactor verification, including Invoker/examples. Release
 publication waits for the entire workflow, so a failed Maven job cannot be bypassed by successful
 Gradle cells. These are declared CI targets; local results do not establish a green Linux matrix.

@@ -5,11 +5,13 @@ import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -157,7 +159,7 @@ class PublicationWorkflowTest {
     @Test
     void sharedReleaseGateAlsoRequiresEveryMavenRuntimeAndRealInvokerBuilds() throws IOException {
         var maven = mapping(mapping(workflow("compatibility").get("jobs")).get("maven"));
-        assertEquals("Maven 3.9.16 / JDK ${{ matrix.java }}", maven.get("name"));
+        assertEquals("Maven 3.10.0 / JDK ${{ matrix.java }}", maven.get("name"));
         assertEquals("Signed Maven release bundle (no upload)",
                 mapping(mapping(workflow("compatibility").get("jobs")).get("release-artifacts")).get("name"));
         assertEquals(List.of("17", "21", "25"), mapping(mapping(maven.get("strategy")).get("matrix")).get("java"));
@@ -166,9 +168,14 @@ class PublicationWorkflowTest {
         assertNull(maven.get("continue-on-error"));
         assertTestedCheckout(maven);
         assertEquals("bash ./mvnw -B -ntp verify", stepNamed(maven, "Verify Maven core, adapter and real runner builds").get("run"));
-        String wrapper = Files.readString(Path.of(".mvn/wrapper/maven-wrapper.properties"));
-        assertTrue(wrapper.contains("apache-maven/3.9.16/apache-maven-3.9.16-bin.zip"));
-        assertTrue(wrapper.contains("distributionSha256Sum="));
+        // CI invokes the Wrapper, so the status label must describe its actual pinned runtime.
+        Properties wrapper = new Properties();
+        wrapper.load(new StringReader(Files.readString(Path.of(".mvn/wrapper/maven-wrapper.properties"))));
+        assertEquals("https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.10.0/apache-maven-3.10.0-bin.zip",
+                wrapper.getProperty("distributionUrl"));
+        String checksum = wrapper.getProperty("distributionSha256Sum");
+        assertNotNull(checksum, "the Maven distribution must be checksum-verified");
+        assertTrue(checksum.matches("[a-f0-9]{64}"), "a nonempty SHA-256 checksum is required");
         assertFalse(maven.toString().contains("secrets."));
     }
 

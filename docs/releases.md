@@ -30,14 +30,15 @@ gate has 12 required contexts, emitted by GitHub Actions:
 | `Gradle 9.0.0 / JDK N` | 17, 21 | 2 |
 | `Gradle 9.1.0 / JDK N` | 17, 21, 25 | 3 |
 | `Gradle 9.8.2 / JDK N` | 17, 21, 25 | 3 |
-| `Maven 3.9.16 / JDK N` | 17, 21, 25 | 3 |
+| `Maven 3.10.0 / JDK N` | 17, 21, 25 | 3 |
 | `Signed Maven release bundle (no upload)` | Fixed release-verification runtime | 1 |
 
 `N` above is replaced with the literal JDK number in each required name. These are job names,
 without the workflow title or `(push)` / `(pull_request)` event suffix shown in parts of the UI.
-For the 9.8.2 update, replace only `Gradle 9.8.1 / JDK 17`, `21` and `25` with their 9.8.2 names.
-Do not retain both sets as requirements: a new workflow emitting only 9.8.2 cannot satisfy an
-obsolete 9.8.1 requirement and GitHub will show it as expected indefinitely.
+The Gradle 9.8.2 update replaces `Gradle 9.8.1 / JDK 17`, `21` and `25` with their 9.8.2 names.
+The Maven 3.10.0 update replaces `Maven 3.9.16 / JDK 17`, `21` and `25` with their 3.10.0 names.
+Do not retain both versions as requirements: a workflow emitting only new names cannot satisfy
+obsolete requirements and GitHub will show them as expected indefinitely.
 
 When changing a matrix version, update the workflow, `PublicationWorkflowTest`, documentation
 and required contexts together. Retain all other requirements: strict up-to-date checks, GitHub
@@ -45,9 +46,9 @@ Actions as the expected source, pull requests, verified signatures and resolved 
 The same eight Gradle cells are used by the reusable release workflow; signed-bundle and Maven
 jobs remain required as well. Coordinate the live rename with the workflow rollout:
 
-1. Push the branch containing the updated matrix and wait for its new 9.8.2 status names to appear.
-2. In **Settings → Rules → Rulesets → main develop**, replace just the three 9.8.1 requirements
-   with the corresponding 9.8.2 names, retaining all 12 required contexts and their source.
+1. Push the branch containing the updated matrix and wait for its new status names to appear.
+2. In **Settings → Rules → Rulesets → main develop**, replace only the three requirements for
+   the changed runtime with the corresponding new names, retaining all 12 contexts and their source.
 3. Re-read the live ruleset and compare all names with the branch's actual reports before merge.
    Older open PRs may need to pick up the new workflow; their old statuses cannot satisfy the
    renamed requirements. Keep the same revision/history cohort for release checks.

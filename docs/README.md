@@ -51,7 +51,7 @@ Gradle 9.0.0, 9.1.0 and 9.8.2 with JDK 17, 21 and 25. Local verification also us
 The repository Wrapper pins Gradle 9.8.2; the CI matrix selects TestKit consumers independently.
 Java 17 plugin bytecode alone is not a compatibility claim; support requires passing matrix
 results for the release revision. See the [verification scope](testing.md#verified-scope).
-The same workflow requires Maven 3.9.16 on JDK 17, 21 and 25. Gradle framework fixtures and
+The same workflow requires Maven 3.10.0 on JDK 17, 21 and 25. Gradle framework fixtures and
 Configuration Cache checks do not establish Maven framework/version coverage; native Maven fixtures
 currently exercise JUnit Jupiter with Surefire/Failsafe 3.5.4.
 

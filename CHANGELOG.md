@@ -34,6 +34,8 @@ recorded by the Gradle Plugin Portal.
 
 ### Build tooling
 
+- Build and verify with Maven 3.10.0 through the checksum-verified Wrapper. The three Maven
+  CI cells use JDK 17/21/25; the adapter's provided Maven APIs and declared minimum stay unchanged.
 - Build ShardPilot with Gradle 9.8.2 through the regenerated, checksum-verified Wrapper.
   CI tests 9.8.2 on JDK 17/21/25, replacing the three 9.8.1 cells while retaining eight
   required consumer runtime combinations.

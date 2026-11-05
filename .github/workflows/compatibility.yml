@@ -100,7 +100,7 @@ jobs:
           retention-days: 14
 
   maven:
-    name: Maven 3.9.16 / JDK ${{ matrix.java }}
+    name: Maven 3.10.0 / JDK ${{ matrix.java }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:

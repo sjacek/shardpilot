@@ -18,9 +18,11 @@ dependency. See [module architecture](architecture.md#source-modules-and-artifac
 
 ## Build and try the checkout
 
-The Maven Wrapper pins Maven 3.9.16 with a SHA-256-verified distribution. Use JDK 17 or newer.
-The CI targets are Maven 3.9.16 with JDK 17, 21 and 25; a green run for the release revision is
+The Maven Wrapper pins Maven 3.10.0 with a SHA-256-verified distribution. Use JDK 17 or newer.
+The CI targets are Maven 3.10.0 with JDK 17, 21 and 25; a green run for the release revision is
 required before claiming those combinations. Maven 4 is not a verified target.
+The adapter still compiles against the provided Maven 3.9.16 APIs; the build-runtime upgrade
+does not raise its declared minimum Maven version of 3.9.0.
 
 From the repository root:
 
