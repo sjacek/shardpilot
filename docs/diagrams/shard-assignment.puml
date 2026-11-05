@@ -19,6 +19,11 @@ if (Task opted in?) then (no)
 else (yes)
   :Validate shard count and one-based index;
   :Parse optional TSV history;
+  if (Explicit selection enabled?) then (yes)
+    :Validate requested subset against full eligibility;
+    :Expand families within eligibility only;
+    :Restrict timing records to selected families;
+  endif
   note right
     Unset or missing file = empty history.
     Invalid settings or metadata fail the task;
@@ -37,10 +42,14 @@ else (yes)
 endif
 
 :Evaluate one candidate file;
-if (Count = 1, directory or non-class file?) then (yes)
+if (Directory or non-class file?) then (yes)
   :Add no ownership exclusion for this candidate;
 else (no)
   :Convert relative .class path to binary name;
+  if (Selection enabled and class outside selected set?) then (yes)
+    :Exclude candidate, also when count = 1;
+    stop
+  endif
   :Take family before first $;
   if (Family has a measured owner?) then (yes)
     :Use packed owner;

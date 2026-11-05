@@ -64,31 +64,45 @@ public final class ClassManifest {
      */
     public static Set<String> read(Path file, boolean allowEmpty) throws IOException {
         if (!Files.isRegularFile(file)) throw new IllegalArgumentException("Missing class manifest: " + file.getFileName());
+        return parse(Files.readString(file, StandardCharsets.UTF_8), allowEmpty, file.getFileName().toString());
+    }
+
+    /**
+     * Parses one immutable YAML snapshot, also suitable for build-tool content providers.
+     * @param text exact UTF-8-compatible YAML content
+     * @param allowEmpty whether an empty shard is accepted
+     * @return sorted unique validated binary names
+     */
+    public static Set<String> parse(String text, boolean allowEmpty) {
+        return parse(text, allowEmpty, "class manifest");
+    }
+
+    private static Set<String> parse(String text, boolean allowEmpty, String file) {
         Object document;
         var settings = LoadSettings.builder().setAllowDuplicateKeys(false).setMaxAliasesForCollections(0).build();
-        try (var reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            document = new Load(settings).loadFromReader(reader);
+        try {
+            document = new Load(settings).loadFromString(text);
         } catch (YamlEngineException invalid) {
-            throw new IllegalArgumentException("Invalid YAML manifest: " + file.getFileName(), invalid);
+            throw new IllegalArgumentException("Invalid YAML manifest", invalid);
         }
         if (!(document instanceof Map<?, ?> fields) || !fields.keySet().equals(Set.of(SCHEMA_VERSION, CLASSES))) {
-            throw new IllegalArgumentException("Manifest must contain only schemaVersion and classes: " + file.getFileName());
+            throw new IllegalArgumentException("Manifest must contain only schemaVersion and classes: " + file);
         }
         if (!(fields.get(SCHEMA_VERSION) instanceof Integer version) || version != VERSION) {
-            throw new IllegalArgumentException("Unsupported manifest schemaVersion: " + file.getFileName());
+            throw new IllegalArgumentException("Unsupported manifest schemaVersion: " + file);
         }
         if (!(fields.get(CLASSES) instanceof List<?> classes)) {
-            throw new IllegalArgumentException("Manifest classes must be a sequence: " + file.getFileName());
+            throw new IllegalArgumentException("Manifest classes must be a sequence: " + file);
         }
         var names = new TreeSet<String>();
         for (Object value : classes) {
             if (!(value instanceof String name)) {
-                throw new IllegalArgumentException("Manifest classes must contain strings: " + file.getFileName());
+                throw new IllegalArgumentException("Manifest classes must contain strings: " + file);
             }
             validateName(name);
-            if (!names.add(name)) throw new IllegalArgumentException("Duplicate class in " + file.getFileName() + ": " + name);
+            if (!names.add(name)) throw new IllegalArgumentException("Duplicate class in " + file + ": " + name);
         }
-        if (!allowEmpty && names.isEmpty()) throw new IllegalArgumentException("Empty class manifest: " + file.getFileName());
+        if (!allowEmpty && names.isEmpty()) throw new IllegalArgumentException("Empty class manifest: " + file);
         return names;
     }
 

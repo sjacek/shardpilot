@@ -1,5 +1,9 @@
 # Configuration
 
+For a consumer-supplied subset, see [explicit test selection](test-selection.md). The optional
+`selection { manifestFile = ...; suite = ...; eligibleClasses.from(...) }` block applies before
+assignment, including at count one, and leaves full-suite configuration unchanged when absent.
+
 [Documentation index](README.md)
 
 This page describes the Gradle DSL. Maven consumers configure native runners in `pom.xml` using
@@ -13,12 +17,15 @@ the [Maven guide](maven.md); the following map identifies shared and adapter-spe
 | Count/index CLI | `-Pshardpilot.count=N`, `-Pshardpilot.index=I`. | `-Dshardpilot.count=N`, `-Dshardpilot.index=I`. |
 | Timing history | `shardPilot.durationsFile`. | Plugin `durationsFile` / `shardpilot.durationsFile`. Both read the same TSV. |
 | Unsharded eligibility | Explicit `verification.eligibleClasses` matching the task's application restrictions. | Compiled classes matched by effective native includes/excludes and `additionalExcludesFile`. |
+| Explicit subset | `selection { manifestFile = ...; suite = ...; eligibleClasses.from(...) }`. | `selectionManifestFile` plus `selectionSuite`; native report/exclusion paths must use the selected namespace. |
+| Subset validation | `prepare<Task>Selection`, then `validate<Task>Selection` before the owning test. | Shared validation in `prepare` and `select`. Both adapters apply the subset at count one and above. |
 | Prepare common plan | `prepare<Task>ShardManifests`; source-set dependencies compile candidates. | `test-compile shardpilot:prepare`; compilation is explicitly requested. |
 | Pre-worker evidence | `write<Task>ActualShardManifest`, attached to the owning task. | Bound `shardpilot:select`, generating native exclusions and `actual-N.yaml`. |
+| Refresh history | Opt-in `history {}` registers `refresh<Task>ShardDurations`. | Standalone `shardpilot:refresh-durations`. Both read existing XML and write candidate TSV/JSON. |
 | Aggregate only | `verify<Task>Shards`. | `shardpilot:verify`. Both write JSON/HTML without scheduling producers. |
 | Default namespace | `build/shardpilot/<task-name>/`. | `<module>/target/shardpilot/unit/` or `integration/`; custom `suite` supported. |
 | JVM policy | Optional `testProcesses`; native Gradle settings remain available. | Native Surefire/Failsafe configuration; no `testProcesses` or equivalent `forkEvery` option. |
-| Focused run | Native `--tests`; a non-owning shard can fail with no match. | `-Dtest`/`-Dit.test` rejected while selection/preparation runs; use an unsharded configuration. |
+| Focused run | Native `--tests` when no explicit subset is configured; explicit selection rejects focused filters. | `-Dtest`/`-Dit.test` rejected while selection/preparation runs; use an unsharded configuration. |
 
 The ownership algorithm, nested-class families, YAML schema and report semantics are shared.
 DSL opt-in, lifecycle phases and build-cache behavior are adapter-specific. A Gradle configuration
@@ -55,7 +62,7 @@ An explicit `shardPilot.testProcesses { ... }` block sets `maxHeapSize`, `maxPar
 and/or `forkEvery` on the owning Gradle `Test` task. See the
 [Groovy and Kotlin examples](../README.md#optional-test-process-settings).
 Version 0.1.0 does not provide this API; it is available in
-[0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1) and retained by 0.3.1.
+[0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1) and retained by 0.4.0.
 
 | Property | Gradle type | Meaning |
 | --- | --- | --- |
@@ -75,7 +82,7 @@ There is no automatic memory detection, memory-driven scheduling, retry or failu
 ```groovy
 plugins {
     id 'java'
-    id 'io.github.sjacek.shardpilot' version '0.3.1'
+    id 'io.github.sjacek.shardpilot' version '0.4.0'
 }
 
 tasks.named('test', Test) {
@@ -108,7 +115,7 @@ import io.github.sjacek.shardpilot.ShardPilotExtension
 
 plugins {
     java
-    id("io.github.sjacek.shardpilot") version "0.3.1"
+    id("io.github.sjacek.shardpilot") version "0.4.0"
 }
 
 tasks.test {
@@ -167,7 +174,7 @@ effect. A malformed existing file is not treated as a cold start, even with `sha
 
 Keep one history file per independently planned task/project. All shards of that task must use
 the same contents. History is read, not modified, by ShardPilot. Remove stale records through your
-own history maintenance process; they still influence packing even when their classes no longer
+[history-refresh process](history-refresh.md); they still influence packing even when their classes no longer
 belong to the suite. See the [assignment algorithm](architecture.md#assignment-algorithm).
 
 ## Optional class manifests (0.3.0 and later)
@@ -216,6 +223,14 @@ and publish both outputs even if it fails. Standalone aggregation does not compi
 The HTML file opens locally without scripts, network resources or a web server.
 See [HTML statuses](shard-verification.md#reading-html-statuses) and
 [GitLab publication](shard-verification.md#finding-a-class-assignment-in-gitlab).
+
+## Optional history refresh (0.4.0)
+
+Configure `shardPilot.history {}` once per owner, outside deferred task configuration, as with
+`verification {}`. It is independent of sharding enablement. No refresh task exists until opt-in.
+See the [complete Groovy/Kotlin DSL and property reference](history-refresh.md#gradle-configuration)
+for defaults, eligibility precedence, output paths and Configuration Cache/build-cache behavior.
+Verification and history blocks may be declared in either order; the baseline is resolved lazily.
 
 ## Multiple projects and tasks
 

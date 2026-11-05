@@ -1,0 +1,39 @@
+@startuml
+title ShardPilot: explicit selection and independent outcome gates
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam activityBackgroundColor #EFF6FF
+skinparam activityBorderColor #2563EB
+skinparam ArrowColor #475569
+
+start
+:Consumer supplies immutable YAML v1 manifest;
+:Adapter discovers full eligible classes E;
+if (Nonempty, unique and requested subset of E?) then (yes)
+  :Expand selected families within E only;
+  :Retain E and selected baseline S separately;
+  :Write suite / manifest hash / expansion report;
+  :Restrict timing history to selected families;
+  :Plan S for count >= 1;
+  fork
+    :Write selected baseline and planned-N.yaml;
+    :Record common selection identity;
+  fork again
+    :Apply subset and shard filter;
+    :Check native candidate equality before NO-SOURCE;
+    :Write actual-N.yaml and identity sidecar;
+    :Native runner executes tests;
+    :Native test-result / CI job gate;
+  end fork
+  :Read original collected evidence;
+  :Verify identity, partition and per-node selections;
+  :Write separate coverage JSON and HTML;
+  :Require coverage AND native outcome gates;
+else (no)
+  :Fail before native execution;
+  :Never fall back to the full suite;
+endif
+stop
+@enduml

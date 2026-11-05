@@ -14,7 +14,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class DurationHistoryRefreshTest {
     private final Options defaults = Options.defaults();
 
-    @Test void replacesWholeFamiliesAndRetainsOnlyEligibleUnmeasuredRecords() {
+    @Test
+    void replacesWholeFamiliesAndRetainsOnlyEligibleUnmeasuredRecords() {
         var previous = Map.of("example.Outer", 20.0, "example.Outer$Inner", 30.0, "example.Kept$Nested", 4.0, "example.Gone", 1.0);
         var raw = List.of(suite("example.Outer", .02), suite("example.Outer$Inner", .02), suite("example.Foreign", 20));
         var result = refresh(previous, raw, eligible("example.Outer", "example.Kept"), defaults);
@@ -27,7 +28,8 @@ class DurationHistoryRefreshTest {
         assertEquals(previous, Map.of("example.Outer", 20.0, "example.Outer$Inner", 30.0, "example.Kept$Nested", 4.0, "example.Gone", 1.0));
     }
 
-    @Test void acceptsInclusiveMavenFamilyWithZeroHeaderTestsAndRejectsOverlappingMemberEvidence() {
+    @Test
+    void acceptsInclusiveMavenFamilyWithZeroHeaderTestsAndRejectsOverlappingMemberEvidence() {
         var inclusive = new JUnitXmlTimings.Suite("example.Outer", .9, 0, 0, 0, 0,
                 List.of(test("example.Outer", "outer", false), test("example.Outer$Inner", "nested", false)), "maven");
         var accepted = refresh(Map.of("example.Outer$Inner", 2.0), List.of(inclusive), eligible("example.Outer"), defaults);
@@ -39,7 +41,8 @@ class DurationHistoryRefreshTest {
         }
     }
 
-    @Test void excludesSkippedSuitesWithoutInventingMinimumMeasurements() {
+    @Test
+    void excludesSkippedSuitesWithoutInventingMinimumMeasurements() {
         var skipped = new JUnitXmlTimings.Suite("example.Skipped", .02, 2, 0, 0, 0,
                 List.of(new JUnitXmlTimings.TestCase("example.Skipped", "one", true, false, false)), "skipped");
         var empty = new JUnitXmlTimings.Suite("example.Empty", .04, 0, 0, 0, 0, List.of(), "empty");
@@ -49,7 +52,8 @@ class DurationHistoryRefreshTest {
         assertEquals(Map.of("example.Skipped", 3.0, "example.Real", .1), result.history());
     }
 
-    @Test void retriesAndAmbiguousIdentitiesBlockTheEntireFamilyEvenWhenFailuresAreAllowed() {
+    @Test
+    void retriesAndAmbiguousIdentitiesBlockTheEntireFamilyEvenWhenFailuresAreAllowed() {
         var retried = new JUnitXmlTimings.Suite("example.Outer$Inner", 1, 1, 0, 0, 0,
                 List.of(test("example.Outer$Inner", "flaky", true)), "retry");
         var repeated = new JUnitXmlTimings.Suite("example.Repeated", 1, 2, 0, 0, 0,
@@ -63,7 +67,8 @@ class DurationHistoryRefreshTest {
         assertEquals(Map.of("example.Outer", 7.0, "example.Outer$Inner", 8.0, "example.Valid", 1.0), result.history());
     }
 
-    @Test void nonRetriedFailuresAreOptInAndBlockCleanFamilyMembersByDefault() {
+    @Test
+    void nonRetriedFailuresAreOptInAndBlockCleanFamilyMembersByDefault() {
         var failed = new JUnitXmlTimings.Suite("example.Outer$Inner", 2, 1, 0, 1, 0, List.of(), "failed");
         var raw = List.of(suite("example.Outer", 1), failed);
         var excluded = refresh(Map.of("example.Outer", 10.0), raw, eligible("example.Outer"), defaults);
@@ -73,7 +78,8 @@ class DurationHistoryRefreshTest {
         assertEquals(Map.of("example.Outer", 3.0), included.history());
     }
 
-    @ParameterizedTest @ValueSource(strings = {"foreign", "skipped", "failed"})
+    @ParameterizedTest
+    @ValueSource(strings = {"foreign", "skipped", "failed"})
     void detectsDuplicatesBeforeAnyExclusion(String category) {
         var raw = new JUnitXmlTimings.Suite("example.Duplicate", 1, category.equals("skipped") ? 0 : 1,
                 0, category.equals("failed") ? 1 : 0, 0, List.of(), "first");
@@ -84,7 +90,8 @@ class DurationHistoryRefreshTest {
         assertTrue(result.report().json().contains("\"status\":\"FAILED\""));
     }
 
-    @Test void sumDoesNotInventAmbiguousTestcaseIdentityButPreservesRetryFlags() {
+    @Test
+    void sumDoesNotInventAmbiguousTestcaseIdentityButPreservesRetryFlags() {
         var original = new JUnitXmlTimings.Suite("example.Summed", 1, 1, 0, 0, 0,
                 List.of(test("example.Summed", "same", false)), "first");
         var result = refresh(Map.of(), List.of(original, original), eligible("example.Summed"), options(Duplicates.SUM, false, 0));
@@ -96,7 +103,8 @@ class DurationHistoryRefreshTest {
         assertEquals(1, excluded.report().counts().retried());
     }
 
-    @Test void distinguishesDisabledEmptyAndPartialCoverage() {
+    @Test
+    void distinguishesDisabledEmptyAndPartialCoverage() {
         var raw = List.of(suite("example.A", 1));
         var disabled = refresh(Map.of("example.Kept", 2.0), raw, Eligibility.disabled(), defaults);
         assertTrue(disabled.passed()); assertNull(disabled.report().eligible()); assertNull(disabled.report().coverage());
@@ -111,7 +119,8 @@ class DurationHistoryRefreshTest {
         assertTrue(failed.report().json().contains("\"measured\":null"));
     }
 
-    @Test void isIdempotentDeterministicAndUsesTheExistingPlannerForReportLoads() {
+    @Test
+    void isIdempotentDeterministicAndUsesTheExistingPlannerForReportLoads() {
         var raw = List.of(suite("example.A", 6.12), suite("example.B", 2.34), suite("example.C", 1));
         var options = new Options(.1, 1, false, Duplicates.FAIL, 0, 2);
         var first = refresh(Map.of("example.A", 100.0), raw, eligible("example.A", "example.B", "example.C"), options);
@@ -129,7 +138,8 @@ class DurationHistoryRefreshTest {
         } finally { Locale.setDefault(previous); }
     }
 
-    @Test void validatesPrecisionMinimumCoverageAndOverflow() {
+    @Test
+    void validatesPrecisionMinimumCoverageAndOverflow() {
         assertThrows(IllegalArgumentException.class, () -> new Options(.1, 0, false, Duplicates.FAIL, 0, 1));
         assertDoesNotThrow(() -> new Options(1, 0, false, Duplicates.FAIL, 0, 1));
         for (double value : new double[]{0, -1, Double.NaN, Double.POSITIVE_INFINITY}) {
@@ -142,7 +152,8 @@ class DurationHistoryRefreshTest {
         assertEquals(Reason.INVALID_DATA, overflow.report().reason());
     }
 
-    @Test void formatterRoundTripsBinaryNamesAndZeroLoadsDoNotProduceNan() {
+    @Test
+    void formatterRoundTripsBinaryNamesAndZeroLoadsDoNotProduceNan() {
         var history = Map.of("example.B", 0.0, "example.A$Nested", 12.34);
         String text = DurationHistory.format(history, 2);
         assertTrue(text.startsWith("#")); assertFalse(text.contains("\r"));
@@ -153,7 +164,8 @@ class DurationHistoryRefreshTest {
         assertFalse(result.report().json().contains("NaN"));
     }
 
-    @Test void reportIsParseableAndCounterUnitsReconcileWithSerializedLoads() {
+    @Test
+    void reportIsParseableAndCounterUnitsReconcileWithSerializedLoads() {
         var previous = Map.of("example.A", 10.0, "example.A$Nested", 5.0, "example.B", 1.234, "example.Removed", 1.0);
         var result = refresh(previous, List.of(suite("example.A", 1), suite("example.A$Nested", 2)), eligible("example.A", "example.B"), defaults);
         var counts = result.report().counts();
@@ -171,7 +183,8 @@ class DurationHistoryRefreshTest {
         assertNull(duplicate.report().refreshedLoad());
     }
 
-    @Test void sumPreservesFailureCountersAndReportsOverflowBeforeFiltering() {
+    @Test
+    void sumPreservesFailureCountersAndReportsOverflowBeforeFiltering() {
         var failed = new JUnitXmlTimings.Suite("example.A", 2, 1, 0, 0, 1, List.of(), "failed");
         var result = refresh(Map.of(), List.of(suite("example.A", 1), failed), eligible("example.A"), options(Duplicates.SUM, false, 0));
         assertEquals(1, result.report().counts().failed());
@@ -180,7 +193,8 @@ class DurationHistoryRefreshTest {
         assertEquals(Reason.INVALID_DATA, overflow.report().reason());
     }
 
-    @Test void skippedMembersDoNotBlockExecutedSiblingsAndRoundingHappensOnceForTheFamily() {
+    @Test
+    void skippedMembersDoNotBlockExecutedSiblingsAndRoundingHappensOnceForTheFamily() {
         var skipped = new JUnitXmlTimings.Suite("example.A$Skipped", 10, 1, 1, 0, 0, List.of(), "skipped");
         var result = refresh(Map.of("example.A$Skipped", 40.0),
                 List.of(suite("example.A", .14), suite("example.A$Executed", .14), skipped), eligible("example.A"), defaults);
@@ -190,7 +204,8 @@ class DurationHistoryRefreshTest {
         assertEquals(1, result.report().counts().replaced());
     }
 
-    @Test void acceptsTheExactCoverageThresholdAndPrunesUnmeasuredOldNestedFamilies() {
+    @Test
+    void acceptsTheExactCoverageThresholdAndPrunesUnmeasuredOldNestedFamilies() {
         var result = refresh(Map.of("example.Removed$Nested", 3.0, "example.Kept$Nested", 4.0),
                 List.of(suite("example.A", 2)), eligible("example.A", "example.Kept"), options(Duplicates.FAIL, false, .5));
         assertTrue(result.passed()); assertEquals(.5, result.report().coverage());
@@ -198,7 +213,8 @@ class DurationHistoryRefreshTest {
         assertEquals(1, result.report().counts().dropped()); assertEquals(1, result.report().counts().kept());
     }
 
-    @Test void refreshDoesNotMutateCallerInputsAndExposesImmutableResults() {
+    @Test
+    void refreshDoesNotMutateCallerInputsAndExposesImmutableResults() {
         var previous = new java.util.LinkedHashMap<>(Map.of("example.A", 2.0, "example.Kept", 3.0));
         var before = new java.util.LinkedHashMap<>(previous);
         var families = new java.util.HashSet<>(Set.of("example.A$Nested", "example.Kept"));
@@ -212,7 +228,8 @@ class DurationHistoryRefreshTest {
         assertThrows(UnsupportedOperationException.class, () -> eligibility.families().clear());
     }
 
-    @ParameterizedTest @ValueSource(doubles = {-1, Double.NaN, Double.POSITIVE_INFINITY})
+    @ParameterizedTest
+    @ValueSource(doubles = {-1, Double.NaN, Double.POSITIVE_INFINITY})
     void invalidPreviousTimingsReturnFailureWithoutPublishingAHistory(double seconds) {
         var result = refresh(Map.of("example.A", seconds), List.of(suite("example.A", 1)), eligible("example.A"), defaults);
         assertFalse(result.passed()); assertTrue(result.history().isEmpty());
@@ -220,7 +237,8 @@ class DurationHistoryRefreshTest {
         assertNull(result.report().counts().measured()); assertNull(result.report().previousLoad());
     }
 
-    @ParameterizedTest @ValueSource(doubles = {-0.1, Double.NaN, Double.POSITIVE_INFINITY})
+    @ParameterizedTest
+    @ValueSource(doubles = {-0.1, Double.NaN, Double.POSITIVE_INFINITY})
     void invalidCoverageIsRejectedAndDisabledPruningCannotApplyAPositiveThreshold(double coverage) {
         assertThrows(IllegalArgumentException.class, () -> options(Duplicates.FAIL, false, coverage));
         assertThrows(IllegalArgumentException.class, () -> refresh(Map.of(), List.of(suite("example.A", 1)),
@@ -228,7 +246,10 @@ class DurationHistoryRefreshTest {
     }
 
     private static Eligibility eligible(String... names) { return new Eligibility(Source.BASELINE, Set.of(names)); }
+
     private static Options options(Duplicates duplicates, boolean failed, double coverage) { return new Options(.1, 1, failed, duplicates, coverage, 1); }
+
     private static JUnitXmlTimings.Suite suite(String name, double seconds) { return new JUnitXmlTimings.Suite(name, seconds, 1, 0, 0, 0, List.of(), name); }
+
     private static JUnitXmlTimings.TestCase test(String name, String method, boolean retried) { return new JUnitXmlTimings.TestCase(name, method, false, false, retried); }
 }

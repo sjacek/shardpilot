@@ -5,11 +5,13 @@ import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -94,6 +96,8 @@ class PublicationWorkflowTest {
         assertTrue(mapping(compatibility.get("concurrency")).get("group").toString().startsWith("compatibility-"));
 
         Map<?, ?> matrixJob = mapping(mapping(compatibility.get("jobs")).get("compatibility"));
+        // Required status contexts use these exact labels; matrix upgrades must update the live ruleset too.
+        assertEquals("Gradle ${{ matrix.gradle }} / JDK ${{ matrix.java }}", matrixJob.get("name"));
         Map<?, ?> strategy = mapping(matrixJob.get("strategy"));
         assertEquals(false, strategy.get("fail-fast"));
         assertNull(matrixJob.get("continue-on-error"));
@@ -107,7 +111,7 @@ class PublicationWorkflowTest {
             assertTrue(cells.remove(pair.get("gradle") + "/" + pair.get("java")));
         }
         assertEquals(Set.of("9.0.0/17", "9.0.0/21", "9.1.0/17", "9.1.0/21", "9.1.0/25",
-                "9.8.1/17", "9.8.1/21", "9.8.1/25"), cells);
+                "9.8.2/17", "9.8.2/21", "9.8.2/25"), cells);
         String checks = stepNamed(matrixJob, "Verify the plugin against the consumer runtime").get("run").toString();
         assertTrue(checks.contains("check assemble"));
         assertTrue(checks.contains("-PtestGradleVersion=${{ matrix.gradle }}"));
@@ -155,15 +159,23 @@ class PublicationWorkflowTest {
     @Test
     void sharedReleaseGateAlsoRequiresEveryMavenRuntimeAndRealInvokerBuilds() throws IOException {
         var maven = mapping(mapping(workflow("compatibility").get("jobs")).get("maven"));
+        assertEquals("Maven 3.10.0 / JDK ${{ matrix.java }}", maven.get("name"));
+        assertEquals("Signed Maven release bundle (no upload)",
+                mapping(mapping(workflow("compatibility").get("jobs")).get("release-artifacts")).get("name"));
         assertEquals(List.of("17", "21", "25"), mapping(mapping(maven.get("strategy")).get("matrix")).get("java"));
         assertEquals(false, mapping(maven.get("strategy")).get("fail-fast"));
         assertNull(maven.get("if"));
         assertNull(maven.get("continue-on-error"));
         assertTestedCheckout(maven);
         assertEquals("bash ./mvnw -B -ntp verify", stepNamed(maven, "Verify Maven core, adapter and real runner builds").get("run"));
-        String wrapper = Files.readString(Path.of(".mvn/wrapper/maven-wrapper.properties"));
-        assertTrue(wrapper.contains("apache-maven/3.9.16/apache-maven-3.9.16-bin.zip"));
-        assertTrue(wrapper.contains("distributionSha256Sum="));
+        // CI invokes the Wrapper, so the status label must describe its actual pinned runtime.
+        Properties wrapper = new Properties();
+        wrapper.load(new StringReader(Files.readString(Path.of(".mvn/wrapper/maven-wrapper.properties"))));
+        assertEquals("https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.10.0/apache-maven-3.10.0-bin.zip",
+                wrapper.getProperty("distributionUrl"));
+        String checksum = wrapper.getProperty("distributionSha256Sum");
+        assertNotNull(checksum, "the Maven distribution must be checksum-verified");
+        assertTrue(checksum.matches("[a-f0-9]{64}"), "a nonempty SHA-256 checksum is required");
         assertFalse(maven.toString().contains("secrets."));
     }
 

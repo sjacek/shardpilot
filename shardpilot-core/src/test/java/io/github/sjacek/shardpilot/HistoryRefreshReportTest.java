@@ -14,7 +14,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** Exercises the published report shape independently of the refresh algorithm. */
 class HistoryRefreshReportTest {
-    @Test void preservesCounterUnitsAndOmitsFailureFieldsOnSuccess() {
+    @Test
+    void preservesCounterUnitsAndOmitsFailureFieldsOnSuccess() {
         var report = new HistoryRefreshReport(Status.PASSED, null, null,
                 new Counts(2, 3, 4, 5, 6, 7, 8, 9, 10, 11), 4, Source.BASELINE, .5, 2,
                 List.of(3.0, 1.0), List.of(2.0, 2.0), Map.of(Reason.INCOMPLETE_FAMILY, 2));
@@ -31,7 +32,8 @@ class HistoryRefreshReportTest {
         assertFalse(report.lifecycle().contains("\n"));
     }
 
-    @Test void escapesDiagnosticsButNeverCopiesThemToLifecycleOutput() {
+    @Test
+    void escapesDiagnosticsButNeverCopiesThemToLifecycleOutput() {
         String detail = "input-1/TEST-quoted\"\\name\n\r\t\b\f.xml: SAFE_DIAGNOSTIC";
         var report = DurationHistoryRefresh.failed(Reason.INVALID_XML, detail, Source.BASELINE, null,
                 DurationHistoryRefresh.Options.defaults()).report();
@@ -44,7 +46,8 @@ class HistoryRefreshReportTest {
         assertFalse(report.lifecycle().contains("\n"));
     }
 
-    @Test void failedReadKeepsPrefixEvidenceWithoutClaimingFinalCoverageOrOutputLoads() {
+    @Test
+    void failedReadKeepsPrefixEvidenceWithoutClaimingFinalCoverageOrOutputLoads() {
         var successfulPrefix = new HistoryRefreshReport(Status.PASSED, null, null,
                 new Counts(1, 2, 3, 4, 5, 0, 1, 0, 1, 0), 8, Source.CLASS_DIRECTORIES, .125, 2,
                 List.of(5.0, 3.0), List.of(2.0, 2.0), Map.of(Reason.INCOMPLETE_FAMILY, 1));
@@ -61,7 +64,8 @@ class HistoryRefreshReportTest {
         assertEquals(Status.PASSED, successfulPrefix.status());
     }
 
-    @Test void snapshotsCollectionsAndProducesTheSameJsonAcrossLocaleAndMapOrder() {
+    @Test
+    void snapshotsCollectionsAndProducesTheSameJsonAcrossLocaleAndMapOrder() {
         var previous = new ArrayList<>(List.of(10.0, 0.0));
         var refreshed = new ArrayList<>(List.of(4.0, 4.0));
         var diagnostics = new LinkedHashMap<Reason, Integer>();
@@ -85,7 +89,8 @@ class HistoryRefreshReportTest {
         } finally { Locale.setDefault(original); }
     }
 
-    @Test void zeroAndVeryLargeLoadsHaveFiniteImbalance() {
+    @Test
+    void zeroAndVeryLargeLoadsHaveFiniteImbalance() {
         for (List<Double> loads : List.of(List.of(0.0, 0.0), List.of(Double.MAX_VALUE, Double.MAX_VALUE))) {
             var report = new HistoryRefreshReport(Status.PASSED, null, null,
                     new Counts(1, 1, 0, 0, 0, 0, 0, 0, 0, 0), null, Source.DISABLED, null, 2,

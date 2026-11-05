@@ -21,14 +21,18 @@ public final class ShardPilotPlugin implements Plugin<Project> {
             settings.getShardIndex().convention(providers.gradleProperty("shardpilot.index")
                     .map(Integer::parseInt).orElse(1));
             var history = providers.fileContents(settings.getDurationsFile()).getAsText().orElse("");
+            var selection = providers.fileContents(settings.selectedManifest()).getAsText().orElse("");
             var filter = new ShardClassFilter(settings.getEnabled(), settings.getShardCount(),
-                    settings.getShardIndex(), history);
+                    settings.getShardIndex(), history, selection);
 
             // Include the plan inputs explicitly: a cached shard must never stand in for another shard.
             test.getInputs().property("shardpilot.enabled", settings.getEnabled());
             test.getInputs().property("shardpilot.count", settings.getShardCount());
             test.getInputs().property("shardpilot.index", settings.getShardIndex());
             test.getInputs().property("shardpilot.history", history);
+            test.getInputs().property("shardpilot.selection", selection);
+            test.getInputs().property("shardpilot.selectionIdentity",
+                    providers.fileContents(settings.selectionIdentity()).getAsText().orElse(""));
             // Exclusions compose with existing includes using AND, never widening the original suite.
             test.exclude(filter);
             test.doFirst(new PrepareShardAction(filter));

@@ -33,115 +33,154 @@ import static io.github.sjacek.shardpilot.HistoryRefreshReport.Reason;
 public abstract class RefreshShardDurations extends DefaultTask {
     /** Creates a Gradle-managed refresh task. */
     public RefreshShardDurations() { }
+
     /**
      * Supplied report roots, without producer task dependencies.
      * @return supplied report roots, without producer task dependencies
      */
-    @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public abstract ConfigurableFileCollection getReports();
+
     /**
      * Explicit eligibility bytecode roots.
      * @return explicit eligibility bytecode roots
      */
-    @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public abstract ConfigurableFileCollection getClassDirectories();
+
     /**
      * Detached owning-task bytecode roots, without compilation dependencies.
      * @return detached owning-task bytecode roots, without compilation dependencies
      */
-    @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public abstract ConfigurableFileCollection getDefaultClassDirectories();
+
     /**
      * Explicitly configured baseline; contents are snapshotted separately.
      * @return explicitly configured baseline; contents are snapshotted separately
      */
-    @Internal public abstract RegularFileProperty getBaselineFile();
+    @Internal
+    public abstract RegularFileProperty getBaselineFile();
+
     /**
      * Lazy verification convention, including when verification is configured later.
      * @return lazy verification convention, including when verification is configured later
      */
-    @Internal public abstract RegularFileProperty getVerificationBaseline();
+    @Internal
+    public abstract RegularFileProperty getVerificationBaseline();
+
     /**
      * Optional versioned history location, used only to prevent destructive output aliases.
      * @return optional versioned history location, used only to prevent destructive output aliases
      */
-    @Internal public abstract RegularFileProperty getDurationsFile();
+    @Internal
+    public abstract RegularFileProperty getDurationsFile();
+
     /**
      * Baseline inputs as plain files, permitting missing-input failure JSON without producer dependencies.
      * @return baseline inputs as plain files, permitting missing-input failure JSON without producer dependencies
      */
-    @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public Set<File> getBaselineInputs() {
         if (getBaselineFile().isPresent()) return Set.of(getBaselineFile().get().getAsFile());
         return getVerificationBaseline().isPresent() ? Set.of(getVerificationBaseline().get().getAsFile()) : Set.of();
     }
+
     /**
      * Explicit override presence, distinct from a verification convention.
      * @return explicit override presence, distinct from a verification convention
      */
-    @Input public boolean getExplicitBaseline() { return getBaselineFile().isPresent(); }
+    @Input
+    public boolean getExplicitBaseline() { return getBaselineFile().isPresent(); }
+
     /**
      * Whether verification supplies a baseline convention.
      * @return whether verification supplies a baseline convention
      */
-    @Input public boolean getHasVerificationBaseline() { return getVerificationBaseline().isPresent(); }
+    @Input
+    public boolean getHasVerificationBaseline() { return getVerificationBaseline().isPresent(); }
+
     /**
      * Previous history contents, snapshotted with the same provider as the test filter.
      * @return previous history contents, snapshotted with the same provider as the test filter
      */
-    @Input public abstract Property<String> getPreviousHistory();
+    @Input
+    public abstract Property<String> getPreviousHistory();
+
     /**
      * Partition count for before/after load reporting.
      * @return partition count for before/after load reporting
      */
-    @Input public abstract Property<Integer> getShardCount();
+    @Input
+    public abstract Property<Integer> getShardCount();
+
     /**
      * Lower bound for each accepted family's seconds.
      * @return lower bound for each accepted family's seconds
      */
-    @Input public abstract Property<Double> getMinimumSeconds();
+    @Input
+    public abstract Property<Double> getMinimumSeconds();
+
     /**
      * Decimal digits, 0–6.
      * @return decimal digits, 0–6
      */
-    @Input public abstract Property<Integer> getPrecision();
+    @Input
+    public abstract Property<Integer> getPrecision();
+
     /**
      * Opt-in to non-retried failures.
      * @return opt-in to non-retried failures
      */
-    @Input public abstract Property<Boolean> getIncludeFailedSuites();
+    @Input
+    public abstract Property<Boolean> getIncludeFailedSuites();
+
     /**
      * Duplicate suite-name policy.
      * @return duplicate suite-name policy
      */
-    @Input public abstract Property<DurationHistoryRefresh.Duplicates> getDuplicates();
+    @Input
+    public abstract Property<DurationHistoryRefresh.Duplicates> getDuplicates();
+
     /**
      * Minimum fraction of eligible families measured.
      * @return minimum fraction of eligible families measured
      */
-    @Input public abstract Property<Double> getMinimumCoverage();
+    @Input
+    public abstract Property<Double> getMinimumCoverage();
+
     /**
      * Eligibility source-selection policy.
      * @return eligibility source-selection policy
      */
-    @Input public abstract Property<ShardHistoryOptions.Pruning> getPruning();
+    @Input
+    public abstract Property<ShardHistoryOptions.Pruning> getPruning();
+
     /**
      * Candidate TSV location.
      * @return candidate TSV location
      */
-    @OutputFile public abstract RegularFileProperty getOutputFile();
+    @OutputFile
+    public abstract RegularFileProperty getOutputFile();
+
     /**
      * Success/failure JSON evidence.
      * @return success/failure JSON evidence
      */
-    @OutputFile public abstract RegularFileProperty getReportFile();
+    @OutputFile
+    public abstract RegularFileProperty getReportFile();
 
     /**
      * Distinguishes invalid aliases in the cache key: a prior valid cached action must never
      * bypass validation for an output now pointing at versioned input or at the other output.
      * @return whether output paths conflict with protected inputs or one another
      */
-    @Input public boolean getOutputConflict() {
+    @Input
+    public boolean getOutputConflict() {
         Path output = getOutputFile().get().getAsFile().toPath();
         Path report = getReportFile().get().getAsFile().toPath();
         if (same(output, report)) return true;

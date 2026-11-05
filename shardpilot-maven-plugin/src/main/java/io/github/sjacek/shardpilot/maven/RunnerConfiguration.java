@@ -66,6 +66,14 @@ final class RunnerConfiguration {
         if (wired == null || !resolve(wired).toAbsolutePath().normalize().equals(mojo.exclusions().toAbsolutePath().normalize())) {
             throw new IllegalArgumentException("Configure " + mojo.runner.artifactId + ".excludesFile to " + mojo.exclusions());
         }
+        if (mojo.selectionManifestFile != null) {
+            String reports = scalar("reportsDirectory", null);
+            if (reports == null || !resolve(reports).toAbsolutePath().normalize()
+                    .startsWith(mojo.namespace().toAbsolutePath().normalize().resolve("test-results"))) {
+                throw new IllegalArgumentException("Explicit selection requires native reportsDirectory under "
+                        + mojo.namespace().resolve("test-results") + "; keep full-suite reports separate");
+            }
+        }
         List<String> includes = patterns("includes");
         String includesFile = scalar("includesFile", null);
         if (includesFile != null) includes.addAll(readPatterns(resolve(includesFile)));

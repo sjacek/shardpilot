@@ -1,0 +1,47 @@
+@startuml
+title Eligibility source: AUTO and explicit policies
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam ArrowColor #475569
+skinparam activityBackgroundColor #EFF6FF
+skinparam activityBorderColor #2563EB
+start
+if (Explicit baseline AND class roots?) then (yes)
+  :Reject conflicting sources;
+  stop
+endif
+if (Policy DISABLED?) then (yes)
+  :Reject explicit sources or positive minimumCoverage;
+  :No pruning; eligible and coverage are null;
+  stop
+endif
+if (Policy BASELINE?) then (yes)
+  :Reject explicit class roots;
+  :Use explicit baseline or adapter baseline convention;
+elseif (Policy CLASS_DIRECTORIES?) then (yes)
+  :Reject explicit baseline;
+  :Use explicit roots or existing owner/project bytecode;
+else (AUTO)
+  if (Explicit baseline or class roots?) then (yes)
+    :Use the explicit source;
+  else (no)
+    if (Gradle with verification?) then (yes)
+      :Use verification baseline;
+    elseif (Maven?) then (yes)
+      :Use prepared suite baseline;
+    else (Gradle without verification)
+      :Use existing owner bytecode;
+    endif
+  endif
+endif
+:Read only the selected source;
+if (Missing, invalid or empty?) then (yes)
+  :FAILED JSON, no candidate TSV;
+  :Never fall back or schedule producers;
+else (no)
+  :Normalize eligible outer-class families;
+endif
+stop
+@enduml

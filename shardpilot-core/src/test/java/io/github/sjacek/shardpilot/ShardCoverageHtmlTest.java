@@ -15,7 +15,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** Presentation contracts include partial evidence, plan-only mode and untrusted parser diagnostics. */
 class ShardCoverageHtmlTest {
-    @TempDir Path directory;
+    @TempDir
+    Path directory;
     Path plan;
     Path actual;
 

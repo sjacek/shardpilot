@@ -1,0 +1,5 @@
+pluginManagement {
+    // Resolve this checkout rather than requiring the candidate on a portal.
+    includeBuild('../../../..')
+}
+rootProject.name = 'shardpilot-jupiter-history-example'

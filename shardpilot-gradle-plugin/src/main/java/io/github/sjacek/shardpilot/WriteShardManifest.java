@@ -8,6 +8,8 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
@@ -22,36 +24,60 @@ import org.gradle.api.tasks.TaskAction;
 public abstract class WriteShardManifest extends DefaultTask {
     /** Creates a Gradle-managed task. */
     public WriteShardManifest() { }
+
     /**
      * Supplies actual candidate bytecode.
      * @return the configured value
      */
-    @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public abstract ConfigurableFileCollection getClasses();
+
     /**
      * Supplies bytecode roots.
      * @return the configured value
      */
-    @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public abstract ConfigurableFileCollection getClassDirectories();
+
     /**
      * Supplies current execution partition size.
      * @return the configured value
      */
     @Input
     public abstract Property<Integer> getShardCount();
+
     /**
      * Supplies one-based execution index.
      * @return the configured value
      */
     @Input
     public abstract Property<Integer> getShardIndex();
+
     /**
      * Supplies index-specific output artifact.
      * @return the configured value
      */
     @OutputFile
     public abstract RegularFileProperty getManifest();
+
+    /**
+     * Supplies optional selection cohort identity; absent for the full suite.
+     * @return the configured value
+     */
+    @Optional
+    @InputFile
+    @PathSensitive(PathSensitivity.NONE)
+    public abstract RegularFileProperty getSelectionIdentity();
+
+    /**
+     * Supplies the matching cohort sidecar; used only with explicit selection.
+     * @return the configured value
+     */
+    @Optional
+    @OutputFile
+    public abstract RegularFileProperty getIdentityFile();
 
     /**
      * Persists sorted class names, rejecting duplicate or out-of-root bytecode.
@@ -62,6 +88,10 @@ public abstract class WriteShardManifest extends DefaultTask {
         ShardPlan.validateShard(getShardCount().get(), getShardIndex().get());
         var names = ClassManifest.compiled(getClasses().getFiles(), getClassDirectories().getFiles());
         ClassManifest.write(getManifest().get().getAsFile().toPath(), names);
+        if (getSelectionIdentity().isPresent()) {
+            java.nio.file.Files.copy(getSelectionIdentity().get().getAsFile().toPath(), getIdentityFile().get().getAsFile().toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        }
         getLogger().lifecycle("ShardPilot actual selection: shard {}, {} classes", getShardIndex().get(), names.size());
     }
 }

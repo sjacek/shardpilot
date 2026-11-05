@@ -13,7 +13,7 @@
     <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>6.1.3</version><scope>test</scope></dependency>
   </dependencies>
   <build><plugins>
-    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.14.0</version></plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.16.0</version></plugin>
     <plugin>
       <groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>@project.version@</version>
       <configuration>
@@ -27,7 +27,7 @@
       <executions><execution><id>select-custom-suite</id><goals><goal>select</goal></goals></execution></executions>
     </plugin>
     <plugin>
-      <groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>3.5.4</version>
+      <groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>3.6.1</version>
       <configuration>
         <!-- The adapter must evaluate the same relative pattern-file path as the native runner. -->
         <includesFile>${native.includes}</includesFile>

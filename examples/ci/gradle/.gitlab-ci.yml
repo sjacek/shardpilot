@@ -1,0 +1,59 @@
+# Consumer example: existing opted-in test task with verification { shardCount = 3 }
+# and history { reports.setFrom(layout.projectDirectory.dir('collected/test')) }.
+# Use one immutable plugin/history revision; run in isolated runner workspaces.
+# Standalone example; HistoryRefreshCiExamplesTest validates every local job reference.
+# Narrow UndefinedJob suppressions work around false positives in IntelliJ's pre-commit analysis.
+image: eclipse-temurin:21-jdk
+stages: [prepare, test, aggregate]
+
+plan:
+  stage: prepare
+  script:
+    - bash ./gradlew prepareTestShardManifests -Pshardpilot.count=3
+  artifacts:
+    # Publish the common plan once; actual node manifests belong only to their node job.
+    paths: [build/shardpilot/test/plan/]
+
+test:
+  stage: test
+  parallel: 3
+  # Short local references download their artifacts by default (GitLab needs:artifacts).
+  #noinspection UndefinedJob
+  needs: [plan]
+  script:
+    - bash ./gradlew test -Pshardpilot.count=3 -Pshardpilot.index="$CI_NODE_INDEX"
+  after_script:
+    # Retain distinct shard paths: downloading parallel artifacts must not flatten XML names.
+    - mkdir -p "collected/test/shard-$CI_NODE_INDEX"
+    - if [ -d build/test-results/test ]; then cp -R build/test-results/test/. "collected/test/shard-$CI_NODE_INDEX/"; fi
+  artifacts:
+    when: always
+    name: "test-$CI_COMMIT_SHA-$CI_NODE_INDEX"
+    paths:
+      - collected/test/
+      - build/shardpilot/test/actual/
+
+coverage:
+  stage: aggregate
+  # Scheduling after a failed node and retaining output after a failed script are separate policies.
+  when: always
+  #noinspection UndefinedJob
+  needs: [plan, test]
+  script:
+    - bash ./gradlew verifyTestShards -Pshardpilot.count=3
+  artifacts:
+    when: always
+    paths: [build/shardpilot/test/coverage.json, build/shardpilot/test/coverage.html]
+
+durations:
+  stage: aggregate
+  when: always
+  #noinspection UndefinedJob
+  needs: [plan, test]
+  script:
+    # Artifact-only: no clean, test, compilation or plan regeneration.
+    # A refresh candidate never changes this pipeline's immutable maintained history.
+    - bash ./gradlew refreshTestShardDurations -Pshardpilot.count=3
+  artifacts:
+    when: always
+    paths: [build/shardpilot/test/durations.tsv, build/shardpilot/test/durations.json]

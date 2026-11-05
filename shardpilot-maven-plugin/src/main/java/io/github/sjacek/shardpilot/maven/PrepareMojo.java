@@ -1,5 +1,8 @@
 package io.github.sjacek.shardpilot.maven;
 
+import io.github.sjacek.shardpilot.TestSelection;
+import java.nio.file.Files;
+
 import io.github.sjacek.shardpilot.ShardManifests;
 import java.io.IOException;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -15,13 +18,25 @@ import org.apache.maven.plugins.annotations.Mojo;
 public final class PrepareMojo extends AbstractShardMojo {
     /** Creates the container-managed planning goal. */
     public PrepareMojo() { }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skipAggregator()) return;
         try {
             var selection = new RunnerConfiguration(this).scan();
-            ShardManifests.prepare(planDirectory(), selection.eligible(), history(), shardCount);
-            getLog().info("ShardPilot plan: " + selection.eligible().size() + " classes across " + shardCount + " shards");
+            var explicit = explicitSelection(selection.eligible());
+            String history = history();
+            if (explicit == null) {
+                ShardManifests.prepare(planDirectory(), selection.eligible(), history, shardCount);
+                Files.deleteIfExists(planDirectory().resolve("selection.id"));
+            } else {
+                explicit.write(namespace().resolve("selection"), history, shardCount);
+                ShardManifests.prepare(planDirectory(), explicit.selected(),
+                        TestSelection.history(history, explicit.selected()), shardCount);
+                Files.writeString(planDirectory().resolve("selection.id"), explicit.identity(history, shardCount));
+            }
+            getLog().info("ShardPilot plan: " + (explicit == null ? selection.eligible().size() : explicit.selected().size())
+                    + " selected / " + selection.eligible().size() + " eligible classes across " + shardCount + " shards");
         } catch (IllegalArgumentException exception) {
             throw new MojoFailureException(exception.getMessage(), exception);
         } catch (IOException exception) {

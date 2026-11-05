@@ -1,5 +1,8 @@
 package io.github.sjacek.shardpilot.maven;
 
+import io.github.sjacek.shardpilot.TestSelection;
+import java.util.Set;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -71,6 +74,14 @@ public abstract class AbstractShardMojo extends AbstractMojo {
     @Parameter(property = "shardpilot.additionalExcludesFile")
     protected File additionalExcludesFile;
 
+    /** Optional strict v1 YAML subset; absent preserves existing full-suite behavior. */
+    @Parameter(property = "shardpilot.selectionManifestFile")
+    protected File selectionManifestFile;
+
+    /** Required separate identity when selectionManifestFile is supplied. */
+    @Parameter(property = "shardpilot.selectionSuite")
+    protected String selectionSuite;
+
     /**
      * A POM-only parent has no native class suite and must not create misleading empty artifacts.
      * @return whether the current project is an aggregator that should be skipped
@@ -91,24 +102,74 @@ public abstract class AbstractShardMojo extends AbstractMojo {
         if (!name.matches("[A-Za-z0-9][A-Za-z0-9._-]*")) {
             throw new IllegalArgumentException("ShardPilot suite must be a single alphanumeric path component");
         }
-        return directory != null ? directory.toPath() : Path.of(project.getBuild().getDirectory(), "shardpilot", name);
+        Path base = directory != null ? directory.toPath() : Path.of(project.getBuild().getDirectory(), "shardpilot", name);
+        return selectedNamespace(base);
+    }
+
+    /**
+     * Isolates explicit overrides as well as defaults from the corresponding full-suite outputs.
+     * @param base consumer-owned output directory
+     * @return unchanged full-suite path or its selection-specific child
+     */
+    protected Path selectedNamespace(Path base) {
+        if (selectionManifestFile == null && selectionSuite == null) return base;
+        if (selectionManifestFile == null) throw new IllegalArgumentException("selectionSuite requires selectionManifestFile");
+        TestSelection.validateSuite(selectionSuite);
+        return base.resolve("selections").resolve(selectionSuite);
+    }
+
+    /**
+     * Reads the consumer manifest against independently discovered native eligibility.
+     * Protection checks precede the failure-report handler: even a diagnostic must not overwrite
+     * the maintained input. Parsed validation failures invalidate the reusable snapshot only;
+     * older plan/actual artifacts are retained as evidence, and the failed native job remains fatal.
+     * @param eligible complete runner candidates
+     * @return validated selection or null for the original full suite
+     * @throws IOException if the manifest cannot be read
+     */
+    protected TestSelection explicitSelection(Set<String> eligible) throws IOException {
+        namespace();
+        if (selectionManifestFile == null) return null;
+        Path source = selectionManifestFile.toPath().toAbsolutePath().normalize();
+        for (Path output : java.util.List.of(namespace(), planDirectory(), selectionDirectory())) {
+            if (source.startsWith(output.toAbsolutePath().normalize())) {
+                throw new IllegalArgumentException("Keep the selection manifest outside generated selection outputs");
+            }
+        }
+        var diagnostics = namespace().resolve("selection");
+        TestSelection.protectInput(selectionManifestFile.toPath(), exclusions(),
+                diagnostics.resolve("selected.yaml"), diagnostics.resolve("eligible.yaml"), diagnostics.resolve("selection.id"),
+                diagnostics.resolve("selection.json"), diagnostics.resolve("selection.html"), planDirectory().resolve("baseline.yaml"),
+                planDirectory().resolve("selection.id"), selectionDirectory().resolve("actual-" + shardIndex + ".yaml"),
+                selectionDirectory().resolve("selection-" + shardIndex + ".id"));
+        try {
+            return TestSelection.read(selectionManifestFile.toPath(), eligible, selectionSuite);
+        } catch (IllegalArgumentException failure) {
+            TestSelection.writeFailure(diagnostics, failure.getMessage());
+            throw failure;
+        }
     }
 
     /**
      * Plan overrides are independent of the actual-selection and report paths.
      * @return baseline/planned manifest directory
      */
-    protected Path planDirectory() { return plannedDirectory == null ? namespace().resolve("plan") : plannedDirectory.toPath(); }
+    protected Path planDirectory() { return plannedDirectory == null ? namespace().resolve("plan") : selectedNamespace(plannedDirectory.toPath()); }
+
     /**
      * Stores one index-specific selection per node; never used as a source of eligibility.
      * @return actual-manifest directory
      */
-    protected Path selectionDirectory() { return actualDirectory == null ? namespace().resolve("actual") : actualDirectory.toPath(); }
+    protected Path selectionDirectory() { return actualDirectory == null ? namespace().resolve("actual") : selectedNamespace(actualDirectory.toPath()); }
+
     /**
      * Generated output consumed by the native runner, distinct from maintained consumer exclusions.
      * @return native runner's generated exclusion file
      */
-    protected Path exclusions() { return excludesFile == null ? namespace().resolve("excludes.txt") : excludesFile.toPath(); }
+    protected Path exclusions() {
+        return excludesFile == null ? namespace().resolve("excludes.txt")
+                : selectedNamespace(excludesFile.toPath().toAbsolutePath().getParent()).resolve(excludesFile.getName());
+    }
 
     /**
      * Missing optional history is a cold start; unreadable existing history remains an I/O error.

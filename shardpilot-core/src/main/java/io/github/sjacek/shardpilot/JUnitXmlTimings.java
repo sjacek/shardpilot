@@ -104,6 +104,7 @@ public final class JUnitXmlTimings {
             super("ShardPilot XML " + source.replaceAll("[\\p{Cntrl}]", "?") + " <" + element + ">: " + reason);
             this.partial = List.copyOf(partial);
         }
+
         /**
          * Successfully parsed suites preceding the unreadable/invalid input.
          * @return successfully parsed suites preceding the unreadable/invalid input
@@ -249,6 +250,7 @@ public final class JUnitXmlTimings {
             tests = counter(reader, "tests"); skipped = counter(reader, "skipped");
             failures = counter(reader, "failures"); errors = counter(reader, "errors");
         }
+
         Suite build() { return new Suite(name, seconds, tests, skipped, failures, errors, cases, source); }
     }
 
@@ -261,6 +263,7 @@ public final class JUnitXmlTimings {
             name = attribute(reader, "name");
             if (name == null) throw new Invalid("missing testcase identity");
         }
+
         TestCase build() { return new TestCase(className, name, skipped, failed, retried); }
     }
 

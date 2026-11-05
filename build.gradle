@@ -5,7 +5,7 @@ plugins {
 
 allprojects {
     group = 'io.github.sjacek'
-    version = '0.3.1'
+    version = '0.4.0'
 }
 
 // The Gradle adapter uses this text for both its Portal listing and publication POMs.
@@ -16,6 +16,7 @@ project.setDescription('ShardPilot helps shorten CI feedback for large JVM unit 
         'Works with existing JUnit Jupiter, Spock and TestNG tasks while preserving nested test families and configured test filters. ' +
         'Optional per-task controls set worker heap size, parallel forks and process recycling. ' +
         'Opt-in YAML class manifests and standalone JSON and HTML reports compare planned assignments with class selections collected from CI jobs. ' +
+        'Opt-in history refresh creates candidate TSV and JSON from existing JUnit XML without rerunning tests or modifying maintained history. ' +
         'Supports Gradle Configuration Cache and any CI provider without a coordinator, replacement test runner or telemetry. ' +
         'Your CI launches every shard and collects the results; class-selection verification complements normal test result checks.')
 
@@ -25,7 +26,7 @@ tasks.named('check') { dependsOn ':shardpilot-core:check', ':shardpilot-gradle-p
 tasks.named('assemble') { dependsOn ':shardpilot-core:assemble', ':shardpilot-gradle-plugin:assemble' }
 
 tasks.named('wrapper') {
-    gradleVersion = '9.8.1'
+    gradleVersion = '9.8.2'
     distributionType = Wrapper.DistributionType.BIN
-    distributionSha256Sum = 'dce76f55f8e251a3a1f130eb120f30b3d271de2b76c9b0729d316b5a1b6dc01f'
+    distributionSha256Sum = '21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e389607'
 }

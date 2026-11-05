@@ -6,6 +6,7 @@ Each scenario is an independent Gradle consumer build, not a subproject of the p
 | Framework | Example | Status |
 | --- | --- | --- |
 | JUnit Jupiter | [PostgreSQL and RabbitMQ with Testcontainers](junit-jupiter/testcontainers/README.md) | Available |
+| JUnit Jupiter | [Duration-history refresh without Docker](junit-jupiter/duration-history/README.md) | Available |
 | Spock | [PostgreSQL and RabbitMQ with Testcontainers](spock/testcontainers/README.md) | Available |
 | TestNG | [PostgreSQL and RabbitMQ with Testcontainers](testng/testcontainers/README.md) | Available |
 

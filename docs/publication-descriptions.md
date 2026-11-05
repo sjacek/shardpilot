@@ -2,7 +2,7 @@
 
 [Documentation index](README.md) · [Release procedure](releases.md)
 
-These English descriptions explain the purpose and scope of the 0.3.1 artifacts. They are
+These English descriptions explain the purpose and scope of the 0.4.0 artifacts. They are
 configured in the build metadata that will be submitted with a release. The metadata files are
 the source of truth; update the matching text here when changing them. Published earlier versions
 keep their own release metadata.
@@ -12,7 +12,7 @@ keep their own release metadata.
 | Field | Value |
 | --- | --- |
 | Name | ShardPilot Maven plugin |
-| Coordinates | `io.github.sjacek:shardpilot-maven-plugin:0.3.1` |
+| Coordinates | `io.github.sjacek:shardpilot-maven-plugin:0.4.0` |
 | Packaging | `maven-plugin` |
 | Description source | [Adapter POM](../shardpilot-maven-plugin/pom.xml) |
 | Project and SCM URL | [sjacek/shardpilot](https://github.com/sjacek/shardpilot) |
@@ -27,7 +27,7 @@ the explicit-field correction is included in 0.3.1, since published POMs are imm
 
 The POM `description` is plain text, ready for the artifact listing:
 
-> ShardPilot helps shorten CI feedback for large JVM unit and integration test suites by splitting Maven Surefire and Failsafe test classes into deterministic, non-overlapping shards for parallel CI jobs. It balances class families using historical test durations and uses stable hashing when timing data is unavailable. The plugin preserves native test execution and configured class include/exclude patterns, with independent suites for unit and integration tests. The prepare, select and verify goals produce readable YAML manifests and standalone JSON and HTML reports to compare planned class assignments with selections collected from every CI job. Supports single-module projects and parallel Maven reactor builds without a coordinator, replacement test runner or telemetry. Your build controls test JVMs and normal test outcomes; your CI launches every shard and collects the results. Class-selection verification complements the native test result checks.
+> ShardPilot helps shorten CI feedback for large JVM unit and integration test suites by splitting Maven Surefire and Failsafe test classes into deterministic, non-overlapping shards for parallel CI jobs. It balances class families using historical test durations and uses stable hashing when timing data is unavailable. The plugin preserves native test execution and configured class include/exclude patterns, with independent suites for unit and integration tests. The prepare, select and verify goals produce readable YAML manifests and standalone JSON and HTML reports to compare planned class assignments with selections collected from every CI job. Supports single-module projects and parallel Maven reactor builds without a coordinator, replacement test runner or telemetry. Your build controls test JVMs and normal test outcomes; your CI launches every shard and collects the results. Class-selection verification complements the native test result checks. The standalone refresh-durations goal creates candidate TSV and diagnostic JSON from existing JUnit XML without rerunning tests or modifying maintained history.
 
 See the [Maven setup guide](maven.md) and [complete POM examples](../examples/maven/README.md) for
 native runner wiring, lifecycle phases, suite configuration and supported filters. The native Maven
@@ -42,15 +42,15 @@ configure `shardpilot-maven-plugin` to enable sharding.
 
 ### ShardPilot build parent
 
-`io.github.sjacek:shardpilot-parent:0.3.1`, packaging `pom`; [source POM](../pom.xml).
+`io.github.sjacek:shardpilot-parent:0.4.0`, packaging `pom`; [source POM](../pom.xml).
 
-> ShardPilot helps shorten CI feedback by splitting JVM test classes into deterministic, non-overlapping shards for parallel CI jobs. Gradle and Maven adapters share balancing based on historical test durations, stable hashing when timings are unavailable, YAML class manifests and standalone JSON and HTML reports for verifying class selections. This parent POM supplies shared dependency and build configuration for shardpilot-core and shardpilot-maven-plugin. Consumers configure the appropriate build-tool adapter; class-selection verification complements normal test result checks.
+> ShardPilot helps shorten CI feedback by splitting JVM test classes into deterministic, non-overlapping shards for parallel CI jobs. Gradle and Maven adapters share balancing based on historical test durations, stable hashing when timings are unavailable, YAML class manifests and standalone JSON and HTML reports for verifying class selections. This parent POM supplies shared dependency and build configuration for shardpilot-core and shardpilot-maven-plugin. Consumers configure the appropriate build-tool adapter; class-selection verification complements normal test result checks. Opt-in history refresh creates candidate TSV and JSON from existing JUnit XML without rerunning tests or modifying maintained history.
 
 ### ShardPilot core
 
-`io.github.sjacek:shardpilot-core:0.3.1`, packaging `jar`; [source POM](../shardpilot-core/pom.xml).
+`io.github.sjacek:shardpilot-core:0.4.0`, packaging `jar`; [source POM](../shardpilot-core/pom.xml).
 
-> Shared Java core used by the ShardPilot Gradle and Maven adapters for deterministic JVM test sharding. Balances class families using historical test durations or stable hashing when timings are unavailable, reads and writes YAML class manifests, and verifies complete, non-overlapping class selections with standalone JSON and HTML reports. Contains the common planning and reporting logic without Gradle or Maven APIs; test execution and process settings belong to the build-tool adapters and native runners.
+> Shared Java core used by the ShardPilot Gradle and Maven adapters for deterministic JVM test sharding. Balances class families using historical test durations or stable hashing when timings are unavailable, reads and writes YAML class manifests, and verifies complete, non-overlapping class selections with standalone JSON and HTML reports. Contains the common planning and reporting logic without Gradle or Maven APIs; test execution and process settings belong to the build-tool adapters and native runners. Includes secure JUnit XML timing import, complete-family history refresh and diagnostic JSON for candidate histories.
 
 ## Gradle Plugin Portal
 
@@ -58,8 +58,8 @@ configure `shardpilot-maven-plugin` to enable sharding.
 | --- | --- |
 | Display name | ShardPilot |
 | Plugin ID | `io.github.sjacek.shardpilot` |
-| Version | `0.3.1` |
-| Implementation | `io.github.sjacek:shardpilot:0.3.1` |
+| Version | `0.4.0` |
+| Implementation | `io.github.sjacek:shardpilot:0.4.0` |
 | Description source | Root [build.gradle](../build.gradle), used by the [Gradle adapter](../shardpilot-gradle-plugin/build.gradle) |
 | Tags | `testing`, `sharding`, `testng`, `spock`, `junit`, `ci` |
 | Website | [sjacek/shardpilot](https://github.com/sjacek/shardpilot) |
@@ -67,7 +67,7 @@ configure `shardpilot-maven-plugin` to enable sharding.
 
 The Portal description and locally generated Gradle implementation/marker POM descriptions use the same text:
 
-> ShardPilot helps shorten CI feedback for large JVM unit and integration test suites by splitting Gradle Test tasks into deterministic, non-overlapping class-level shards for parallel CI jobs. It balances class families using historical test durations, with stable hashing when timing data is unavailable. Works with existing JUnit Jupiter, Spock and TestNG tasks while preserving nested test families and configured test filters. Optional per-task controls set worker heap size, parallel forks and process recycling. Opt-in YAML class manifests and standalone JSON and HTML reports compare planned assignments with class selections collected from CI jobs. Supports Gradle Configuration Cache and any CI provider without a coordinator, replacement test runner or telemetry. Your CI launches every shard and collects the results; class-selection verification complements normal test result checks.
+> ShardPilot helps shorten CI feedback for large JVM unit and integration test suites by splitting Gradle Test tasks into deterministic, non-overlapping class-level shards for parallel CI jobs. It balances class families using historical test durations, with stable hashing when timing data is unavailable. Works with existing JUnit Jupiter, Spock and TestNG tasks while preserving nested test families and configured test filters. Optional per-task controls set worker heap size, parallel forks and process recycling. Opt-in YAML class manifests and standalone JSON and HTML reports compare planned assignments with class selections collected from CI jobs. Opt-in history refresh creates candidate TSV and JSON from existing JUnit XML without rerunning tests or modifying maintained history. Supports Gradle Configuration Cache and any CI provider without a coordinator, replacement test runner or telemetry. Your CI launches every shard and collects the results; class-selection verification complements normal test result checks.
 
 ## Verification and publication
 

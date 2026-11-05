@@ -7,12 +7,38 @@ recorded by the Gradle Plugin Portal.
 
 ### Added
 
+- Run an explicitly selected test subset with one or multiple shards in Gradle and Maven.
+  Supply a strict YAML class manifest; invalid, empty or ineligible requests fail before tests.
+- Keep nested families together within full eligibility and balance only selected families.
+  Separate suite namespaces and selection JSON/HTML preserve full-suite reports; cohort identities
+  reject mixed plan/actual artifacts. See the [selection guide](docs/test-selection.md).
+
+## [0.4.0](docs/releases/0.4.0.md)
+
+### Added
+
 - Maven `refresh-durations` creates candidate TSV/JSON artifacts from existing Surefire or
   Failsafe reports and suite eligibility, without rerunning tests or modifying maintained history.
 - Opt-in Gradle `history {}` configuration and `refresh<Task>ShardDurations` tasks create a
   candidate TSV from existing JUnit XML reports without rerunning tests or modifying versioned history.
 - Shared refresh logic normalizes complete class families, excludes skipped/retried/ambiguous
   measurements and reports coverage plus before/after recorded shard loads in JSON, including data failures.
+- Runnable history-refresh examples and CI collection flows for Gradle and Maven, with
+  option references, diagnostic contracts and diagrams for reviewed history adoption.
+
+### Compatibility and upgrade
+
+- Existing sharding DSL, native Maven selection and YAML manifests remain compatible.
+  Enable Gradle `history {}` or invoke Maven `refresh-durations` to use the new feature;
+  review and adopt the generated candidate separately for the next pipeline.
+
+### Build tooling
+
+- Build and verify with Maven 3.10.0 through the checksum-verified Wrapper. The three Maven
+  CI cells use JDK 17/21/25; the adapter's provided Maven APIs and declared minimum stay unchanged.
+- Build ShardPilot with Gradle 9.8.2 through the regenerated, checksum-verified Wrapper.
+  CI tests 9.8.2 on JDK 17/21/25, replacing the three 9.8.1 cells while retaining eight
+  required consumer runtime combinations.
 
 ### Fixed
 

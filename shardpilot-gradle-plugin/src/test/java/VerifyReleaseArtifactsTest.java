@@ -154,6 +154,7 @@ class VerifyReleaseArtifactsTest {
     }
 
     private static String prefix(String artifact) { return "io/github/sjacek/" + artifact + "/0.3.0/" + artifact + "-0.3.0"; }
+
     private static byte[] bytes(String text) { return text.getBytes(StandardCharsets.UTF_8); }
 
     private static byte[] zip(Map<String, byte[]> entries) throws Exception {

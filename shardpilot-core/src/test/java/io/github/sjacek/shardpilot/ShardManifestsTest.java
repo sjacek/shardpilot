@@ -21,7 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Both adapters share preparation, pre-write validation and report serialization contracts. */
 class ShardManifestsTest {
-    @TempDir Path directory;
+    @TempDir
+    Path directory;
 
     @Test
     void preparationAndSelectionUseTheSameFamilyPlannerAndCleanOnlyNumericPlans() throws IOException {
