@@ -318,6 +318,157 @@ class MavenAdapterTest {
         }
     }
 
+    @Test
+    void explicitSingleNodeSelectionExcludesOthersAndIsolatesFullArtifacts() throws Exception {
+        enableSelection("example.OneTest");
+        var full = directory.resolve("target/shardpilot/unit/coverage.json");
+        Files.createDirectories(full.getParent());
+        Files.writeString(full, "full sentinel");
+        PrepareMojo prepare = selectionContext(new PrepareMojo());
+        prepare.execute();
+        select.execute();
+        assertEquals(Set.of("example.OneTest"), ClassManifest.read(select.selectionDirectory().resolve("actual-1.yaml"), false));
+        assertTrue(Files.readString(select.exclusions()).contains("example/TwoTest.class"));
+        assertEquals("full sentinel", Files.readString(full));
+        assertTrue(Files.readString(select.namespace().resolve("selection/selection.json")).contains("\"eligibleClasses\":2"));
+        assertEquals(Files.readString(select.planDirectory().resolve("selection.id")),
+                Files.readString(select.selectionDirectory().resolve("selection-1.id")));
+        selectionContext(new VerifyMojo()).execute();
+    }
+
+    @Test
+    void explicitSelectionRejectsClassesExcludedByNativeDiscovery() throws Exception {
+        enableSelection("example.Helper");
+        assertTrue(assertThrows(MojoFailureException.class, select::execute).getMessage().contains("ineligible"));
+        assertFalse(Files.exists(select.exclusions()));
+    }
+
+    @Test
+    void explicitSelectionRequiresSeparateNativeReportsAndRejectsFocusedOverrides() throws Exception {
+        enableSelection("example.OneTest");
+        configuration.getChild("reportsDirectory").setValue("${project.build.directory}/surefire-reports");
+        assertTrue(assertThrows(MojoFailureException.class, select::execute).getMessage().contains("reportsDirectory"));
+        configuration.getChild("reportsDirectory").setValue(select.namespace().resolve("test-results").toString());
+        select.session.getUserProperties().setProperty("test", "OneTest");
+        assertThrows(MojoFailureException.class, select::execute);
+        assertFalse(Files.exists(select.exclusions()));
+    }
+
+    @Test
+    void selectionOverridesCannotReuseFullPlanActualOrExclusionDirectories() throws Exception {
+        enableSelection("example.OneTest");
+        select.plannedDirectory = directory.resolve("custom-plan").toFile();
+        select.actualDirectory = directory.resolve("custom-actual").toFile();
+        select.excludesFile = directory.resolve("custom-exclusions.txt").toFile();
+        assertEquals(directory.resolve("custom-plan/selections/smoke"), select.planDirectory());
+        assertEquals(directory.resolve("custom-actual/selections/smoke"), select.selectionDirectory());
+        assertEquals(directory.resolve("selections/smoke/custom-exclusions.txt"), select.exclusions());
+    }
+
+    @Test
+    void selectedVerificationStillRequiresIdentityAfterEverySidecarIsLost() throws Exception {
+        enableSelection("example.OneTest");
+        selectionContext(new PrepareMojo()).execute();
+        select.execute();
+        Files.delete(select.planDirectory().resolve("selection.id"));
+        Files.delete(select.selectionDirectory().resolve("selection-1.id"));
+        VerifyMojo verify = selectionContext(new VerifyMojo());
+        assertTrue(assertThrows(MojoFailureException.class, verify::execute).getMessage()
+                .contains("Explicit selection requires its planned cohort identity"));
+        assertTrue(Files.readString(verify.namespace().resolve("coverage.html")).contains("Verification: FAILED"));
+    }
+
+    @Test
+    void selectionCannotOmitItsSuiteIdentity() throws Exception {
+        enableSelection("example.OneTest");
+        select.selectionSuite = null;
+        assertTrue(assertThrows(MojoFailureException.class, select::execute).getMessage().contains("Selection suite"));
+    }
+
+    @Test
+    void explicitFamilyExpansionUsesOnlyTheEffectiveNativeCandidates() throws Exception {
+        var includes = new Xpp3Dom("includes");
+        add(includes, "include", "**/OneTest*.class");
+        configuration.addChild(includes);
+        var excludes = new Xpp3Dom("excludes");
+        // An explicit harmless pattern replaces Surefire's default exclusion of nested candidates.
+        add(excludes, "exclude", "**/NotPresent.class");
+        configuration.addChild(excludes);
+        enableSelection("example.OneTest$Nested");
+        select.execute();
+        assertEquals(Set.of("example.OneTest", "example.OneTest$Nested"),
+                ClassManifest.read(select.selectionDirectory().resolve("actual-1.yaml"), false));
+        String report = Files.readString(select.namespace().resolve("selection/selection.json"));
+        assertTrue(report.contains("\"eligibleClasses\":2"));
+        assertTrue(report.contains("\"familyExpansions\":[\"example.OneTest\"]"));
+        assertTrue(Files.readString(select.exclusions()).contains("example/TwoTest.class"));
+    }
+
+    @Test
+    void explicitlySelectedEmptyShardDeniesEveryNativeCandidate() throws Exception {
+        enableSelection("example.OneTest");
+        select.durationsFile = directory.resolve("timings.tsv").toFile();
+        Files.writeString(select.durationsFile.toPath(), "example.OneTest\t1\nexample.TwoTest\t1000\n");
+        select.shardCount = 3;
+        select.shardIndex = 3;
+        select.execute();
+        assertTrue(ClassManifest.read(select.selectionDirectory().resolve("actual-3.yaml"), true).isEmpty());
+        assertTrue(Files.readAllLines(select.exclusions()).contains("**/*"));
+        var snapshot = io.github.sjacek.shardpilot.TestSelection.read(select.selectionManifestFile.toPath(),
+                Set.of("example.OneTest", "example.TwoTest"), "smoke");
+        assertEquals(snapshot.identity(Files.readString(select.durationsFile.toPath()), 3),
+                Files.readString(select.selectionDirectory().resolve("selection-3.id")));
+    }
+
+    @Test
+    void invalidReplacementInvalidatesSnapshotWithoutRewritingEarlierNodeEvidence() throws Exception {
+        enableSelection("example.OneTest");
+        select.execute();
+        String actual = Files.readString(select.selectionDirectory().resolve("actual-1.yaml"));
+        String exclusions = Files.readString(select.exclusions());
+        Files.writeString(select.selectionManifestFile.toPath(), "schemaVersion: 1\nclasses: []\n");
+        assertThrows(MojoFailureException.class, select::execute);
+        Path reports = select.namespace().resolve("selection");
+        assertFalse(Files.exists(reports.resolve("selected.yaml")));
+        assertFalse(Files.exists(reports.resolve("selection.id")));
+        assertTrue(Files.readString(reports.resolve("selection.json")).contains("\"status\":\"failed\""));
+        assertEquals(actual, Files.readString(select.selectionDirectory().resolve("actual-1.yaml")));
+        assertEquals(exclusions, Files.readString(select.exclusions()));
+        // Recovery is an explicit new execution, not a fallback to old snapshots or full discovery.
+        ClassManifest.write(select.selectionManifestFile.toPath(), Set.of("example.TwoTest"));
+        select.execute();
+        assertEquals(Set.of("example.TwoTest"),
+                ClassManifest.read(select.selectionDirectory().resolve("actual-1.yaml"), false));
+    }
+
+    @Test
+    void generatedOutputAliasCannotDestroyTheMaintainedManifest() throws Exception {
+        enableSelection("example.OneTest");
+        Files.createDirectories(select.exclusions().getParent());
+        Files.createLink(select.exclusions(), select.selectionManifestFile.toPath());
+        String before = Files.readString(select.selectionManifestFile.toPath());
+        assertTrue(assertThrows(MojoFailureException.class, select::execute).getMessage().contains("cannot overwrite"));
+        assertEquals(before, Files.readString(select.selectionManifestFile.toPath()));
+        assertFalse(Files.exists(select.namespace().resolve("selection/selection.json")));
+    }
+
+    @Test
+    void missingSelectionFileIsAnIoFailureAndCannotPublishNewEvidence() throws Exception {
+        enableSelection("example.OneTest");
+        Files.delete(select.selectionManifestFile.toPath());
+        assertThrows(MojoExecutionException.class, select::execute);
+        assertFalse(Files.exists(select.exclusions()));
+        assertFalse(Files.exists(select.selectionDirectory()));
+    }
+
+    private void enableSelection(String name) throws IOException {
+        select.selectionManifestFile = directory.resolve("selection.yaml").toFile();
+        select.selectionSuite = "smoke";
+        ClassManifest.write(select.selectionManifestFile.toPath(), Set.of(name));
+        configuration.getChild("excludesFile").setValue(select.exclusions().toString());
+        add(configuration, "reportsDirectory", select.namespace().resolve("test-results/shard-1").toString());
+    }
+
     /** Builds a valid Failsafe boundary so rejection tests exercise the requested bypass, not missing wiring. */
     private void configureFailsafe() {
         select.runner = TestRunner.FAILSAFE;
@@ -338,6 +489,8 @@ class MavenAdapterTest {
         mojo.runner = select.runner;
         mojo.suite = select.suite;
         mojo.directory = select.directory;
+        mojo.selectionManifestFile = select.selectionManifestFile;
+        mojo.selectionSuite = select.selectionSuite;
         return mojo;
     }
 

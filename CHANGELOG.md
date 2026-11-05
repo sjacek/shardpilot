@@ -5,6 +5,14 @@ recorded by the Gradle Plugin Portal.
 
 ## Unreleased
 
+### Added
+
+- Run an explicitly selected test subset with one or multiple shards in Gradle and Maven.
+  Supply a strict YAML class manifest; invalid, empty or ineligible requests fail before tests.
+- Keep nested families together within full eligibility and balance only selected families.
+  Separate suite namespaces and selection JSON/HTML preserve full-suite reports; cohort identities
+  reject mixed plan/actual artifacts. See the [selection guide](docs/test-selection.md).
+
 ## [0.4.0](docs/releases/0.4.0.md)
 
 ### Added

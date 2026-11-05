@@ -22,6 +22,7 @@ YAML manifests and selection reports remain compatible. Current snippets target 
 | [History recovery](history-refresh.md#recover-a-missing-shard-download) | Diagnose missing shard XML, distinguish the three outcome gates and restore the original report cohort. |
 | [CI integration](ci.md) | Run all shards with consistent inputs, isolated workspaces and separate reports. |
 | [Class manifests and coverage](shard-verification.md) | Configure artifact gates, read HTML assignment statuses, expose a GitLab MR link and distinguish selection from test completion. |
+| [Explicit test selection](test-selection.md) | Validate a consumer-owned subset, expand eligible families and run one/many shards with separate reports. |
 | [PostgreSQL and RabbitMQ example](testcontainers-example.md) | Run a JUnit Jupiter integration suite with shared worker-local Testcontainers fixtures and isolated test data. |
 | [Spock with PostgreSQL and RabbitMQ](spock-testcontainers-example.md) | Run specifications and data-table iterations with worker-local containers and specification-local databases. |
 | [TestNG with PostgreSQL and RabbitMQ](testng-testcontainers-example.md) | Run class fixtures and data-provider rows with the native TestNG adapter and worker-local containers. |

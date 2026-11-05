@@ -13,6 +13,8 @@ import org.apache.maven.plugins.annotations.Parameter;
  * dependency resolution can manufacture missing evidence. Native runner configuration and compiled
  * classes are unnecessary: only the supplied plan/actual cohort is inspected. Both reports are
  * attempted before raising a validation failure; write failures remain execution errors.
+     * Selection configuration independently requires cohort sidecars; deleting all sidecars must
+     * not downgrade an explicitly selected run to legacy full-suite verification.
  */
 @Mojo(name = "verify", threadSafe = true)
 public final class VerifyMojo extends AbstractShardMojo {
@@ -40,8 +42,11 @@ public final class VerifyMojo extends AbstractShardMojo {
         try {
             var result = ShardCoverage.writeReports(planDirectory(), selectionDirectory(), shardCount,
                     verifyActual, requireNonEmptyShards,
-                    reportFile == null ? namespace().resolve("coverage.json") : reportFile.toPath(),
-                    htmlReportFile == null ? namespace().resolve("coverage.html") : htmlReportFile.toPath());
+                    reportFile == null ? namespace().resolve("coverage.json")
+                            : selectedNamespace(reportFile.toPath().toAbsolutePath().getParent()).resolve(reportFile.getName()),
+                    htmlReportFile == null ? namespace().resolve("coverage.html")
+                            : selectedNamespace(htmlReportFile.toPath().toAbsolutePath().getParent()).resolve(htmlReportFile.getName()),
+                    selectionManifestFile != null);
             if (result.failure() != null) throw new MojoFailureException("ShardPilot coverage verification failed: " + result.failure().getMessage(), result.failure());
             getLog().info("ShardPilot coverage verified: " + result.json().trim());
         } catch (IllegalArgumentException exception) {

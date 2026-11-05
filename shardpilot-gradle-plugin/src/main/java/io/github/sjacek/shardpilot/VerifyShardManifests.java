@@ -26,7 +26,17 @@ import org.gradle.work.DisableCachingByDefault;
 @DisableCachingByDefault(because = "Each invocation must inspect the downloaded CI artifact cohort")
 public abstract class VerifyShardManifests extends DefaultTask {
     /** Creates an always-running verification gate. */
-    public VerifyShardManifests() { getOutputs().upToDateWhen(task -> false); }
+    public VerifyShardManifests() {
+        getOutputs().upToDateWhen(task -> false);
+        getRequireSelection().convention(false);
+    }
+
+    /**
+     * Requires provenance independently of whether downloaded artifacts contain sidecars.
+     * @return whether explicit-selection identity is mandatory
+     */
+    @Input
+    public abstract Property<Boolean> getRequireSelection();
 
     /**
      * Supplies directory of immutable planning evidence.
@@ -102,7 +112,8 @@ public abstract class VerifyShardManifests extends DefaultTask {
         var result = ShardCoverage.writeReports(getPlannedDirectory().get().getAsFile().toPath(),
                 getActualDirectory().get().getAsFile().toPath(), getShardCount().get(),
                 getVerifyActual().get(), getRequireNonEmptyShards().get(),
-                getReportFile().get().getAsFile().toPath(), getHtmlReportFile().get().getAsFile().toPath());
+                getReportFile().get().getAsFile().toPath(), getHtmlReportFile().get().getAsFile().toPath(),
+                getRequireSelection().get());
         Exception failure = result.failure();
         if (failure != null) throw new GradleException("ShardPilot coverage verification failed: " + failure.getMessage(), failure);
         getLogger().lifecycle("ShardPilot coverage verified: {}", result.json().trim());

@@ -1,5 +1,9 @@
 # Maven adapter
 
+Optional [explicit test selection](test-selection.md#maven-surefire-and-failsafe) adds
+`selectionManifestFile` and `selectionSuite` to the existing goals. It preserves the native test
+runner and requires selection-specific exclusions and report paths, including for a single node.
+
 [Documentation index](README.md) · [Runnable POMs](../examples/maven/README.md)
 
 `io.github.sjacek:shardpilot-maven-plugin:0.4.0` provides class sharding, YAML manifests and
@@ -162,6 +166,8 @@ aggregators produce no plan/report. See the [reactor example](../examples/maven/
 | `shardIndex` / `shardpilot.index` | `1`; one-based selected node. Preparation/verification use count only. |
 | `durationsFile` / `shardpilot.durationsFile` | Unset/missing means hash-only cold start. Existing invalid TSV fails. |
 | `suite` / `shardpilot.suite` | `unit` for Surefire, `integration` for Failsafe. Custom names must be one alphanumeric path component, optionally containing `.`, `_`, `-`. |
+| `selectionManifestFile` / `shardpilot.selectionManifestFile` | Unset preserves full eligibility. When supplied, strict class-manifest v1 selects a nonempty eligible subset before assignment. |
+| `selectionSuite` / `shardpilot.selectionSuite` | Required with a selection manifest; safe path component distinct from `full`. Adds a separate `selections/<selectionSuite>/` namespace. See [selection wiring](test-selection.md#maven-surefire-and-failsafe). |
 | `directory` / `shardpilot.directory` | `${project.build.directory}/shardpilot/<suite>`. |
 | `plannedDirectory` / `shardpilot.plannedDirectory` | `<directory>/plan`. |
 | `actualDirectory` / `shardpilot.actualDirectory` | `<directory>/actual`. |

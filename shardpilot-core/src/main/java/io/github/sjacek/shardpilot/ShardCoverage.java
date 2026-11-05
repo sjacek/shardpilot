@@ -52,6 +52,11 @@ public final class ShardCoverage {
      */
     public static Evaluation evaluate(Path plannedDirectory, Path actualDirectory, int count,
                                boolean verifyActual, boolean requireNonEmpty) {
+        return evaluate(plannedDirectory, actualDirectory, count, verifyActual, requireNonEmpty, false);
+    }
+
+    private static Evaluation evaluate(Path plannedDirectory, Path actualDirectory, int count,
+                                       boolean verifyActual, boolean requireNonEmpty, boolean requireSelection) {
         Manifest baseline = read(plannedDirectory.resolve("baseline.yaml"), false);
         var planned = new TreeMap<Integer, Manifest>();
         var actual = new TreeMap<Integer, Manifest>();
@@ -60,6 +65,9 @@ public final class ShardCoverage {
             if (verifyActual) actual.put(index, read(actualDirectory.resolve("actual-" + index + ".yaml"), !requireNonEmpty));
         }
         try {
+            if (requireSelection && !Files.isRegularFile(plannedDirectory.resolve("selection.id"))) {
+                throw new IllegalArgumentException("Explicit selection requires its planned cohort identity");
+            }
             String json = validate(plannedDirectory, actualDirectory, count, verifyActual, baseline, planned, actual);
             return new Evaluation(json, null, baseline, Map.copyOf(planned), Map.copyOf(actual), verifyActual);
         } catch (IllegalArgumentException | IOException exception) {
@@ -114,6 +122,7 @@ public final class ShardCoverage {
                                    Manifest baselineManifest, Map<Integer, Manifest> plans,
                                    Map<Integer, Manifest> selections) throws IOException {
         ShardPlan.validateShard(count, 1);
+        validateSelectionCohort(plannedDirectory, actualDirectory, count, verifyActual);
         Set<String> baseline = baselineManifest.require();
         var seen = new TreeSet<String>();
         var shards = new ArrayList<String>();
@@ -170,10 +179,31 @@ public final class ShardCoverage {
     public static Evaluation writeReports(Path plannedDirectory, Path actualDirectory, int count,
                                           boolean verifyActual, boolean requireNonEmpty,
                                           Path jsonFile, Path htmlFile) throws IOException {
+        return writeReports(plannedDirectory, actualDirectory, count, verifyActual, requireNonEmpty, jsonFile, htmlFile, false);
+    }
+
+    /**
+     * Writes coverage reports with an explicit selection-provenance requirement. The adapter passes
+     * this mode independently of downloaded artifacts, so losing every sidecar cannot downgrade a
+     * selected run to ordinary full-suite verification. Existing report formats remain unchanged.
+     * @param plannedDirectory original planning evidence
+     * @param actualDirectory original node evidence
+     * @param count expected partition count
+     * @param verifyActual whether actual artifacts are required
+     * @param requireNonEmpty whether each partition must be nonempty
+     * @param jsonFile JSON report output
+     * @param htmlFile HTML report output
+     * @param requireSelection whether a valid selection cohort identity is mandatory
+     * @return shared immutable report snapshot
+     * @throws IOException if reports cannot be written
+     */
+    public static Evaluation writeReports(Path plannedDirectory, Path actualDirectory, int count,
+                                          boolean verifyActual, boolean requireNonEmpty,
+                                          Path jsonFile, Path htmlFile, boolean requireSelection) throws IOException {
         if (jsonFile.toAbsolutePath().normalize().equals(htmlFile.toAbsolutePath().normalize())) {
             throw new IllegalArgumentException("JSON and HTML report paths must be distinct");
         }
-        var result = evaluate(plannedDirectory, actualDirectory, count, verifyActual, requireNonEmpty);
+        var result = evaluate(plannedDirectory, actualDirectory, count, verifyActual, requireNonEmpty, requireSelection);
         Files.createDirectories(jsonFile.toAbsolutePath().getParent());
         Files.writeString(jsonFile, result.json(), StandardCharsets.UTF_8);
         Files.createDirectories(htmlFile.toAbsolutePath().getParent());
@@ -197,6 +227,28 @@ public final class ShardCoverage {
         return result;
     }
 
+    private static void validateSelectionCohort(Path plan, Path actual, int count, boolean verifyActual) throws IOException {
+        // Plan-only verification still validates a supplied identity, but must not require/read nodes.
+        Path identity = plan.resolve("selection.id");
+        String expected = Files.exists(identity) ? Files.readString(identity, StandardCharsets.UTF_8) : null;
+        if (expected != null && !expected.matches("[0-9a-f]{64}")) {
+            throw new IllegalArgumentException("Invalid selection cohort identity");
+        }
+        if (!verifyActual) return;
+        for (int index = 1; index <= count; index++) {
+            Path node = actual.resolve("selection-" + index + ".id");
+            String found = Files.exists(node) ? Files.readString(node, StandardCharsets.UTF_8) : null;
+            if (!java.util.Objects.equals(expected, found)) {
+                throw new IllegalArgumentException("Selection cohort differs for shard " + index);
+            }
+        }
+        if (Files.isDirectory(actual)) try (var files = Files.list(actual)) {
+            // Matching expected nodes is insufficient when an extra sidecar survived a count reduction.
+            long found = files.filter(file -> file.getFileName().toString().matches("selection-.*\\.id")).count();
+            if (found != (expected == null ? 0 : count)) throw new IllegalArgumentException("Unexpected selection identity set");
+        }
+    }
+
     /** Hashes sorted UTF-8 names joined by LF, without a trailing LF; independent of input line endings. */
     private static String digest(Set<String> classes) {
         try {
@@ -207,7 +259,7 @@ public final class ShardCoverage {
         }
     }
 
-    private static String quote(String text) {
+    static String quote(String text) {
         var escaped = new StringBuilder("\"");
         for (char character : text.toCharArray()) {
             if (character == '"' || character == '\\') escaped.append('\\').append(character);

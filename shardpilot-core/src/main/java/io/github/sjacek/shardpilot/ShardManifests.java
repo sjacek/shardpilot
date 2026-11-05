@@ -26,8 +26,21 @@ public final class ShardManifests {
      * @throws IOException if artifacts cannot be written
      */
     public static void prepare(Path directory, Set<String> names, String history, int count) throws IOException {
+        prepare(directory, names, DurationHistory.parse(history), count);
+    }
+
+    /**
+     * Prepares a plan from validated timings, including an explicitly restricted selection history.
+     * @param directory task-owned output directory
+     * @param names nonempty validated candidate names
+     * @param measuredSeconds exact timing records; no decimal reformatting is performed
+     * @param count positive partition size
+     * @throws IOException if output cannot be written
+     */
+    public static void prepare(Path directory, Set<String> names, java.util.Map<String, Double> measuredSeconds,
+                               int count) throws IOException {
         if (names.isEmpty()) throw new IllegalArgumentException("ShardPilot verification requires nonempty eligibleClasses");
-        var plan = ShardPlan.create(DurationHistory.parse(history), count);
+        var plan = ShardPlan.create(measuredSeconds, count);
         Files.createDirectories(directory);
         try (var files = Files.list(directory)) {
             for (var file : files.filter(path -> path.getFileName().toString().matches("planned-[0-9]+\\.yaml")).toList()) {

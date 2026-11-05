@@ -34,6 +34,8 @@ For a focused iteration:
 ./gradlew :shardpilot-core:test --tests 'io.github.sjacek.shardpilot.ClassManifestTest' --tests 'io.github.sjacek.shardpilot.ShardCoverageTest'
 ./gradlew :shardpilot-gradle-plugin:test --tests 'io.github.sjacek.shardpilot.HistoryRefreshExampleFunctionalTest' --tests 'io.github.sjacek.shardpilot.HistoryRefreshCiExamplesTest'
 ./mvnw -B -ntp verify -Dinvoker.test=junit-jupiter
+./gradlew :shardpilot-gradle-plugin:test --tests 'io.github.sjacek.shardpilot.TestSelectionFunctionalTest'
+./mvnw -B -ntp verify '-Dinvoker.test=selection-*'
 ```
 
 The plugin's own test task is not configured to shard itself. These selectors run normal Gradle
@@ -70,6 +72,9 @@ do not reproduce an application's memory leak or prove that a configured heap pr
 | `RefreshDurationsMojoTest`, `RefreshDurationsEvidenceTest`, `RefreshDurationsDescriptorTest` | Maven defaults, descriptor without lifecycle forks, project isolation, eligibility, conservative measurements, output/input protection and safe failure/I/O evidence. |
 | `ShardPlanTest` | Deterministic packing/ties, nested aggregation, floating-point order, hash fallback, complete ownership, invalid settings and overflow. |
 | `ClassManifestTest` | Canonical YAML round trips, schema/types/duplicate keys, CRLF/comments/flow sequences, nested/Unicode/default-package names, root normalization, collisions, empty-class policy and malformed-document rejection. |
+| `TestSelectionTest` | Strict nonempty subsets and direct-constructor invariants, expansion bounded by full eligibility, immutable sets, deterministic reports/hashes, foreign-history validation, malformed/stale identities, input aliases and separate diagnostics. |
+| `TestSelectionFunctionalTest` | One/many-node native JUnit execution, legitimate empty shards versus mismatched native discovery, Groovy/Kotlin DSL, Configuration Cache/build-cache restoration and invalidation, missing/replaced input recovery, native filter rejection, standalone aggregation and failure retention. |
+| `TestSelectionDescriptorTest` | Generated Maven metadata exposes optional P2 parameters with correct types to every suite-scoped goal, without implicit selection defaults or lifecycle forks. |
 | `ShardCoverageTest` | Complete/disjoint/index-matching evidence, canonical hashes, empty policy, missing/stale/duplicate/foreign records, plan-only mode and JSON escaping. |
 | `ShardCoverageHtmlTest` | Sorted class assignments, wrong-node differences, partial evidence, plan-only labels, empty shards, Unicode/HTML escaping and a shared JSON/HTML snapshot with defensively copied public collections. |
 | `ShardManifestsTest` | Shared preparation/selection across input orders, family ownership with empty partitions, preserved plans after invalid inputs, selective index cleanup, normalized report-path collisions and partial I/O failures. |

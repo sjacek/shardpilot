@@ -7,6 +7,12 @@ shared core calculates an immutable ownership plan from timing history and shard
 adapter excludes candidate classes owned by other shards through its native runner's filters;
 the build tool and test framework still discover and execute tests.
 
+Opt-in [explicit selection](test-selection.md) validates a consumer-owned subset against the full
+eligible candidate set, expands eligible families and restricts history before assignment. The
+shared `TestSelection` snapshot owns these rules, selection diagnostics and cohort identities.
+Gradle's `PrepareTestSelection` and Maven's existing prepare/select goals adapt the same core;
+coverage uses the selected baseline, with a distinct output namespace and identity sidecars.
+
 ## Source modules and artifact compatibility
 
 ![Shared core and build-tool adapters](diagrams/modules.svg)

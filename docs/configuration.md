@@ -1,5 +1,9 @@
 # Configuration
 
+For a consumer-supplied subset, see [explicit test selection](test-selection.md). The optional
+`selection { manifestFile = ...; suite = ...; eligibleClasses.from(...) }` block applies before
+assignment, including at count one, and leaves full-suite configuration unchanged when absent.
+
 [Documentation index](README.md)
 
 This page describes the Gradle DSL. Maven consumers configure native runners in `pom.xml` using
@@ -13,13 +17,15 @@ the [Maven guide](maven.md); the following map identifies shared and adapter-spe
 | Count/index CLI | `-Pshardpilot.count=N`, `-Pshardpilot.index=I`. | `-Dshardpilot.count=N`, `-Dshardpilot.index=I`. |
 | Timing history | `shardPilot.durationsFile`. | Plugin `durationsFile` / `shardpilot.durationsFile`. Both read the same TSV. |
 | Unsharded eligibility | Explicit `verification.eligibleClasses` matching the task's application restrictions. | Compiled classes matched by effective native includes/excludes and `additionalExcludesFile`. |
+| Explicit subset | `selection { manifestFile = ...; suite = ...; eligibleClasses.from(...) }`. | `selectionManifestFile` plus `selectionSuite`; native report/exclusion paths must use the selected namespace. |
+| Subset validation | `prepare<Task>Selection`, then `validate<Task>Selection` before the owning test. | Shared validation in `prepare` and `select`. Both adapters apply the subset at count one and above. |
 | Prepare common plan | `prepare<Task>ShardManifests`; source-set dependencies compile candidates. | `test-compile shardpilot:prepare`; compilation is explicitly requested. |
 | Pre-worker evidence | `write<Task>ActualShardManifest`, attached to the owning task. | Bound `shardpilot:select`, generating native exclusions and `actual-N.yaml`. |
 | Refresh history | Opt-in `history {}` registers `refresh<Task>ShardDurations`. | Standalone `shardpilot:refresh-durations`. Both read existing XML and write candidate TSV/JSON. |
 | Aggregate only | `verify<Task>Shards`. | `shardpilot:verify`. Both write JSON/HTML without scheduling producers. |
 | Default namespace | `build/shardpilot/<task-name>/`. | `<module>/target/shardpilot/unit/` or `integration/`; custom `suite` supported. |
 | JVM policy | Optional `testProcesses`; native Gradle settings remain available. | Native Surefire/Failsafe configuration; no `testProcesses` or equivalent `forkEvery` option. |
-| Focused run | Native `--tests`; a non-owning shard can fail with no match. | `-Dtest`/`-Dit.test` rejected while selection/preparation runs; use an unsharded configuration. |
+| Focused run | Native `--tests` when no explicit subset is configured; explicit selection rejects focused filters. | `-Dtest`/`-Dit.test` rejected while selection/preparation runs; use an unsharded configuration. |
 
 The ownership algorithm, nested-class families, YAML schema and report semantics are shared.
 DSL opt-in, lifecycle phases and build-cache behavior are adapter-specific. A Gradle configuration

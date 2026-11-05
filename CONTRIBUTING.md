@@ -98,6 +98,11 @@ Test wrong schemas/types, duplicate keys/names, canonical hashes, missing/stale/
 and failed-test preservation. Aggregation must never manufacture missing CI downloads. Keep both
 selection coverage and normal execution outcomes as independent required gates.
 
+Explicit selection additionally requires one-node and multi-node native execution tests, full/selected
+artifact isolation, bounded family expansion and manifest-content cache invalidation. Keep impact/risk
+mapping outside the core. Check native filter conflicts even when Gradle would skip an empty candidate
+tree as `NO-SOURCE`; see [the selection contract](docs/test-selection.md).
+
 For report changes, keep JSON's machine-readable contract and HTML's human-readable status
 semantics aligned with the same evidence snapshot. Cover partial/malformed/missing evidence,
 plan-only mode, artifact-derived text escaping and replacement of earlier successful outputs.
