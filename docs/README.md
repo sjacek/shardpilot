@@ -4,10 +4,10 @@ ShardPilot splits the classes of an opted-in Gradle `Test` task between independ
 Each execution calculates ownership locally from the same inputs. The Maven adapter applies that
 same core to Surefire/Failsafe. There is no coordinator service or replacement test engine.
 
-This checkout prepares [0.4.0](releases/0.4.0.md): opt-in history refresh for both adapters,
+The reference stable tag is [0.4.0](releases/0.4.0.md): opt-in history refresh for both adapters,
 with candidate TSV and diagnostic JSON from existing JUnit XML. Existing sharding configuration,
 YAML manifests and selection reports remain compatible. Current snippets target 0.4.0; use the
-[local development setup](../README.md#local-plugin-development) before release. The
+[local development setup](../README.md#local-plugin-development) for local checkout changes. The
 [release notes](releases/0.4.0.md) separate local checks from the release-commit CI/publication gates.
 
 ## Guides
@@ -27,6 +27,8 @@ YAML manifests and selection reports remain compatible. Current snippets target 
 | [Spock with PostgreSQL and RabbitMQ](spock-testcontainers-example.md) | Run specifications and data-table iterations with worker-local containers and specification-local databases. |
 | [TestNG with PostgreSQL and RabbitMQ](testng-testcontainers-example.md) | Run class fixtures and data-provider rows with the native TestNG adapter and worker-local containers. |
 | [Testing and compatibility](testing.md) | Verify changes and understand what the existing tests actually cover. |
+| [Security and trust boundaries](security.md) | Understand private reporting, build-process permissions, metadata handling and publication responsibilities. |
+| [12 November 2026 review follow-up](security-review-2026-11-12.md) | Find the exact public reference commit, existing evidence, verification limits and remaining security/performance work. |
 | [Troubleshooting](troubleshooting.md) | Diagnose empty shards, unexpected selection, poor balance or cache behavior. |
 | [Releases and upgrades](releases.md) | Configure protected publication credentials, release from a tested version tag and manage upgrades. |
 | [Maven Central setup](maven-central.md) | Reuse the verified namespace, create a token/signing key and configure the Maven publishing environment. |
@@ -47,8 +49,8 @@ candidate TSV plus JSON evidence. It never runs producers, fetches history remot
 candidate into versioned history. CI collects one cohort; the consumer reviews and commits it.
 
 The [compatibility matrix](testing.md#gradle-and-jdk-matrix) defines eight Linux CI targets for
-Gradle 9.0.0, 9.1.0 and 9.8.2 with JDK 17, 21 and 25. Local verification also uses Windows.
-The repository Wrapper pins Gradle 9.8.2; the CI matrix selects TestKit consumers independently.
+Gradle 9.0.0, 9.1.0 and 9.9.1 with JDK 17, 21 and 25. Local verification also uses Windows.
+The repository Wrapper pins Gradle 9.9.1; the CI matrix selects TestKit consumers independently.
 Java 17 plugin bytecode alone is not a compatibility claim; support requires passing matrix
 results for the release revision. See the [verification scope](testing.md#verified-scope).
 The same workflow requires Maven 3.10.0 on JDK 17, 21 and 25. Gradle framework fixtures and
@@ -61,6 +63,7 @@ currently exercise JUnit Jupiter with Surefire/Failsafe 3.5.4.
 - [Source-module development](../CONTRIBUTING.md#source-layout-and-local-development): both build entry points, IDE import and distribution boundaries.
 - [Changelog](../CHANGELOG.md): released changes, upcoming work and limitations.
 - [Contribution guidelines](../CONTRIBUTING.md): implementation and review expectations.
+- [Security policy](../SECURITY.md): private vulnerability reports and security-maintenance scope.
 - [Coding standards](CODING_STANDARDS.md): declaration layout, CI example validation and inspection suppressions.
 - [MIT license](../LICENSE) and [third-party notices](../THIRD_PARTY_NOTICES.md): distribution terms.
 

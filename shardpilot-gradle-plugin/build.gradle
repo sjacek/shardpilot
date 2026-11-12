@@ -69,6 +69,8 @@ test {
     inputs.file(rootProject.file('gradle/release-verification.gradle')).withPropertyName('releaseTagVerificationScript')
     inputs.files(rootProject.file('.github/workflows/compatibility.yml'), rootProject.file('.github/workflows/publish.yml'))
             .withPropertyName('releaseWorkflowConfiguration')
+    inputs.files(rootProject.file('build.gradle'), rootProject.file('gradle/wrapper/gradle-wrapper.properties'),
+            rootProject.file('gradle/wrapper/gradle-wrapper.jar')).withPropertyName('gradleWrapperConfiguration')
     inputs.files(rootProject.file('pom.xml'), rootProject.file('shardpilot-core/pom.xml'),
             rootProject.file('shardpilot-maven-plugin/pom.xml'), rootProject.file('.mvn/wrapper/maven-wrapper.properties'))
             .withPropertyName('mavenReactorConfiguration')

@@ -29,13 +29,13 @@ gate has 12 required contexts, emitted by GitHub Actions:
 | --- | --- | --- |
 | `Gradle 9.0.0 / JDK N` | 17, 21 | 2 |
 | `Gradle 9.1.0 / JDK N` | 17, 21, 25 | 3 |
-| `Gradle 9.8.2 / JDK N` | 17, 21, 25 | 3 |
+| `Gradle 9.9.1 / JDK N` | 17, 21, 25 | 3 |
 | `Maven 3.10.0 / JDK N` | 17, 21, 25 | 3 |
 | `Signed Maven release bundle (no upload)` | Fixed release-verification runtime | 1 |
 
 `N` above is replaced with the literal JDK number in each required name. These are job names,
 without the workflow title or `(push)` / `(pull_request)` event suffix shown in parts of the UI.
-The Gradle 9.8.2 update replaces `Gradle 9.8.1 / JDK 17`, `21` and `25` with their 9.8.2 names.
+The Gradle 9.9.1 update replaces `Gradle 9.8.2 / JDK 17`, `21` and `25` with their 9.9.1 names.
 The Maven 3.10.0 update replaces `Maven 3.9.16 / JDK 17`, `21` and `25` with their 3.10.0 names.
 Do not retain both versions as requirements: a workflow emitting only new names cannot satisfy
 obsolete requirements and GitHub will show them as expected indefinitely.

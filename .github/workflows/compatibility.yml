@@ -24,7 +24,7 @@ jobs:
       # Keep all results even if one supported runtime regresses.
       fail-fast: false
       matrix:
-        gradle: ['9.0.0', '9.1.0', '9.8.2']
+        gradle: ['9.0.0', '9.1.0', '9.9.1']
         java: ['17', '21', '25']
         exclude:
           # Running Gradle on JDK 25 is supported starting with Gradle 9.1.0.
