@@ -7,11 +7,25 @@ recorded by the Gradle Plugin Portal.
 
 ### Added
 
+- Security policy with GitHub private vulnerability reporting, a trust-boundary guide and a
+  commit-pinned follow-up to the 12 November 2026 preliminary review. Documentation separates
+  existing controls from planned SBOM/scanning, execution-equivalence and benchmark work.
 - Run an explicitly selected test subset with one or multiple shards in Gradle and Maven.
   Supply a strict YAML class manifest; invalid, empty or ineligible requests fail before tests.
 - Keep nested families together within full eligibility and balance only selected families.
   Separate suite namespaces and selection JSON/HTML preserve full-suite reports; cohort identities
   reject mixed plan/actual artifacts. See the [selection guide](docs/test-selection.md).
+
+### Build tooling
+
+- Warm Gradle/TestKit and Maven/native-fixture downloads sequentially before the CI matrices.
+  Share same-run dependency snapshots with PRs and forks, persist them only from the default
+  branch and retain isolated test results, local candidate installations and uncached publishers.
+- Upgrade the build Wrapper to Gradle 9.9.1 with the official distribution SHA-256 and regenerated
+  scripts/JAR. Replace the three newest consumer CI cells with 9.9.1 on JDK 17/21/25, retaining
+  all eight Gradle targets. Required GitHub status names need the matching maintainer rollout.
+- Verify the Wrapper URL, distribution checksum, generated JAR checksum and newest CI target
+  together in publication workflow regression tests.
 
 ## [0.4.0](docs/releases/0.4.0.md)
 

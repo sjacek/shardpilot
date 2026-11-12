@@ -4,6 +4,11 @@ ShardPilot is MIT-licensed. Only submit code and examples that you have the righ
 Preserve third-party attribution and license requirements; do not copy application-specific code,
 credentials, customer data, private repository addresses or captured application logs into fixtures.
 
+For suspected vulnerabilities, follow the [security policy](SECURITY.md) and use the private
+reporting channel. Do not put exploit details or sensitive evidence in public issues or pull requests.
+The [trust-boundary guide](docs/security.md) and [review follow-up](docs/security-review-2026-11-12.md)
+distinguish existing controls from checks that remain open.
+
 Follow the [coding standards](docs/CODING_STANDARDS.md) for declaration layout, CI example validation
 and handling IDE diagnostics or inspection suppressions.
 

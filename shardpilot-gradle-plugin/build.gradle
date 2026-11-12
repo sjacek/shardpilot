@@ -63,12 +63,18 @@ dependencies {
 // Exercise the standalone documentation utility without publishing it as plugin code.
 sourceSets.test.java.srcDir(rootProject.file('scripts'))
 
+// Infer the annotated Provider type; an explicit generic declaration can confuse Groovy IDEs.
+def testKitDirectory = providers.environmentVariable('SHARDPILOT_TESTKIT_DIR')
+        .orElse(layout.buildDirectory.dir('testkit').get().asFile.absolutePath)
+
 test {
     useJUnitPlatform()
     workingDir = rootProject.projectDir
     inputs.file(rootProject.file('gradle/release-verification.gradle')).withPropertyName('releaseTagVerificationScript')
     inputs.files(rootProject.file('.github/workflows/compatibility.yml'), rootProject.file('.github/workflows/publish.yml'))
             .withPropertyName('releaseWorkflowConfiguration')
+    inputs.files(rootProject.file('build.gradle'), rootProject.file('gradle/wrapper/gradle-wrapper.properties'),
+            rootProject.file('gradle/wrapper/gradle-wrapper.jar')).withPropertyName('gradleWrapperConfiguration')
     inputs.files(rootProject.file('pom.xml'), rootProject.file('shardpilot-core/pom.xml'),
             rootProject.file('shardpilot-maven-plugin/pom.xml'), rootProject.file('.mvn/wrapper/maven-wrapper.properties'))
             .withPropertyName('mavenReactorConfiguration')
@@ -99,6 +105,8 @@ test {
             providers.gradleProperty('testGradleVersion').orElse(gradle.gradleVersion).get()
     systemProperty 'shardpilot.test.javaVersion',
             providers.gradleProperty('testJavaVersion').orElse(JavaVersion.current().majorVersion).get()
+    // CI restores only downloaded dependencies/distributions here; fixture projects stay temporary.
+    systemProperty 'org.gradle.testkit.dir', testKitDirectory.get()
     // TestKit launches nested builds; keep their memory budgets independent of test parallelism.
     maxParallelForks = 1
     maxHeapSize = '512m'
@@ -106,6 +114,17 @@ test {
         exceptionFormat = 'full'
         showStandardStreams = false
     }
+}
+
+// Resolve fixture libraries and consumer distributions sequentially, without executing any tests.
+tasks.register('warmTestKitCache', JavaExec) {
+    group = 'verification'
+    description = 'Download TestKit dependencies and consumer distributions before the CI matrix.'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'io.github.sjacek.shardpilot.TestKitCacheWarmup'
+    args testKitDirectory.get()
+    args layout.buildDirectory.dir('cache-warmup').get().asFile.absolutePath
+    args providers.gradleProperty('testGradleVersions').orElse(gradle.gradleVersion).get().split(',')
 }
 
 tasks.withType(Javadoc).configureEach {

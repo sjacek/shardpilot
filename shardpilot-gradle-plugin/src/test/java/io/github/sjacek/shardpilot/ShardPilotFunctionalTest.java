@@ -156,8 +156,9 @@ class ShardPilotFunctionalTest {
         assertEquals(javaVersion, Integer.toString(Runtime.version().feature()), "outer test worker must use the matrix JDK");
         append("""
                 def runtime = "TESTKIT_RUNTIME Gradle ${gradle.gradleVersion} / JDK ${JavaVersion.current().majorVersion}"
+                def cacheHome = 'TESTKIT_HOME ' + gradle.gradleUserHomeDir.canonicalPath
                 tasks.register('verifyRuntime') {
-                    doLast { logger.lifecycle(runtime) }
+                    doLast { logger.lifecycle(runtime); logger.lifecycle(cacheHome) }
                 }
                 """);
         write("src/test/java/example/RuntimeTest.java", """
@@ -170,6 +171,11 @@ class ShardPilotFunctionalTest {
                 """.formatted(javaVersion));
         BuildResult result = run("verifyRuntime", "test", "--tests", "example.RuntimeTest");
         assertTrue(result.getOutput().contains("TESTKIT_RUNTIME Gradle " + consumerGradleVersion() + " / JDK " + javaVersion));
+        String configuredHome = System.getProperty("org.gradle.testkit.dir");
+        if (configuredHome != null) {
+            assertTrue(result.getOutput().contains("TESTKIT_HOME " + Path.of(configuredHome).toRealPath()),
+                    "nested builds must use the restored TestKit cache rather than a temporary user home");
+        }
         assertEquals(Set.of("example.RuntimeTest#usesTheMatrixJdk()"), cases("test"));
     }
 

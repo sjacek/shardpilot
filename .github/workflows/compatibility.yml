@@ -11,26 +11,124 @@ on:
 permissions:
   contents: read
 
+# Separate downloaded artifacts from fixture projects, test results and publisher state.
+env:
+  GRADLE_USER_HOME: ${{ github.workspace }}/build/ci-dependencies/gradle
+  SHARDPILOT_TESTKIT_DIR: ${{ github.workspace }}/build/ci-dependencies/testkit
+  MAVEN_USER_HOME: ${{ github.workspace }}/build/ci-dependencies/maven-user-home
+
 concurrency:
   group: compatibility-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  warm-cache:
+    name: Prepare dependency cache
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Set up the warmup JDK
+        uses: actions/setup-java@v6
+        with:
+          # JDK 21 can run all three consumer distributions, including Gradle 9.0.0.
+          distribution: temurin
+          java-version: '21'
+      - name: Set up Python for dependency snapshots
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Restore downloaded dependencies
+        id: dependencies
+        uses: actions/cache/restore@v5
+        # restore/action.yml at v5 defines these inputs; older IDE action metadata may lag.
+        with:
+          # noinspection UndefinedParamsPresent
+          path: |
+            build/gradle-dependencies.tar
+            build/maven-dependencies.tar
+          # noinspection UndefinedParamsPresent
+          key: ci-dependencies-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.gradle', '**/pom.xml', 'gradle.properties', '**/gradle-wrapper.properties', '.mvn/wrapper/maven-wrapper.properties', 'shardpilot-gradle-plugin/src/test/**/*.java', 'scripts/ci_dependency_cache.py', '.github/workflows/compatibility.yml') }}
+          # noinspection UndefinedParamsPresent
+          restore-keys: ci-dependencies-v1-${{ runner.os }}-${{ runner.arch }}-
+      - name: Unpack downloaded dependencies
+        run: python3 -B scripts/ci_dependency_cache.py restore
+      - name: Set up Gradle and validate the Wrapper
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          # One download-only snapshot owns these paths; do not layer a second Gradle cache over it.
+          cache-disabled: true
+      - name: Warm Gradle and TestKit dependencies without running tests
+        if: steps.dependencies.outputs.cache-hit != 'true'
+        run: >-
+          bash ./gradlew :shardpilot-gradle-plugin:warmTestKitCache
+          -PtestGradleVersions=9.0.0,9.1.0,9.9.1 --stacktrace --console=plain
+      - name: Warm Maven reactor and native fixture dependencies without running tests
+        if: steps.dependencies.outputs.cache-hit != 'true'
+        run: python3 -B scripts/ci_dependency_cache.py warm-maven
+      - name: Verify dependency snapshot handling
+        run: python3 -B -m unittest discover -s scripts -p 'test_ci_dependency_cache.py' -v
+      - name: Pack downloaded dependencies only
+        if: steps.dependencies.outputs.cache-hit != 'true'
+        run: python3 -B scripts/ci_dependency_cache.py pack
+      - name: Save downloaded dependencies from the default branch
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.dependencies.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        # save/action.yml at v5 defines both inputs; suppress only these known parameters.
+        with:
+          # noinspection UndefinedParamsPresent
+          path: |
+            build/gradle-dependencies.tar
+            build/maven-dependencies.tar
+          # noinspection UndefinedParamsPresent
+          key: ${{ steps.dependencies.outputs.cache-primary-key }}
+      - name: Share warmed Gradle dependencies with this run
+        # Same-run artifacts also work on PRs/forks that cannot write the default branch cache.
+        uses: actions/upload-artifact@v7
+        with:
+          name: gradle-dependencies
+          path: build/gradle-dependencies.tar
+          overwrite: true
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+      - name: Share warmed Maven dependencies with this run
+        uses: actions/upload-artifact@v7
+        with:
+          name: maven-dependencies
+          path: build/maven-dependencies.tar
+          overwrite: true
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
   compatibility:
     name: Gradle ${{ matrix.gradle }} / JDK ${{ matrix.java }}
+    needs: warm-cache
+    # A failed warmup must fail required checks, not silently skip them as successful statuses.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       # Keep all results even if one supported runtime regresses.
       fail-fast: false
       matrix:
-        gradle: ['9.0.0', '9.1.0', '9.8.2']
+        gradle: ['9.0.0', '9.1.0', '9.9.1']
         java: ['17', '21', '25']
         exclude:
           # Running Gradle on JDK 25 is supported starting with Gradle 9.1.0.
           - gradle: '9.0.0'
             java: '25'
     steps:
+      - name: Require successful dependency warmup
+        if: needs.warm-cache.result != 'success'
+        run: |
+          echo '::error::Dependency warmup failed; compatibility tests cannot be skipped.'
+          exit 1
       - name: Check out sources
         uses: actions/checkout@v7
         with:
@@ -44,7 +142,17 @@ jobs:
       - name: Set up Gradle and validate the Wrapper
         uses: gradle/actions/setup-gradle@v6
         with:
-          cache-read-only: ${{ github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
+          cache-disabled: true
+      - name: Download warmed dependencies
+        uses: actions/download-artifact@v7
+        # action.yml at v7 defines name/path; retain validation elsewhere in this workflow.
+        with:
+          # noinspection UndefinedParamsPresent
+          name: gradle-dependencies
+          # noinspection UndefinedParamsPresent
+          path: build
+      - name: Unpack downloaded dependencies
+        run: python3 -B scripts/ci_dependency_cache.py restore gradle
       - name: Verify the plugin against the consumer runtime
         # The Wrapper builds the plugin; each TestKit consumer uses matrix.gradle and the selected JDK.
         # Invoke through Bash because Windows checkouts may track gradlew without its executable bit.
@@ -101,6 +209,8 @@ jobs:
 
   maven:
     name: Maven 3.10.0 / JDK ${{ matrix.java }}
+    needs: warm-cache
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -108,6 +218,11 @@ jobs:
       matrix:
         java: ['17', '21', '25']
     steps:
+      - name: Require successful dependency warmup
+        if: needs.warm-cache.result != 'success'
+        run: |
+          echo '::error::Dependency warmup failed; compatibility tests cannot be skipped.'
+          exit 1
       - name: Check out sources
         uses: actions/checkout@v7
         with:
@@ -118,8 +233,20 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
+      - name: Download warmed dependencies
+        uses: actions/download-artifact@v7
+        # action.yml at v7 defines name/path; retain validation elsewhere in this workflow.
+        with:
+          # noinspection UndefinedParamsPresent
+          name: maven-dependencies
+          # noinspection UndefinedParamsPresent
+          path: build
+      - name: Unpack downloaded dependencies
+        run: python3 -B scripts/ci_dependency_cache.py restore maven
+      - name: Seed the isolated Invoker repository
+        run: python3 -B scripts/ci_dependency_cache.py seed-invoker
       - name: Verify Maven core, adapter and real runner builds
-        run: bash ./mvnw -B -ntp verify
+        run: bash ./mvnw -B -ntp -Dmaven.repo.local="$GITHUB_WORKSPACE/build/ci-dependencies/maven" verify
       - name: Retain Maven tests and Invoker evidence
         if: always()
         uses: actions/upload-artifact@v7

@@ -23,7 +23,7 @@ The Maven Wrapper also retains its Apache 2.0 headers and verifies its pinned di
 
 [Getting started](#getting-started) · [Configuration](#configuration) ·
 [Timing history](#timing-history-and-assignment) · [Examples](examples/README.md) · [Documentation](docs/README.md) · [Changelog](CHANGELOG.md) ·
-[Contributing](CONTRIBUTING.md)
+[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
 ## Why ShardPilot?
 
@@ -73,11 +73,14 @@ collects the results. It does not create CI jobs or coordinate their completion.
 
 ## Status
 
-This checkout prepares **[0.4.0](docs/releases/0.4.0.md)** with opt-in duration-history refresh
+The reference stable tag is **[0.4.0](docs/releases/0.4.0.md)** with opt-in duration-history refresh
 for Gradle and Maven. Generate a candidate TSV and diagnostic JSON from existing JUnit XML,
 review the result, then adopt it for a later pipeline. Existing sharding settings and YAML
 manifests remain compatible. Installation snippets target 0.4.0; use the
-[local development setup](#local-plugin-development) to try this checkout before release.
+[local development setup](#local-plugin-development) to evaluate local checkout changes.
+The [12 November 2026 follow-up](docs/security-review-2026-11-12.md) pins the public commit and
+records successful reference-commit compatibility/publication workflows, separately from
+checks that remain open. Historical release notes retain their preparation/check procedures.
 
 Version **[0.3.1](docs/releases/0.3.1.md)** is available from both Gradle Plugin Portal and Maven Central
 and includes the explicit Maven homepage fix. Version [0.3.0](docs/releases/0.3.0.md) introduced
@@ -96,8 +99,8 @@ For future releases containing the updated workflow, temporary Central status er
 without repeating the upload. An accepted deployment can be resumed by ID; see
 [publication recovery](docs/maven-central.md#resume-an-accepted-central-deployment).
 The [compatibility matrix](docs/testing.md#gradle-and-jdk-matrix) defines eight Linux CI targets across
-Gradle 9.0.0, 9.1.0 and 9.8.2 with JDK 17, 21 and 25, excluding Gradle 9.0.0/JDK 25.
-The repository's build Wrapper uses Gradle 9.8.2; CI selects the consumer runtimes independently.
+Gradle 9.0.0, 9.1.0 and 9.9.1 with JDK 17, 21 and 25, excluding Gradle 9.0.0/JDK 25.
+The repository's build Wrapper uses Gradle 9.9.1; CI selects the consumer runtimes independently.
 For the 0.2.0 candidate, all eight pairs passed locally in Linux amd64 containers on 23 October 2026:
 67 tests per pair, 536 executions, no failures or skips. The tag workflow reruns the matrix for the
 release commit before publication. Plugin bytecode targets
