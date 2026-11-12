@@ -144,7 +144,11 @@ negative/positive oracle unit cases. The full native Maven run includes both new
 Logs and a combined local summary are under ignored `build/`: `execution-equivalence-gradle-full.log`,
 `execution-equivalence-maven-full.log` and `execution-equivalence-validation.json`.
 These durations describe concurrent local verification, not a sharding speedup measurement.
-The hosted Gradle/JDK and Maven/JDK matrix must still run after the maintainer pushes this change.
+The subsequent [hosted run for commit `81e6827`](https://github.com/sjacek/shardpilot/actions/runs/43297476822)
+passed all 15 jobs in 11m 43s: eight Gradle/JDK cells and three Maven/JDK cells, dependency warmup,
+two runtime-security scans and the signed Maven bundle check. Downloaded artifacts independently
+confirmed all 60 two/four-node comparisons across that matrix. This result belongs to that exact
+revision; later published-artifact audit tooling has its own local evidence.
 
 ## Scope
 

@@ -158,3 +158,23 @@ Negative oracle tests reject lost/duplicated runs and swapped outcomes even when
 This addresses a bounded fixture-based part of stage 3. It does not establish equivalence for all
 consumer suites, retries or dynamic identities; isolated published-artifact execution, broader
 network observation and real-suite performance measurements remain separate work.
+
+## Subsequent public 0.4.0 artifact and network observation
+
+The [published-artifact audit](published-artifact-audit.md#local-result-12-november-2026) now verifies
+the actual 0.4.0 registry cohort, Central checksums/nine artifact signatures, the signed tag and
+tag-matched Java source JARs. Portal module hashes and marker wiring are checked separately;
+the absence of Portal detached signatures/sidecar SHA-256/SHA-512 is recorded explicitly.
+
+Fourteen credential-free offline runs in network-none Linux containers exercise an unapplied-plugin
+reference plus two/four-node Gradle Jupiter and Maven Surefire/Failsafe cohorts. Original native XML,
+engine identities/outcomes and syscall traces were re-read independently. The four unions match
+their references; no non-loopback IP/DNS attempt was observed in the measured consumers, while a
+deliberate blocked connection was captured by the same tracer. Nine mutated evidence copies were
+rejected and the audit guard suite passed seventeen unit cases.
+
+This supplies bounded maintainer evidence for stage 4 and the registry-byte part of stage 2 for
+0.4.0; it is not an independent audit, complete telemetry proof, reproducible binary-build proof
+or coverage of every registry version/consumer/feature. Real-suite performance measurements,
+broader producer/provided/test vulnerability inventories and operational private-reporting setup
+verification remain separate work.

@@ -53,7 +53,9 @@ download distributions/dependencies or contact other services.
 A dynamic check must separate dependency warm-up from an isolated execution phase, document
 allowed destinations, record attempted connections and test the actual distributed artifacts.
 Do not attribute every build connection to ShardPilot or infer absence of all network activity
-from a source search. That check remains open in the review follow-up.
+from a source search. The [published 0.4.0 artifact audit](published-artifact-audit.md) now records
+bounded Linux-container observations for the authored Gradle/Jupiter and Maven Surefire/Failsafe
+consumers, including a blocked positive control. It does not cover every code path or consumer.
 
 ## Publication boundaries
 
@@ -85,7 +87,8 @@ distribution graphs separately and gates compatibility/publication on its policy
 candidate JAR hashes and records scanner/database identities. The separate
 [build dependency integrity gate](dependency-verification.md) pins Actions commits and verifies
 Gradle/TestKit and Maven dependency bytes, including restored caches. Verification of actual
-previously published registry bytes remains separate work.
+previously published registry bytes has separate [0.4.0 integrity/signature evidence](published-artifact-audit.md).
+That check does not retroactively scan all published versions or prove reproducible binary builds.
 
 ## Maintainer setup for private reports
 

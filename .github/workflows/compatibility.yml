@@ -44,6 +44,8 @@ jobs:
           python-version: '3.12'
       - name: Verify immutable build inputs
         run: python3 -B scripts/dependency_policy.py
+      - name: Verify published artifact audit guards
+        run: python3 -B -m unittest discover -s testing/published-artifacts -p 'test_*.py' -v
       - name: Enable Maven dependency verification
         run: python3 -B scripts/maven_verification.py prepare
       - name: Restore downloaded dependencies

@@ -32,6 +32,7 @@ YAML manifests and selection reports remain compatible. Current snippets target 
 | [Runtime SBOMs and vulnerability scanning](dependency-security.md) | Verify separate Gradle/Maven runtime inventories, candidate JAR identities and the CI severity/database policy. |
 | [Build dependency integrity](dependency-verification.md) | Review immutable Actions pins, Gradle/TestKit and Maven checksum enforcement, cache protection and baseline updates. |
 | [12 November 2026 review follow-up](security-review-2026-11-12.md) | Find the exact public reference commit, existing evidence, verification limits and remaining security/performance work. |
+| [Published artifact audit](published-artifact-audit.md) | Verify registry bytes and signatures, then observe warmed consumers in isolated Linux containers. |
 | [Troubleshooting](troubleshooting.md) | Diagnose empty shards, unexpected selection, poor balance or cache behavior. |
 | [Releases and upgrades](releases.md) | Configure protected publication credentials, release from a tested version tag and manage upgrades. |
 | [Maven Central setup](maven-central.md) | Reuse the verified namespace, create a token/signing key and configure the Maven publishing environment. |
