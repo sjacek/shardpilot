@@ -120,7 +120,7 @@ availability or enable repository settings.
    results with their limitations. Recheck the relevant matrix before any implementation/release change;
    an external review remains a separate activity.
 
-Stages 2-6 remain planned work, not completed checks. The initial policy follow-up established
+At the initial follow-up, stages 2-6 remained planned work, not completed checks. The policy follow-up established
 trust-boundary documentation and reference evidence without changing runtime code or CI behavior.
 
 ## Subsequent build-tool update
@@ -130,3 +130,11 @@ The working tree now separately updates the build Wrapper and newest consumer CI
 [Gradle 9.9.1](testing.md#gradle-991-wrapper-upgrade). Those changes and their verification are
 not part of the original `58daef5` snapshot or the initial Gradle 9.8.2 checks recorded above.
 Do not attribute the new Wrapper bytes or matrix to the already published reference artifacts.
+
+## Subsequent runtime SBOM and SCA implementation
+
+The [runtime dependency workflow](dependency-security.md) implements the runtime-distribution
+part of stage 2: separate native Gradle/Maven inventories, candidate JAR/class/descriptor checks,
+and pinned Grype scans with versioned DB evidence and a blocking severity policy. It does not
+retroactively audit `58daef5` or registry artifacts, and does not complete producer/provided/test
+inventories, the broader immutable-Actions/dependency-verification policy, or stages 3-6.

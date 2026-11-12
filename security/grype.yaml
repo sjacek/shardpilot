@@ -1,0 +1,3 @@
+# Explicit configuration prevents an unrelated auto-discovered config from hiding findings.
+# Any future exception needs an advisory ID, affected package, rationale, owner and expiry.
+ignore: []

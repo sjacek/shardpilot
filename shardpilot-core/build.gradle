@@ -1,4 +1,10 @@
-plugins { id 'java-library' }
+import org.cyclonedx.gradle.CyclonedxDirectTask
+import org.cyclonedx.Version
+
+plugins {
+    id 'java-library'
+    id 'org.cyclonedx.bom'
+}
 
 // Group and version are configured for all projects in the root build.gradle.
 repositories { mavenCentral() }
@@ -20,6 +26,16 @@ dependencies {
 test {
     useJUnitPlatform()
     maxHeapSize = '256m'
+}
+
+// The Gradle distribution embeds these classes. Its final inventory joins this resolved graph
+// with the plugin graph and verifies the class bytes against the assembled plugin JAR.
+tasks.named('cyclonedxDirectBom', CyclonedxDirectTask) {
+    includeConfigs = ['runtimeClasspath']
+    includeBuildEnvironment = false
+    schemaVersion = Version.VERSION_16
+    jsonOutput = layout.buildDirectory.file('reports/security/gradle/bom.raw.json')
+    xmlOutput.convention((RegularFile) null)
 }
 tasks.withType(Jar).configureEach {
     from(rootProject.file('LICENSE')) { into 'META-INF' }

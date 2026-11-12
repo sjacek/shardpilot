@@ -106,9 +106,16 @@ jobs:
           retention-days: 1
           compression-level: 0
 
+  dependency-security:
+    name: Check runtime dependencies
+    needs: warm-cache
+    uses: ./.github/workflows/security.yml
+    with:
+      warmed-dependencies: true
+
   compatibility:
     name: Gradle ${{ matrix.gradle }} / JDK ${{ matrix.java }}
-    needs: warm-cache
+    needs: [warm-cache, dependency-security]
     # A failed warmup must fail required checks, not silently skip them as successful statuses.
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
@@ -124,10 +131,10 @@ jobs:
           - gradle: '9.0.0'
             java: '25'
     steps:
-      - name: Require successful dependency warmup
-        if: needs.warm-cache.result != 'success'
+      - name: Require successful dependency prerequisites
+        if: needs.warm-cache.result != 'success' || needs.dependency-security.result != 'success'
         run: |
-          echo '::error::Dependency warmup failed; compatibility tests cannot be skipped.'
+          echo '::error::Dependency warmup or security scan failed; compatibility tests cannot be skipped.'
           exit 1
       - name: Check out sources
         uses: actions/checkout@v7
@@ -209,7 +216,7 @@ jobs:
 
   maven:
     name: Maven 3.10.0 / JDK ${{ matrix.java }}
-    needs: warm-cache
+    needs: [warm-cache, dependency-security]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -218,10 +225,10 @@ jobs:
       matrix:
         java: ['17', '21', '25']
     steps:
-      - name: Require successful dependency warmup
-        if: needs.warm-cache.result != 'success'
+      - name: Require successful dependency prerequisites
+        if: needs.warm-cache.result != 'success' || needs.dependency-security.result != 'success'
         run: |
-          echo '::error::Dependency warmup failed; compatibility tests cannot be skipped.'
+          echo '::error::Dependency warmup or security scan failed; compatibility tests cannot be skipped.'
           exit 1
       - name: Check out sources
         uses: actions/checkout@v7

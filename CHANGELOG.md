@@ -18,6 +18,10 @@ recorded by the Gradle Plugin Portal.
 
 ### Build tooling
 
+- Generate independent CycloneDX runtime SBOMs for Gradle and Maven candidate distributions,
+  verify embedded core bytes/Maven descriptor dependencies and bind candidate JAR SHA-256 values.
+- Gate compatibility/publication on pinned Grype scans, including unfixed high/critical findings;
+  retain scanner/DB identities, complete JSON findings and summaries, with daily default-branch scans.
 - Warm Gradle/TestKit and Maven/native-fixture downloads sequentially before the CI matrices.
   Share same-run dependency snapshots with PRs and forks, persist them only from the default
   branch and retain isolated test results, local candidate installations and uncached publishers.

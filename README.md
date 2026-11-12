@@ -81,6 +81,8 @@ manifests remain compatible. Installation snippets target 0.4.0; use the
 The [12 November 2026 follow-up](docs/security-review-2026-11-12.md) pins the public commit and
 records successful reference-commit compatibility/publication workflows, separately from
 checks that remain open. Historical release notes retain their preparation/check procedures.
+Candidate [runtime SBOMs and vulnerability scans](docs/dependency-security.md) now distinguish the
+Gradle and Maven distributions and gate CI/publication on their recorded severity/database policy.
 
 Version **[0.3.1](docs/releases/0.3.1.md)** is available from both Gradle Plugin Portal and Maven Central
 and includes the explicit Maven homepage fix. Version [0.3.0](docs/releases/0.3.0.md) introduced

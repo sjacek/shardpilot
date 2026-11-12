@@ -1,9 +1,13 @@
 import org.gradle.plugin.compatibility.CompatibilityExtension
+import org.cyclonedx.gradle.CyclonedxDirectTask
+import org.cyclonedx.Version
+import org.cyclonedx.model.Component
 
 plugins {
     id 'java-gradle-plugin'
     id 'maven-publish'
     id 'com.gradle.plugin-publish'
+    id 'org.cyclonedx.bom'
 }
 
 project.setDescription(rootProject.description)
@@ -63,6 +67,18 @@ dependencies {
 // Exercise the standalone documentation utility without publishing it as plugin code.
 sourceSets.test.java.srcDir(rootProject.file('scripts'))
 
+// This boundary ships bundled core classes plus external runtime libraries. Tests, Gradle APIs
+// and producer plugins belong to other scopes and must not appear as distributed dependencies.
+tasks.named('cyclonedxDirectBom', CyclonedxDirectTask) {
+    includeConfigs = ['runtimeClasspath']
+    includeBuildEnvironment = false
+    componentName = 'shardpilot'
+    projectType = Component.Type.LIBRARY
+    schemaVersion = Version.VERSION_16
+    jsonOutput = layout.buildDirectory.file('reports/security/gradle/bom.raw.json')
+    xmlOutput.convention((RegularFile) null)
+}
+
 // Infer the annotated Provider type; an explicit generic declaration can confuse Groovy IDEs.
 def testKitDirectory = providers.environmentVariable('SHARDPILOT_TESTKIT_DIR')
         .orElse(layout.buildDirectory.dir('testkit').get().asFile.absolutePath)
@@ -71,8 +87,11 @@ test {
     useJUnitPlatform()
     workingDir = rootProject.projectDir
     inputs.file(rootProject.file('gradle/release-verification.gradle')).withPropertyName('releaseTagVerificationScript')
-    inputs.files(rootProject.file('.github/workflows/compatibility.yml'), rootProject.file('.github/workflows/publish.yml'))
+    inputs.files(rootProject.file('.github/workflows/compatibility.yml'), rootProject.file('.github/workflows/publish.yml'),
+            rootProject.file('.github/workflows/security.yml'))
             .withPropertyName('releaseWorkflowConfiguration')
+    inputs.files(rootProject.file('security/scan-policy.json'), rootProject.file('security/grype.yaml'),
+            rootProject.file('scripts/security_reports.py')).withPropertyName('runtimeSecurityPolicy')
     inputs.files(rootProject.file('build.gradle'), rootProject.file('gradle/wrapper/gradle-wrapper.properties'),
             rootProject.file('gradle/wrapper/gradle-wrapper.jar')).withPropertyName('gradleWrapperConfiguration')
     inputs.files(rootProject.file('pom.xml'), rootProject.file('shardpilot-core/pom.xml'),

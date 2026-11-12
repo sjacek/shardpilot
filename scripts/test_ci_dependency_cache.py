@@ -161,7 +161,7 @@ class DependencyCacheTest(unittest.TestCase):
             cache.warm_maven()
         calls = [call.args for call in maven.call_args_list]
         self.assertEqual(('install', '-DskipTests', '-DskipITs'), calls[0])
-        self.assertEqual((cache.DEPENDENCY_PLUGIN + ':go-offline',), calls[1])
+        self.assertEqual((cache.DEPENDENCY_PLUGIN + ':go-offline', '-Psecurity-sbom'), calls[1])
         for command in calls[2:-1]:
             self.assertEqual(cache.DEPENDENCY_PLUGIN + ':go-offline', command[-1])
             text = Path(command[1]).read_text()

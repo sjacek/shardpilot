@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "scannerVersion": "0.121.3",
+  "severityCutoff": "high",
+  "databaseMaxAgeHours": 120,
+  "includeUnfixed": true
+}

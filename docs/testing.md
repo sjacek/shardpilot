@@ -365,8 +365,9 @@ This also works for PRs and forks that cannot write the default branch's persist
 `main` can save a persistent snapshot. Cache keys include the OS/architecture, dependency models,
 Wrapper pins, fixture sources and cache tooling; prefix restores reuse existing downloads after
 a dependency change. Each matrix job gets its own writable copy. Tests, runtime assertions and
-all 12 existing required status names remain unchanged; the warmup is an additional prerequisite.
-If warmup fails, those matrix jobs report failure explicitly instead of a skipped required check.
+all 12 existing required status names remain unchanged. Warmup and both
+[runtime dependency security scans](dependency-security.md) are prerequisites. A failed prerequisite
+explicitly fails those matrix jobs instead of producing a skipped required check.
 
 `SHARDPILOT_TESTKIT_DIR` selects the shared TestKit download location. Outside CI it defaults to
 `shardpilot-gradle-plugin/build/testkit`; fixture projects and reports remain separate. CI also

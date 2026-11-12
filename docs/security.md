@@ -80,6 +80,11 @@ analysis of the artifacts consumers actually resolve. The Gradle distribution bu
 classes; Maven resolves the core separately and has its own runtime dependency graph. Assess
 those graphs separately from provided build-tool APIs, test libraries and producer tooling.
 
+The [runtime SBOM and vulnerability workflow](dependency-security.md) now inventories those two
+distribution graphs separately and gates compatibility/publication on its policy. It binds local
+candidate JAR hashes and records scanner/database identities. Producer dependencies and verification
+of actual previously published registry bytes remain separate work.
+
 ## Maintainer setup for private reports
 
 In the repository's **Settings**, open **Security and quality > Advanced Security** and enable

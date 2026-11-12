@@ -70,7 +70,7 @@ def warm_maven():
     version = ET.parse(ROOT / 'pom.xml').findtext('m:version', namespaces=NS)
     # Fixture plugin resolution needs this checkout's candidate, which pack() explicitly excludes.
     maven('install', '-DskipTests', '-DskipITs')
-    maven(DEPENDENCY_PLUGIN + ':go-offline')
+    maven(DEPENDENCY_PLUGIN + ':go-offline', '-Psecurity-sbom')
     fixtures = ROOT / 'build/cache-warmup/maven'
     providers = set()
     for source in (ROOT / 'shardpilot-maven-plugin/src/it', ROOT / 'examples/maven'):

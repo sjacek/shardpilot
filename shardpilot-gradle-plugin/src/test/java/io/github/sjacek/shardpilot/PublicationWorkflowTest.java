@@ -208,6 +208,11 @@ class PublicationWorkflowTest {
         var workflow = workflow("compatibility");
         var jobs = mapping(workflow.get("jobs"));
         var warmup = mapping(jobs.get("warm-cache"));
+        var security = mapping(jobs.get("dependency-security"));
+        assertEquals("warm-cache", security.get("needs"));
+        assertEquals("./.github/workflows/security.yml", security.get("uses"));
+        assertEquals(Map.of("warmed-dependencies", true), security.get("with"));
+        assertNull(security.get("secrets"));
         assertTestedCheckout(warmup);
         assertNull(warmup.get("if"), "cold PRs must also warm dependencies");
         assertNull(warmup.get("continue-on-error"));
@@ -237,10 +242,10 @@ class PublicationWorkflowTest {
         }
         for (String jobName : List.of("compatibility", "maven")) {
             var job = mapping(jobs.get(jobName));
-            assertEquals("warm-cache", job.get("needs"));
+            assertEquals(List.of("warm-cache", "dependency-security"), job.get("needs"));
             assertEquals("${{ !cancelled() }}", job.get("if"));
-            var guard = stepNamed(job, "Require successful dependency warmup");
-            assertEquals("needs.warm-cache.result != 'success'", guard.get("if"));
+            var guard = stepNamed(job, "Require successful dependency prerequisites");
+            assertEquals("needs.warm-cache.result != 'success' || needs.dependency-security.result != 'success'", guard.get("if"));
             assertTrue(guard.get("run").toString().contains("exit 1"));
             assertEquals(guard, sequence(job.get("steps")).get(0),
                     "a failed warmup must fail required contexts before any cache-dependent work");
@@ -259,6 +264,78 @@ class PublicationWorkflowTest {
         var maven = mapping(jobs.get("maven"));
         assertTrue(sequence(maven.get("steps")).indexOf(stepNamed(maven, "Seed the isolated Invoker repository"))
                 < sequence(maven.get("steps")).indexOf(stepNamed(maven, "Verify Maven core, adapter and real runner builds")));
+    }
+
+    @Test
+    void runtimeSecurityUsesSeparateScopesPinnedScannerAndFreshDatabaseWithoutCredentials() throws Exception {
+        var security = workflow("security");
+        assertEquals(Map.of("contents", "read"), security.get("permissions"));
+        assertFalse(security.toString().contains("secrets."));
+        var events = mapping(security.get("on"));
+        assertEquals(Set.of("workflow_call", "workflow_dispatch", "schedule"), events.keySet());
+        assertFalse(sequence(events.get("schedule")).isEmpty(), "new advisories must also be checked without source changes");
+        var callInputs = mapping(mapping(events.get("workflow_call")).get("inputs"));
+        assertEquals(false, mapping(callInputs.get("warmed-dependencies")).get("default"));
+        var job = mapping(mapping(security.get("jobs")).get("scan"));
+        assertEquals(List.of("gradle", "maven"), mapping(mapping(job.get("strategy")).get("matrix")).get("distribution"));
+        assertEquals(false, mapping(job.get("strategy")).get("fail-fast"));
+        assertTestedCheckout(job);
+        for (Object step : sequence(job.get("steps"))) {
+            assertNull(mapping(step).get("continue-on-error"), "scanner and DB failures must never turn into success");
+        }
+        var install = stepUsing(job, "anchore/scan-action/download-grype@");
+        assertEquals("anchore/scan-action/download-grype@27805bf3b4e84b4a5c980df22ed233c00390a439", install.get("uses"));
+        assertEquals(false, mapping(install.get("with")).get("cache-db"));
+        assertEquals("${{ steps.policy.outputs.scanner-version }}", mapping(install.get("with")).get("grype-version"));
+        var env = mapping(security.get("env"));
+        assertEquals("false", env.get("GRYPE_DB_AUTO_UPDATE"));
+        assertEquals("true", env.get("GRYPE_DB_VALIDATE_AGE"));
+        String database = stepNamed(job, "Refresh vulnerability database and record scanner identity").get("run").toString();
+        assertTrue(database.contains("db update --config security/grype.yaml"));
+        assertTrue(database.contains("db status -o json"));
+        assertTrue(database.contains("version -o json"));
+        String scan = stepNamed(job, "Scan runtime dependencies").get("run").toString();
+        assertTrue(scan.contains("sbom:build/security/$DISTRIBUTION/bom.cdx.json"));
+        assertTrue(scan.contains("--only-fixed=false --show-suppressed"));
+        assertTrue(scan.contains("--fail-on \"$SEVERITY\""));
+        assertTrue(scan.contains("scan-status.json"));
+        assertTrue(scan.contains("exit \"$scan_exit\""));
+        var summary = stepNamed(job, "Summarize findings and verify scan evidence");
+        assertTrue(summary.get("if").toString().contains("always()"));
+        assertTrue(summary.get("if").toString().contains("steps.scan.outcome == 'failure'"));
+        var retained = stepNamed(job, "Retain SBOM, findings and candidate provenance");
+        assertEquals("always()", retained.get("if"));
+        assertEquals("build/security/${{ matrix.distribution }}/", mapping(retained.get("with")).get("path"));
+        assertEquals(30, mapping(retained.get("with")).get("retention-days"));
+        var policy = mapping(new Load(LoadSettings.builder().build())
+                .loadFromString(Files.readString(Path.of("security/scan-policy.json"))));
+        assertEquals("0.121.3", policy.get("scannerVersion"));
+        assertEquals("high", policy.get("severityCutoff"));
+        assertEquals(true, policy.get("includeUnfixed"));
+        assertEquals(120, policy.get("databaseMaxAgeHours"));
+    }
+
+    @Test
+    void nativeSbomGeneratorsExcludeTestsProvidedApisAndPublicationAttachments() throws Exception {
+        var factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        var document = factory.newDocumentBuilder().parse(Path.of("pom.xml").toFile());
+        var xpath = javax.xml.xpath.XPathFactory.newInstance().newXPath();
+        String plugin = "/project/profiles/profile[id='security-sbom']/build/plugins/plugin[artifactId='cyclonedx-maven-plugin']";
+        assertEquals("2.9.3", xpath.evaluate(plugin + "/version", document));
+        for (String included : List.of("includeCompileScope", "includeRuntimeScope", "skipAttach")) {
+            assertEquals("true", xpath.evaluate(plugin + "/configuration/" + included, document));
+        }
+        for (String excluded : List.of("includeProvidedScope", "includeSystemScope", "includeTestScope")) {
+            assertEquals("false", xpath.evaluate(plugin + "/configuration/" + excluded, document));
+        }
+        assertEquals("makeBom", xpath.evaluate(plugin + "/executions/execution/goals/goal", document));
+        assertTrue(Files.readString(Path.of("build.gradle")).contains("id 'org.cyclonedx.bom' version '3.5.1'"));
+        for (String module : List.of("shardpilot-core", "shardpilot-gradle-plugin")) {
+            String build = Files.readString(Path.of(module, "build.gradle"));
+            assertTrue(build.contains("includeConfigs = ['runtimeClasspath']"));
+            assertTrue(build.contains("includeBuildEnvironment = false"));
+        }
     }
 
     @Test

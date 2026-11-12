@@ -51,6 +51,23 @@
   </plugins></pluginManagement></build>
   <profiles>
     <profile>
+      <id>security-sbom</id>
+      <!-- Inventory the actual consumer runtime, independently of provided Maven APIs and tests.
+           CI keeps these reports separately; this profile never attaches or publishes a new artifact. -->
+      <build><plugins><plugin>
+        <groupId>org.cyclonedx</groupId><artifactId>cyclonedx-maven-plugin</artifactId><version>2.9.3</version>
+        <configuration>
+          <schemaVersion>1.6</schemaVersion><projectType>library</projectType>
+          <includeCompileScope>true</includeCompileScope><includeRuntimeScope>true</includeRuntimeScope>
+          <includeProvidedScope>false</includeProvidedScope><includeSystemScope>false</includeSystemScope>
+          <includeTestScope>false</includeTestScope><outputFormat>json</outputFormat>
+          <outputDirectory>${project.build.directory}/reports/security/maven</outputDirectory>
+          <outputName>bom.raw</outputName><skipAttach>true</skipAttach>
+        </configuration>
+        <executions><execution><id>runtime-sbom</id><phase>package</phase><goals><goal>makeBom</goal></goals></execution></executions>
+      </plugin></plugins></build>
+    </profile>
+    <profile>
       <id>central-release</id>
       <properties>
         <!-- Local release checks produce the exact bundle but never upload by default. -->
