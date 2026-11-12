@@ -16,7 +16,7 @@ public final class TestKitCacheWarmup {
             dependencies {
                 testImplementation platform('org.junit:junit-bom:6.1.3')
                 testImplementation 'org.junit.jupiter:junit-jupiter'
-                testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+                testImplementation 'org.junit.platform:junit-platform-launcher:6.1.3'
                 testImplementation 'org.testng:testng:7.12.0'
                 testImplementation 'org.spockframework:spock-core:2.5-groovy-5.0'
                 testImplementation 'org.apache.groovy:groovy:5.1.3'

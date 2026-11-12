@@ -146,3 +146,15 @@ Actions to reviewed commit SHAs and adds producer/TestKit/Maven integrity baseli
 This is a distinct control from runtime SCA: it binds resolved bytes, not advisory coverage or
 publisher identity. Published-artifact verification, third-party action/toolchain download behavior,
 execution equivalence, isolated execution and reproducible performance remain separate work.
+
+## Subsequent native execution-equivalence regressions
+
+[Native execution equivalence](execution-equivalence.md) now supplies deterministic no-plugin
+references and two/four-node execution comparisons for Gradle Jupiter, Spock and TestNG, plus
+Maven Jupiter through Surefire and Failsafe. It compares native identities, exact occurrence counts,
+outcomes and skips independently of class manifests, retaining original events and comparison JSON.
+Negative oracle tests reject lost/duplicated runs and swapped outcomes even when aggregate counts match.
+
+This addresses a bounded fixture-based part of stage 3. It does not establish equivalence for all
+consumer suites, retries or dynamic identities; isolated published-artifact execution, broader
+network observation and real-suite performance measurements remain separate work.

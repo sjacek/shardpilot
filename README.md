@@ -500,7 +500,7 @@ Spock and native TestNG execution, data-provider rows, nested classes, pre-exist
 custom tasks, empty-shard report cleanup,
 failure propagation, Groovy/Kotlin DSL and configuration-cache reuse. Sources and Javadoc JARs
 are built alongside the plugin JAR; each contains the MIT license.
-The Maven build runs core/adapter unit tests, 15 native Invoker fixtures and two runnable examples in an isolated
+The Maven build runs core/adapter unit tests, 17 native Invoker fixtures and two runnable examples in an isolated
 repository. Root Gradle `check` does not run that Maven reactor. See the
 [testing guide](docs/testing.md#local-verification) for module report paths and focused commands.
 

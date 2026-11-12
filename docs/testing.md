@@ -36,6 +36,8 @@ For a focused iteration:
 python3 -B scripts/maven_verification.py run -- -B -ntp verify -Dinvoker.test=junit-jupiter
 ./gradlew :shardpilot-gradle-plugin:test --tests 'io.github.sjacek.shardpilot.TestSelectionFunctionalTest'
 python3 -B scripts/maven_verification.py run -- -B -ntp verify '-Dinvoker.test=selection-*'
+./gradlew :shardpilot-gradle-plugin:test --tests '*ExecutionEquivalenceFunctionalTest' --tests '*VerifyTestExecutionsTest'
+python3 -B scripts/maven_verification.py run -- -B -ntp verify '-Dinvoker.test=execution-equivalence-*'
 ```
 
 The plugin's own test task is not configured to shard itself. These selectors run normal Gradle
@@ -79,6 +81,7 @@ do not reproduce an application's memory leak or prove that a configured heap pr
 | `ShardCoverageHtmlTest` | Sorted class assignments, wrong-node differences, partial evidence, plan-only labels, empty shards, Unicode/HTML escaping and a shared JSON/HTML snapshot with defensively copied public collections. |
 | `ShardManifestsTest` | Shared preparation/selection across input orders, family ownership with empty partitions, preserved plans after invalid inputs, selective index cleanup, normalized report-path collisions and partial I/O failures. |
 | `ShardPilotFunctionalTest` | Real Gradle tasks with Jupiter/Spock/native TestNG, weighted/hash-only partitions, provider-row ownership, opt-in, filters, custom tasks, empty results, fatal setup failures, Kotlin DSL, actual Gradle/JDK runtimes and configuration-cache reuse. |
+| `ExecutionEquivalenceFunctionalTest`, `VerifyTestExecutionsTest` | Native no-plugin reference versus two/four weighted shards, exact terminal identities/outcome multiplicities, nested/parameter/repeated tests and skips; the independent oracle rejects dropped/duplicated runs and changed outcomes. Shared Maven Surefire/Failsafe fixtures exercise the same oracle. |
 | `NormalizeSvgTest` | Standalone preview normalization, text/geometry/link preservation, XML input safety, idempotence and committed SVG compatibility checks. |
 | `ReleaseTagVerificationTest` | Actual Gradle guard script, stable/malformed/missing/mismatched tags, evaluated build versions and strict configuration-cache reuse. |
 | `PublicationWorkflowTest` | Parsed YAML, complete matrix dependency gating, immutable checkout SHA, required jobs, credential isolation and disabled publisher caches. |
@@ -88,6 +91,11 @@ Functional partition checks compare the union of shard results to an unsharded b
 for duplicates. Configuration-cache checks reuse a build, then change timing contents to verify
 that old test results are not accepted as unchanged. Empty-shard checks also guard against retaining
 another shard's report files when rerunning a task sequentially in a fixture.
+
+The [execution-equivalence regressions](execution-equivalence.md) additionally compare native
+terminal-event identities and outcome multiplicities, rather than only XML testcase-name sets.
+They retain baseline/node evidence, keep expected native failures as failures, and document the
+bounded scope of the Jupiter/Spock/TestNG and Maven Surefire/Failsafe fixtures.
 
 ## Manifest verification tests
 
@@ -122,6 +130,11 @@ candidate-name sets rather than test outcomes, bytecode or artifact provenance.
 The verified Maven launcher uses Maven Invoker with an isolated repository, installing only test copies of
 the candidate parent/core/plugin there. No global candidate installation or remote publication
 is needed. Hook scripts parse YAML and native JUnit XML rather than trusting log counts alone.
+
+The Surefire and Failsafe execution-equivalence fixtures additionally compare native listener
+events for an unsharded reference and two/four nodes. They preserve expected native assertion/error
+failures and check invocation identities, multiplicities and skip outcomes with the shared
+[execution oracle](execution-equivalence.md).
 
 - The [Jupiter POM](../examples/maven/junit-jupiter/pom.xml) prepares separate unit/integration plans,
   runs two nodes through real Surefire/Failsafe, checks nested methods and a custom `Spec` suffix,

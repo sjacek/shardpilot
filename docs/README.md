@@ -27,6 +27,7 @@ YAML manifests and selection reports remain compatible. Current snippets target 
 | [Spock with PostgreSQL and RabbitMQ](spock-testcontainers-example.md) | Run specifications and data-table iterations with worker-local containers and specification-local databases. |
 | [TestNG with PostgreSQL and RabbitMQ](testng-testcontainers-example.md) | Run class fixtures and data-provider rows with the native TestNG adapter and worker-local containers. |
 | [Testing and compatibility](testing.md) | Verify changes and understand what the existing tests actually cover. |
+| [Native execution equivalence](execution-equivalence.md) | Compare native test identities, invocation counts, outcomes and skips against two/four shards for the deterministic Gradle/Maven fixtures. |
 | [Security and trust boundaries](security.md) | Understand private reporting, build-process permissions, metadata handling and publication responsibilities. |
 | [Runtime SBOMs and vulnerability scanning](dependency-security.md) | Verify separate Gradle/Maven runtime inventories, candidate JAR identities and the CI severity/database policy. |
 | [Build dependency integrity](dependency-verification.md) | Review immutable Actions pins, Gradle/TestKit and Maven checksum enforcement, cache protection and baseline updates. |

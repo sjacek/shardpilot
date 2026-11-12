@@ -291,6 +291,8 @@ jobs:
             shardpilot-maven-plugin/target/surefire-reports/
             shardpilot-maven-plugin/target/invoker-reports/
             shardpilot-maven-plugin/target/it/**/build.log
+            shardpilot-maven-plugin/target/it/execution-equivalence-*/target/executions/
+            shardpilot-maven-plugin/target/it/execution-equivalence-*/build*.log
             shardpilot-maven-plugin/target/examples/**/build.log
             shardpilot-maven-plugin/target/examples/**/coverage.html
           if-no-files-found: warn

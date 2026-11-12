@@ -27,6 +27,7 @@ See the [module diagram](docs/architecture.md#source-modules-and-artifact-compat
 | `examples/gradle/<framework>/testcontainers` | Independent Gradle consumers using the repository-root composite. |
 | `examples/gradle/junit-jupiter/duration-history` | Docker-free consumer; its build/test inputs also run through TestKit in the Gradle adapter suite. |
 | `examples/maven/junit-jupiter` / `reactor` | Independent Maven consumers; Invoker clones them into isolated test outputs. |
+| `testing/execution-equivalence` / `testing/java` | Native execution fixtures and the independent test-only oracle shared by TestKit and Maven Invoker; excluded from distributed plugin code. |
 
 Import the root Gradle settings for Gradle development and the root POM for Maven development.
 In IntelliJ IDEA, use the root Gradle Wrapper and a supported Gradle JVM, then synchronize
@@ -75,6 +76,11 @@ Any assignment change needs regression coverage proving determinism and complete
 class ownership. Changes to Gradle integration need TestKit coverage with strict configuration cache,
 existing test filters, task opt-in and failed test propagation. Update both Groovy and Kotlin DSL examples
 when changing the public extension. Do not advertise a compatibility combination without testing it.
+
+Keep [native execution equivalence](docs/execution-equivalence.md) passing for adapter/assignment
+changes: compare unsharded execution with two and four shards, including identity multiplicities,
+outcomes and skips. Preserve the intentional native failure gates and the independent listener-based
+oracle; class manifests must not become a substitute for evidence that invocations actually ran.
 
 History is untrusted metadata: reject malformed numbers and identities, and do not print raw lines.
 The XML timing reader disables DTDs and external entities and reads timing metadata only. Preserve
