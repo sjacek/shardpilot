@@ -18,6 +18,9 @@ recorded by the Gradle Plugin Portal.
 
 ### Build tooling
 
+- Warm Gradle/TestKit and Maven/native-fixture downloads sequentially before the CI matrices.
+  Share same-run dependency snapshots with PRs and forks, persist them only from the default
+  branch and retain isolated test results, local candidate installations and uncached publishers.
 - Upgrade the build Wrapper to Gradle 9.9.1 with the official distribution SHA-256 and regenerated
   scripts/JAR. Replace the three newest consumer CI cells with 9.9.1 on JDK 17/21/25, retaining
   all eight Gradle targets. Required GitHub status names need the matching maintainer rollout.

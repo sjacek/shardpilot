@@ -348,6 +348,67 @@ CI runs on Linux and retains uniquely named HTML/JUnit reports for every cell, i
 It validates the Wrapper, uses read-only repository permissions and does not publish the plugin or
 require release credentials. The matrix does not run the Docker-backed examples.
 
+### Dependency cache and sequential warmup
+
+The `warm-cache` job runs before both Gradle and Maven matrices. It uses JDK 21, which can run
+all supported consumer distributions, and first restores a download-only snapshot from GitHub
+Actions cache. A cold run is valid. `warmTestKitCache` resolves the Jupiter, TestNG and Spock
+fixture libraries on a cache miss; an exact hit reuses the already prepared snapshots.
+It uses each Gradle version and does not execute tests. The Maven warmup builds
+the local candidate with tests/Invoker disabled, then resolves reactor and copied native-fixture
+POMs with a pinned `dependency:go-offline` goal. Runtime-selected Surefire engine providers are
+downloaded explicitly. Fixture verification hooks never run during warmup.
+
+The job always supplies freshly warmed dependency artifacts to the matrices in the **same run**.
+Gradle and Maven use separate archives, so a Maven job does not download Gradle distributions.
+This also works for PRs and forks that cannot write the default branch's persistent cache. Only
+`main` can save a persistent snapshot. Cache keys include the OS/architecture, dependency models,
+Wrapper pins, fixture sources and cache tooling; prefix restores reuse existing downloads after
+a dependency change. Each matrix job gets its own writable copy. Tests, runtime assertions and
+all 12 existing required status names remain unchanged; the warmup is an additional prerequisite.
+If warmup fails, those matrix jobs report failure explicitly instead of a skipped required check.
+
+`SHARDPILOT_TESTKIT_DIR` selects the shared TestKit download location. Outside CI it defaults to
+`shardpilot-gradle-plugin/build/testkit`; fixture projects and reports remain separate. CI also
+uses dedicated Gradle/Maven download directories under `build/ci-dependencies`. The Invoker
+repository is seeded with external Maven dependencies and then installs the current reactor as
+usual, preserving its isolation from a developer's normal local repository.
+
+Snapshots allow only dependency resolver metadata, downloaded libraries and Wrapper distributions.
+They exclude local `io.github.sjacek` Maven candidates, locks, partial downloads, daemon/task state,
+test results, settings and signing material. A tar archive preserves launcher permissions;
+imports reject links, unexpected paths and traversal before extracting. Same-run artifacts expire
+after one day. `setup-gradle` still validates the Wrapper, but its own cache is disabled to avoid
+duplicate cache ownership. A full workflow rerun replaces its previous dependency artifacts;
+after they expire, rerun the whole workflow so warmup can recreate them.
+Credentialed publishing jobs restore no cache.
+
+Cold caches and newly added or dynamically resolved artifacts still need remote repositories;
+this reduces repeated downloads and HTTP 429 exposure rather than promising an offline build.
+Do not enable `--offline` for the compatibility matrix or replace verification with warmup.
+
+Local checks (Python 3.12+ and a JDK supported by each selected Gradle version):
+
+```shell
+./gradlew :shardpilot-gradle-plugin:warmTestKitCache -PtestGradleVersions=9.0.0,9.1.0,9.9.1
+python3 -B -m unittest discover -s scripts -p 'test_ci_dependency_cache.py' -v
+```
+
+The first command uses the local TestKit directory unless `SHARDPILOT_TESTKIT_DIR` is set.
+`scripts/ci_dependency_cache.py warm-maven` is intended for CI's dedicated repository directories;
+it builds local candidates but never publishes them remotely.
+
+Local cache verification on 12 November 2026 (Windows, Temurin 21.0.13): cold TestKit warmup
+completed for Gradle 9.0.0, 9.1.0 and 9.9.1; Maven warmup resolved the reactor and native-fixture
+graphs without running tests. Both snapshots were then restored into a new directory.
+`check assemble -PtestGradleVersion=9.0.0 -PtestJavaVersion=21` passed 328 tests, including an
+assertion that the actual nested Gradle User Home matches the restored TestKit directory.
+Maven `verify` passed 302 unit tests, 15 Invoker fixture projects and two runnable examples.
+All nine executable Python cache checks passed; the additional real-symlink export check is
+skipped on Windows and runs on Linux CI. Final workflow regression tests passed separately
+after adding artifact overwrite on reruns. These local results do not establish cache hit rates,
+transfer times, pipeline speedup or a green hosted Linux matrix; inspect the first pushed run.
+
 The release-artifacts job also runs the offline standard-library tests in
 `scripts/test_central_publication*.py` with Python 3.12. Unit tests exercise transient status errors,
 timeouts, authentication failures, release identity checks and resume without a second upload.

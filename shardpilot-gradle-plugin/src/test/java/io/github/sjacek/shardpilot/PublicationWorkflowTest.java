@@ -187,10 +187,11 @@ class PublicationWorkflowTest {
                 mapping(mapping(workflow("compatibility").get("jobs")).get("release-artifacts")).get("name"));
         assertEquals(List.of("17", "21", "25"), mapping(mapping(maven.get("strategy")).get("matrix")).get("java"));
         assertEquals(false, mapping(maven.get("strategy")).get("fail-fast"));
-        assertNull(maven.get("if"));
+        assertEquals("${{ !cancelled() }}", maven.get("if"));
         assertNull(maven.get("continue-on-error"));
         assertTestedCheckout(maven);
-        assertEquals("bash ./mvnw -B -ntp verify", stepNamed(maven, "Verify Maven core, adapter and real runner builds").get("run"));
+        assertEquals("bash ./mvnw -B -ntp -Dmaven.repo.local=\"$GITHUB_WORKSPACE/build/ci-dependencies/maven\" verify",
+                stepNamed(maven, "Verify Maven core, adapter and real runner builds").get("run"));
         // CI invokes the Wrapper, so the status label must describe its actual pinned runtime.
         Properties wrapper = new Properties();
         wrapper.load(new StringReader(Files.readString(Path.of(".mvn/wrapper/maven-wrapper.properties"))));
@@ -200,6 +201,81 @@ class PublicationWorkflowTest {
         assertNotNull(checksum, "the Maven distribution must be checksum-verified");
         assertTrue(checksum.matches("[a-f0-9]{64}"), "a nonempty SHA-256 checksum is required");
         assertFalse(maven.toString().contains("secrets."));
+    }
+
+    @Test
+    void matricesWaitForSameRunDownloadsAndOnlyMainCanSavePersistentCaches() throws IOException {
+        var workflow = workflow("compatibility");
+        var jobs = mapping(workflow.get("jobs"));
+        var warmup = mapping(jobs.get("warm-cache"));
+        assertTestedCheckout(warmup);
+        assertNull(warmup.get("if"), "cold PRs must also warm dependencies");
+        assertNull(warmup.get("continue-on-error"));
+        assertEquals("21", mapping(stepUsing(warmup, "actions/setup-java@").get("with")).get("java-version"));
+        String command = stepNamed(warmup, "Warm Gradle and TestKit dependencies without running tests").get("run").toString();
+        assertTrue(command.contains(":shardpilot-gradle-plugin:warmTestKitCache"));
+        var gradleMatrix = mapping(mapping(mapping(jobs.get("compatibility")).get("strategy")).get("matrix"));
+        assertTrue(command.contains("-PtestGradleVersions=" + String.join(",",
+                sequence(gradleMatrix.get("gradle")).stream().map(Object::toString).toList())));
+        assertEquals("python3 -B scripts/ci_dependency_cache.py warm-maven",
+                stepNamed(warmup, "Warm Maven reactor and native fixture dependencies without running tests").get("run"));
+        for (String step : List.of("Warm Gradle and TestKit dependencies without running tests",
+                "Warm Maven reactor and native fixture dependencies without running tests", "Pack downloaded dependencies only")) {
+            assertEquals("steps.dependencies.outputs.cache-hit != 'true'", stepNamed(warmup, step).get("if"),
+                    "an exact snapshot hit must avoid repeating dependency warmup");
+        }
+        var save = stepUsing(warmup, "actions/cache/save@");
+        assertEquals("github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.dependencies.outputs.cache-hit != 'true'",
+                save.get("if"));
+        assertEquals("${{ steps.dependencies.outputs.cache-primary-key }}", mapping(save.get("with")).get("key"));
+        for (String kind : List.of("Gradle", "Maven")) {
+            var snapshot = mapping(stepNamed(warmup, "Share warmed " + kind + " dependencies with this run").get("with"));
+            assertEquals(kind.toLowerCase(java.util.Locale.ROOT) + "-dependencies", snapshot.get("name"));
+            assertEquals(1, snapshot.get("retention-days"));
+            assertEquals("error", snapshot.get("if-no-files-found"));
+            assertEquals(true, snapshot.get("overwrite"), "a full rerun must replace the previous warmup artifacts");
+        }
+        for (String jobName : List.of("compatibility", "maven")) {
+            var job = mapping(jobs.get(jobName));
+            assertEquals("warm-cache", job.get("needs"));
+            assertEquals("${{ !cancelled() }}", job.get("if"));
+            var guard = stepNamed(job, "Require successful dependency warmup");
+            assertEquals("needs.warm-cache.result != 'success'", guard.get("if"));
+            assertTrue(guard.get("run").toString().contains("exit 1"));
+            assertEquals(guard, sequence(job.get("steps")).get(0),
+                    "a failed warmup must fail required contexts before any cache-dependent work");
+            String kind = jobName.equals("compatibility") ? "gradle" : "maven";
+            assertEquals(kind + "-dependencies", mapping(stepUsing(job, "actions/download-artifact@").get("with")).get("name"));
+            var steps = sequence(job.get("steps"));
+            var restore = stepNamed(job, "Unpack downloaded dependencies");
+            assertEquals("python3 -B scripts/ci_dependency_cache.py restore " + kind, restore.get("run"));
+            assertTrue(steps.indexOf(stepUsing(job, "actions/download-artifact@")) < steps.indexOf(restore));
+            assertFalse(job.toString().contains("actions/cache/save@"));
+        }
+        for (String jobName : List.of("warm-cache", "compatibility")) {
+            assertEquals(true, mapping(stepUsing(mapping(jobs.get(jobName)), "gradle/actions/setup-gradle@").get("with")).get("cache-disabled"),
+                    "the download snapshot must not overlap another Gradle User Home cache");
+        }
+        var maven = mapping(jobs.get("maven"));
+        assertTrue(sequence(maven.get("steps")).indexOf(stepNamed(maven, "Seed the isolated Invoker repository"))
+                < sequence(maven.get("steps")).indexOf(stepNamed(maven, "Verify Maven core, adapter and real runner builds")));
+    }
+
+    @Test
+    void warmupIncludesEveryVersionedLibraryUsedByRealFunctionalFixtures() throws IOException {
+        var coordinate = java.util.regex.Pattern.compile("['\"]([\\w.-]+:[\\w.-]+:[\\w.-]+)['\"]");
+        try (var sources = Files.list(Path.of("shardpilot-gradle-plugin/src/test/java/io/github/sjacek/shardpilot"))) {
+            for (Path source : sources.filter(path -> path.getFileName().toString().endsWith("FunctionalTest.java")).toList()) {
+                var matcher = coordinate.matcher(Files.readString(source));
+                while (matcher.find()) {
+                    assertTrue(TestKitCacheWarmup.BUILD.contains(matcher.group(1)),
+                            () -> "Missing warmup library from " + source + ": " + matcher.group(1));
+                }
+            }
+        }
+        String build = Files.readString(Path.of("shardpilot-gradle-plugin/build.gradle"));
+        assertTrue(build.contains("systemProperty 'org.gradle.testkit.dir'"));
+        assertTrue(build.contains("providers.environmentVariable('SHARDPILOT_TESTKIT_DIR')"));
     }
 
     @Test

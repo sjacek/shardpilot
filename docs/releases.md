@@ -22,7 +22,7 @@ commits, tag creation, publisher credentials and release-environment protection 
 
 ## Keep required checks aligned with the matrix
 
-The repository's active **main develop** ruleset applies to `main` and `develop`. The release
+The repository's active **main** ruleset applies to `main`. The release
 gate has 12 required contexts, emitted by GitHub Actions:
 
 | Job contexts | Required JDKs | Count |
@@ -32,6 +32,9 @@ gate has 12 required contexts, emitted by GitHub Actions:
 | `Gradle 9.9.1 / JDK N` | 17, 21, 25 | 3 |
 | `Maven 3.10.0 / JDK N` | 17, 21, 25 | 3 |
 | `Signed Maven release bundle (no upload)` | Fixed release-verification runtime | 1 |
+
+The dependency warmup is a prerequisite of the two matrices. Their existing required contexts
+fail explicitly when warmup fails; adding the cache does not require renaming these 12 checks.
 
 `N` above is replaced with the literal JDK number in each required name. These are job names,
 without the workflow title or `(push)` / `(pull_request)` event suffix shown in parts of the UI.
@@ -47,7 +50,7 @@ The same eight Gradle cells are used by the reusable release workflow; signed-bu
 jobs remain required as well. Coordinate the live rename with the workflow rollout:
 
 1. Push the branch containing the updated matrix and wait for its new status names to appear.
-2. In **Settings → Rules → Rulesets → main develop**, replace only the three requirements for
+2. In **Settings → Rules → Rulesets → main**, replace only the three requirements for
    the changed runtime with the corresponding new names, retaining all 12 contexts and their source.
 3. Re-read the live ruleset and compare all names with the branch's actual reports before merge.
    Older open PRs may need to pick up the new workflow; their old statuses cannot satisfy the

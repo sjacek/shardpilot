@@ -63,6 +63,12 @@ use separate Gradle Plugin Portal and Maven Central environments; caches are dis
 credentialed Gradle publication. The Maven release profile signs artifacts, and compatibility
 includes an upload-disabled release-bundle/signature check with a disposable key.
 
+Compatibility warmup shares allowlisted dependency/distribution snapshots, not task results or
+locally built ShardPilot artifacts. Only the default branch writes persistent snapshots; PRs use
+their own same-run artifacts, and every matrix job receives a separate writable copy. Imports
+reject links and unexpected paths. Neither credentialed publisher restores these snapshots.
+See [dependency cache and warmup](testing.md#dependency-cache-and-sequential-warmup).
+
 Those are repository-defined controls. Environment approvals, tag protection, account security,
 private reporting and other GitHub settings require separate maintainer configuration. A YAML
 environment name does not prove that reviewers or tag restrictions are enabled. Follow the
