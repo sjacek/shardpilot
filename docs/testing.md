@@ -9,14 +9,14 @@ the Gradle version; use a JDK supported by that Gradle runtime.
 
 ```shell
 ./gradlew check assemble
-./mvnw -B -ntp verify
+python3 -B scripts/maven_verification.py run -- -B -ntp verify
 ```
 
 PowerShell:
 
 ```powershell
 .\gradlew.bat check assemble
-.\mvnw.cmd -B -ntp verify
+python -B scripts/maven_verification.py run -- -B -ntp verify
 ```
 
 Root Gradle `check` runs the shared-core and Gradle-adapter suites plus plugin validation.
@@ -33,9 +33,9 @@ For a focused iteration:
 ./gradlew :shardpilot-gradle-plugin:test --tests 'io.github.sjacek.shardpilot.ShardPilotFunctionalTest'
 ./gradlew :shardpilot-core:test --tests 'io.github.sjacek.shardpilot.ClassManifestTest' --tests 'io.github.sjacek.shardpilot.ShardCoverageTest'
 ./gradlew :shardpilot-gradle-plugin:test --tests 'io.github.sjacek.shardpilot.HistoryRefreshExampleFunctionalTest' --tests 'io.github.sjacek.shardpilot.HistoryRefreshCiExamplesTest'
-./mvnw -B -ntp verify -Dinvoker.test=junit-jupiter
+python3 -B scripts/maven_verification.py run -- -B -ntp verify -Dinvoker.test=junit-jupiter
 ./gradlew :shardpilot-gradle-plugin:test --tests 'io.github.sjacek.shardpilot.TestSelectionFunctionalTest'
-./mvnw -B -ntp verify '-Dinvoker.test=selection-*'
+python3 -B scripts/maven_verification.py run -- -B -ntp verify '-Dinvoker.test=selection-*'
 ```
 
 The plugin's own test task is not configured to shard itself. These selectors run normal Gradle
@@ -119,7 +119,7 @@ candidate-name sets rather than test outcomes, bytecode or artifact provenance.
 
 ## Maven integration fixtures
 
-`./mvnw verify` uses Maven Invoker with an isolated repository, installing only test copies of
+The verified Maven launcher uses Maven Invoker with an isolated repository, installing only test copies of
 the candidate parent/core/plugin there. No global candidate installation or remote publication
 is needed. Hook scripts parse YAML and native JUnit XML rather than trusting log counts alone.
 

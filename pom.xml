@@ -48,8 +48,27 @@
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>${surefire.version}</version></plugin>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>${surefire.version}</version></plugin>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.5.1</version></plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-help-plugin</artifactId><version>3.5.2</version></plugin>
   </plugins></pluginManagement></build>
   <profiles>
+    <profile>
+      <id>verified-maven-consumers</id>
+      <activation><property><name>codes.rafael.mavenchecksumextension.mode</name></property></activation>
+      <!-- Root invocations verify against committed sums. Invoker additionally installs this checkout's
+           candidate artifacts and hashes those exact five files into a disposable consumer baseline. -->
+      <build><pluginManagement><plugins><plugin>
+        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-invoker-plugin</artifactId>
+        <configuration>
+          <preBuildHookScript>../../../../scripts/prepare-maven-consumer-checksums.groovy</preBuildHookScript>
+          <scriptVariables>
+            <verificationRoot>${maven.multiModuleProjectDirectory}</verificationRoot>
+            <verificationRepository>${project.build.directory}/it-repository</verificationRepository>
+            <verificationVersion>${project.version}</verificationVersion>
+          </scriptVariables>
+          <mavenOpts>${env.MAVEN_OPTS} ${env.SHARDPILOT_MAVEN_CONSUMER_OPTS}</mavenOpts>
+        </configuration>
+      </plugin></plugins></pluginManagement></build>
+    </profile>
     <profile>
       <id>security-sbom</id>
       <!-- Inventory the actual consumer runtime, independently of provided Maven APIs and tests.

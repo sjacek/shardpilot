@@ -82,8 +82,10 @@ those graphs separately from provided build-tool APIs, test libraries and produc
 
 The [runtime SBOM and vulnerability workflow](dependency-security.md) now inventories those two
 distribution graphs separately and gates compatibility/publication on its policy. It binds local
-candidate JAR hashes and records scanner/database identities. Producer dependencies and verification
-of actual previously published registry bytes remain separate work.
+candidate JAR hashes and records scanner/database identities. The separate
+[build dependency integrity gate](dependency-verification.md) pins Actions commits and verifies
+Gradle/TestKit and Maven dependency bytes, including restored caches. Verification of actual
+previously published registry bytes remains separate work.
 
 ## Maintainer setup for private reports
 

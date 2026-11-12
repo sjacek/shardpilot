@@ -1,7 +1,5 @@
 package io.github.sjacek.shardpilot;
 
-import org.gradle.testkit.runner.GradleRunner;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +20,9 @@ public final class TestKitCacheWarmup {
                 testImplementation 'org.testng:testng:7.12.0'
                 testImplementation 'org.spockframework:spock-core:2.5-groovy-5.0'
                 testImplementation 'org.apache.groovy:groovy:5.1.3'
+                testRuntimeOnly 'org.apache.groovy:groovy-all:5.1.3'
+                testRuntimeOnly 'org.apache.groovy:groovy-astbuilder:5.1.3'
+                testRuntimeOnly 'org.apache.groovy:groovy-dateutil:5.1.3'
             }
             tasks.register('warmDependencies') {
                 doLast {
@@ -38,9 +39,10 @@ public final class TestKitCacheWarmup {
         Files.createDirectories(project);
         Files.writeString(project.resolve("settings.gradle"), "rootProject.name = 'ci-dependency-warmup'\n");
         Files.writeString(project.resolve("build.gradle"), BUILD);
-        for (String version : Arrays.copyOfRange(args, 2, args.length)) {
+        Path metadata = Path.of(args[2]);
+        for (String version : Arrays.copyOfRange(args, 3, args.length)) {
             System.out.println("Warming TestKit dependencies for Gradle " + version);
-            GradleRunner.create().withProjectDir(project.toFile()).withTestKitDir(cache.toFile())
+            VerifiedTestKit.create(project, metadata).withTestKitDir(cache.toFile())
                     .withGradleVersion(version)
                     .withArguments("warmDependencies", "--no-configuration-cache", "--stacktrace", "--console=plain",
                             "-Dorg.gradle.java.home=" + System.getProperty("java.home"))

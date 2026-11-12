@@ -1,235 +1,148 @@
 # Changelog
 
-Notable changes to ShardPilot are recorded here. Release dates follow the version creation dates
-recorded by the Gradle Plugin Portal.
+User-facing changes, fixes and upgrade guidance for ShardPilot. Release dates follow the version
+creation dates recorded by the Gradle Plugin Portal. Changes under **Unreleased** are available
+in the development checkout; they do not imply a published release.
+
+For build, CI and publication details, see the [maintainer documentation](docs/README.md).
 
 ## Unreleased
 
 ### Added
 
-- Security policy with GitHub private vulnerability reporting, a trust-boundary guide and a
-  commit-pinned follow-up to the 12 November 2026 preliminary review. Documentation separates
-  existing controls from planned SBOM/scanning, execution-equivalence and benchmark work.
-- Run an explicitly selected test subset with one or multiple shards in Gradle and Maven.
-  Supply a strict YAML class manifest; invalid, empty or ineligible requests fail before tests.
-- Keep nested families together within full eligibility and balance only selected families.
-  Separate suite namespaces and selection JSON/HTML preserve full-suite reports; cohort identities
-  reject mixed plan/actual artifacts. See the [selection guide](docs/test-selection.md).
+- Run a chosen subset of test classes in Gradle or Maven, with one shard or several. Provide a
+  YAML selection manifest to run a smoke suite or another explicitly chosen group of tests;
+  invalid or empty selections fail instead of silently running a different suite.
+- Selected nested tests stay with their eligible class family. Separate suite reports let you
+  inspect selected-test assignments without overwriting full-suite reports. See the
+  [selection guide](docs/test-selection.md) for configuration and report paths.
 
-### Build tooling
+### Security
 
-- Generate independent CycloneDX runtime SBOMs for Gradle and Maven candidate distributions,
-  verify embedded core bytes/Maven descriptor dependencies and bind candidate JAR SHA-256 values.
-- Gate compatibility/publication on pinned Grype scans, including unfixed high/critical findings;
-  retain scanner/DB identities, complete JSON findings and summaries, with daily default-branch scans.
-- Warm Gradle/TestKit and Maven/native-fixture downloads sequentially before the CI matrices.
-  Share same-run dependency snapshots with PRs and forks, persist them only from the default
-  branch and retain isolated test results, local candidate installations and uncached publishers.
-- Upgrade the build Wrapper to Gradle 9.9.1 with the official distribution SHA-256 and regenerated
-  scripts/JAR. Replace the three newest consumer CI cells with 9.9.1 on JDK 17/21/25, retaining
-  all eight Gradle targets. Required GitHub status names need the matching maintainer rollout.
-- Verify the Wrapper URL, distribution checksum, generated JAR checksum and newest CI target
-  together in publication workflow regression tests.
+- Added [instructions for reporting vulnerabilities privately](SECURITY.md) and a
+  [guide to plugin permissions and trust boundaries](docs/security.md).
+- Separate [runtime dependency inventories and vulnerability reports](docs/dependency-security.md)
+  are available for Gradle and Maven release candidates. High or critical findings block release
+  checks, including findings without an available fix.
+- Release builds reject downloaded dependencies with missing or unexpected SHA-256 checksums,
+  including files restored from cache. See the [dependency integrity guide](docs/dependency-verification.md)
+  for the scope of these checks and instructions for building from source.
 
 ## [0.4.0](docs/releases/0.4.0.md)
 
 ### Added
 
-- Maven `refresh-durations` creates candidate TSV/JSON artifacts from existing Surefire or
-  Failsafe reports and suite eligibility, without rerunning tests or modifying maintained history.
-- Opt-in Gradle `history {}` configuration and `refresh<Task>ShardDurations` tasks create a
-  candidate TSV from existing JUnit XML reports without rerunning tests or modifying versioned history.
-- Shared refresh logic normalizes complete class families, excludes skipped/retried/ambiguous
-  measurements and reports coverage plus before/after recorded shard loads in JSON, including data failures.
-- Runnable history-refresh examples and CI collection flows for Gradle and Maven, with
-  option references, diagnostic contracts and diagrams for reviewed history adoption.
-
-### Compatibility and upgrade
-
-- Existing sharding DSL, native Maven selection and YAML manifests remain compatible.
-  Enable Gradle `history {}` or invoke Maven `refresh-durations` to use the new feature;
-  review and adopt the generated candidate separately for the next pipeline.
-
-### Build tooling
-
-- Build and verify with Maven 3.10.0 through the checksum-verified Wrapper. The three Maven
-  CI cells use JDK 17/21/25; the adapter's provided Maven APIs and declared minimum stay unchanged.
-- Build ShardPilot with Gradle 9.8.2 through the regenerated, checksum-verified Wrapper.
-  CI tests 9.8.2 on JDK 17/21/25, replacing the three 9.8.1 cells while retaining eight
-  required consumer runtime combinations.
+- Refresh duration history from existing test reports without rerunning tests. Gradle provides
+  opt-in `history {}` configuration and `refresh<Task>ShardDurations` tasks; Maven provides
+  `refresh-durations` for Surefire and Failsafe reports.
+- Review a candidate TSV history and a JSON report showing timing coverage and the effect on
+  recorded shard loads before adopting new weights. Skipped, retried and ambiguous measurements
+  are excluded to help avoid misleading history updates.
+- Follow runnable [history-refresh examples and CI collection flows](docs/history-refresh.md)
+  for collecting reports, diagnosing missing inputs and adopting updated history.
 
 ### Fixed
 
-- Duration refresh reports remain identical across JVMs, avoiding intermittent differences
-  in recorded shard loads when comparing reports from the same timing inputs.
-- Maven Central publication retries temporary status-check failures without uploading the
-  bundle again. Maintainers can resume an accepted deployment by ID after a timeout;
-  the workflow retains its release identity and last observed status for recovery.
+- Identical timing inputs now produce identical refresh reports across JVMs, making history
+  comparisons reliable when recorded shard loads contain fractional durations.
+
+### Upgrade
+
+- Enable Gradle `history {}` or invoke Maven `refresh-durations` to use duration refresh.
+  Review the generated candidate and give every shard the same adopted history in the next
+  pipeline. Refresh does not replace your maintained history automatically.
+- See the [0.4.0 upgrade guide](docs/releases/0.4.0.md#upgrade-and-opt-in) for Gradle and Maven examples.
 
 ## [0.3.1](docs/releases/0.3.1.md)
 
 ### Fixed
 
-- Maven Central artifacts explicitly include the project homepage in each published POM, so
-  artifact listings can find it without resolving the parent POM.
+- Maven artifact listings and tools can find the project homepage directly from each published
+  POM, without resolving the parent POM.
 
-- Release checks reject missing or incorrect homepage URLs in the uploaded POMs, even when
-  Maven's effective model inherits a valid URL from the parent.
-
-Existing sharding configuration, YAML manifests and JSON/HTML reports are unchanged.
-See the [0.3.1 release notes](docs/releases/0.3.1.md) for upgrade and verification steps.
+See the [0.3.1 release notes](docs/releases/0.3.1.md) for upgrade details.
 
 ## [0.3.0](docs/releases/0.3.0.md)
 
 ### Added
 
-- **First Maven version of ShardPilot.** Split unit and integration test classes across CI jobs
-  using native Surefire/Failsafe. Configure `io.github.sjacek:shardpilot-maven-plugin:0.3.0` in
-  `pom.xml`; see the [Maven setup guide](docs/maven.md) and [runnable POMs](examples/maven/README.md).
-- Maven Central distribution includes source and Javadoc JARs for IDE navigation, signed together
-  with the parent, core and adapter. Maintainers have a [token and signing-key setup guide](docs/maven-central.md)
-  and one workflow that publishes Gradle on a version tag, then Maven Central manually from the same tag.
-- Optionally verify that every eligible class belongs to exactly one shard and each node's
-  selected classes match the common plan. Fail the CI gate when selection evidence is missing
-  or inconsistent, without rerunning tests. See [class-manifest verification](docs/shard-verification.md).
-- Find which shard owns a class in the standalone `coverage.html` report. Compare planned and
-  actual assignments and diagnose missing evidence, including after verification fails. Open
-  the file locally or [expose it in a GitLab merge request](docs/shard-verification.md#finding-a-class-assignment-in-gitlab).
-- Inspect and collect readable YAML manifests containing the full candidate list, planned
-  partitions and each node's actual selection. Gradle and Maven use the same manifest format;
-  JSON reports remain available for CI automation.
+- **Maven support:** split unit and integration test classes across CI jobs using native
+  Surefire and Failsafe. Configure `io.github.sjacek:shardpilot-maven-plugin:0.3.0` in `pom.xml`;
+  see the [Maven setup guide](docs/maven.md) and [runnable examples](examples/maven/README.md).
+- Maven source and Javadoc JARs support IDE navigation and API documentation.
+- Optionally verify that every eligible class belongs to exactly one shard and that each node
+  selected the classes assigned to it. Missing or inconsistent evidence fails verification;
+  see [class-manifest verification](docs/shard-verification.md).
+- Find a test class's shard in the standalone `coverage.html` report. Compare planned and actual
+  assignments and diagnose missing evidence, including after verification fails. You can also
+  [link the report from a GitLab merge request](docs/shard-verification.md#finding-a-class-assignment-in-gitlab).
+- Read common plans and actual selections as YAML manifests, using the same format in Gradle
+  and Maven. JSON reports remain available for CI automation.
 
-### Changed
+### Upgrade
 
-- Runnable examples are now grouped by build tool: [Gradle examples](examples/gradle/README.md)
-  cover JUnit Jupiter, Spock and TestNG with Testcontainers; [Maven examples](examples/maven/README.md)
-  cover Surefire/Failsafe and parallel builds of multiple modules.
-
-### Compatibility and migration
-
-- Existing Gradle sharding and test-process configuration continues to work. Enable the new
-  manifest verification explicitly when adding it to a pipeline.
+- Enable manifest verification explicitly when adding it to an existing pipeline. Keep normal
+  test jobs required as well: matching class selections do not prove that test methods passed.
 - When upgrading from development snapshots with text manifests, regenerate the common plan
-  and every node's evidence together in YAML; do not mix old and new artifacts.
-- Coverage reports verify class selection. Keep every normal test job required, because matching
-  selections do not prove that test methods passed.
+  and every node's evidence together in YAML. Mixing old and new artifacts is unsupported.
+- Runnable examples moved into [Gradle](examples/gradle/README.md) and
+  [Maven](examples/maven/README.md) groups. Update local paths or CI commands that use the old locations.
 
-See the [0.3.0 release notes](docs/releases/0.3.0.md) for setup and upgrade details.
+See the [0.3.0 release notes](docs/releases/0.3.0.md) for setup and migration examples.
 
 ## [0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1)
 
 ### Changed
 
-- Expanded the Plugin Portal and Maven description to explain the purpose of parallel CI sharding,
-  duration-based balancing, existing test-framework support and optional test-process controls.
-  The README introduction now describes the same intended use.
-- Supersedes the unpublished 0.2.0 candidate. Test-process configuration and sharding behavior
-  are unchanged; the new version publishes the expanded description from a new immutable tag.
-- See the [0.2.1 release notes](docs/releases/0.2.1.md) for publication and consumer verification.
+- Expanded the project and Plugin Portal descriptions to explain when sharding helps CI,
+  how duration-based balancing works and which test frameworks are supported.
+- Published the features prepared for the unpublished 0.2.0 candidate. Use 0.2.1 when following
+  its test-process configuration examples; see the [release notes](docs/releases/0.2.1.md).
 
 ## [0.2.0](docs/releases/0.2.0.md) — not published
 
 ### Added
 
-- Optional per-task `testProcesses` configuration for Gradle's `maxHeapSize`, `maxParallelForks`
-  and `forkEvery`, independent of sharding. Omitted settings stay untouched; explicit settings
-  accept providers, validate at configuration time, and participate in test-task cache inputs.
-- Real TestKit worker probes for heap limits, process reuse/replacement, concurrency,
-  configuration-cache restoration and process-policy input changes, plus Kotlin DSL coverage.
+- Configure Gradle test-process memory, parallel forks and process replacement per task through
+  the optional `testProcesses` block (`maxHeapSize`, `maxParallelForks` and `forkEvery`).
+- Use test-process controls independently of sharding, including with sharding disabled.
+  Settings accept Gradle providers and invalid values fail during configuration.
 
-### Changed
+### Upgrade
 
-- Expanded the README to explain CI testing bottlenecks, parallel shards, duration-aware workload
-  balancing and practical speedup limits. Project, Plugin Portal and Maven metadata share one summary.
-- Installation, CI and release guides now use the published `0.1.0` plugin by default, with
-  composite builds reserved for explicit local plugin development and checkout-based examples.
-
-### Compatibility and migration
-
-- Existing sharding configuration, assignment and native test-process settings remain unchanged
-  unless the new `testProcesses` block explicitly configures a setting. Sharding can stay disabled
-  while process settings are used. Direct Gradle `Test` setters remain supported.
-- All eight Gradle/JDK target pairs passed locally on Linux amd64 on 23 October 2026: 67 tests per
-  pair, 536 executions, no failures or skips. The tag workflow reruns the complete matrix for the
-  exact release commit before publication.
-- See the [0.2.0 release notes](docs/releases/0.2.0.md) for upgrade examples and publication checks.
+- Configure only the process settings you want ShardPilot to manage; omitted settings retain
+  their existing values. Direct Gradle `Test` configuration remains supported.
+- This candidate was not published. Use 0.2.1 and the
+  [configuration examples](docs/releases/0.2.0.md) to adopt these features.
 
 ## [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0) - 2026-10-20
 
 ### Added
 
-- Tag-triggered Plugin Portal publication gated by an offline version check and the complete
-  reusable eight-cell Gradle/JDK matrix at the same commit SHA. Publication uses scoped environment
-  secrets, mandatory Portal validation and no shared Gradle/configuration caches.
-- A configuration-cache-compatible `verifyReleaseTag` task with strict stable-version matching,
-  TestKit guard regressions and structural YAML tests for release dependencies and secret isolation.
-- An eight-cell GitHub Actions compatibility matrix for Gradle 9.0.0, 9.1.0 and 9.8.1 with
-  Temurin JDK 17, 21 and 25, excluding the unsupported Gradle 9.0.0/JDK 25 pair. Every cell runs
-  all Docker-free checks with strict configuration-cache TestKit fixtures and retains reports.
-- A `testGradleVersion` build property selecting the Gradle distribution for all functional
-  consumers and a `testJavaVersion` expectation, with assertions for the actual outer worker,
-  nested Gradle/JDK and consumer test-worker JDK.
-- Gradle plugin `io.github.sjacek.shardpilot` for opt-in, class-level test sharding without a
-  coordinator service or a replacement test runner.
-- A per-task `shardPilot` extension on standard `Test` tasks, including lazily registered tasks.
-  Settings include `enabled`, `shardCount`, `shardIndex` and an optional `durationsFile`.
-- One-based shard selection through the `shardpilot.count` and `shardpilot.index` Gradle properties,
-  with defaults of `1` and validation of invalid indices and counts.
-- Deterministic longest-processing-time-first assignment of measured class families, with class-name
-  and shard-index tie-breaking. Unmeasured classes use stable string hashing and `floorMod`.
-- Nested-class grouping with the outer class and deterministic aggregation of nested timing records.
-- UTF-8 TSV history parsing with comments and blank lines. Invalid names, duplicate class records,
-  negative/non-finite durations and accumulated duration overflow are rejected.
-- Hash-only assignment when timing history is unset or missing.
-- Shard ownership filtering that intersects existing file includes and excludes without widening
-  the original test suite. Runtime classes remain available for normal framework discovery.
-- Explicit test task inputs for the enabled flag, shard count, index and history contents, keeping
-  shard results distinct for Gradle up-to-date and build-cache checks.
-- Serializable filtering and preparation actions without captured `Project` or `Test` instances,
-  with strict configuration-cache functional verification.
-- Metadata-only logging of shard index, count and recorded workload. Parser errors identify the
-  offending line without echoing arbitrary history contents.
-- Unit tests for parsing, validation, deterministic assignment, nested classes, hash fallback,
-  floating-point aggregation and overflow handling.
-- Gradle TestKit coverage for JUnit Jupiter, Groovy Spock and native TestNG tasks, nested tests, complete/non-overlapping
-  weighted and hash-only shards, existing filters, custom tasks, command-line test selection,
-  empty-shard report cleanup, failed test propagation, Groovy/Kotlin DSL and configuration-cache reuse.
-- Gradle Wrapper pinned to version `9.8.1`, with distribution checksum verification.
-- Plugin bytecode targeting Java 17, plugin validation, source/Javadoc artifacts and Maven
-  publication metadata containing license information.
-- MIT licensing for the original plugin, preserved Apache 2.0 licensing for the Gradle Wrapper,
-  third-party notices and license files in distributable JARs.
-- English usage documentation and contribution guidelines.
-- Configuration, architecture, CI, testing, troubleshooting and release guides, with PlantUML
-  diagram sources and locally rendered SVG previews.
-- A standalone PostgreSQL/RabbitMQ Testcontainers example with worker-local parallel startup,
-  class-local databases, isolated queues, illustrative shard weights and a lifecycle diagram.
-- An analogous Spock/Groovy Testcontainers example with `setupSpec`, specification-local databases,
-  a data-driven feature, complete-specification sharding and a separate lifecycle guide/diagram.
-- An analogous TestNG Testcontainers example with inherited `@BeforeClass`, class-local databases,
-  sequential data-provider invocations and a separate lifecycle guide/diagram.
-- TestNG regression fixtures covering complete/non-overlapping weighted and hash-only shards,
-  data-provider ownership, configuration-cache reuse, empty reports and fatal setup failures.
+- Initial Gradle plugin `io.github.sjacek.shardpilot` for splitting test classes across independent
+  CI jobs. Each job calculates its own assignment from the same inputs, without a coordinator service.
+- Opt in standard or custom Gradle `Test` tasks through `shardPilot`. Configure `enabled`,
+  `shardCount`, `shardIndex` and optional `durationsFile`; use `shardpilot.count` and
+  `shardpilot.index` Gradle properties to select a one-based shard in CI.
+- Balance shards using recorded class durations from a UTF-8 TSV file. Without history,
+  stable hash-based assignment still gives each class family a consistent owner.
+- Keep nested tests with their outer class and preserve existing task includes and excludes.
+  Invalid shard settings and malformed timing history fail with actionable errors.
+- Use JUnit Jupiter, Spock or TestNG with their native Gradle runners, Groovy or Kotlin DSL
+  configuration, and Gradle Configuration Cache.
+- Try runnable PostgreSQL/RabbitMQ Testcontainers examples for JUnit Jupiter, Spock and TestNG,
+  with isolated test data and guidance for container lifecycle and CI resources. See the
+  [example index](examples/README.md) for their current locations.
+- Source and Javadoc JARs, MIT licensing, and [configuration, CI and troubleshooting guides](docs/README.md).
 
-### Changed
+### Requirements and limitations
 
-- Runnable examples are grouped by framework and scenario under `examples/junit-jupiter/testcontainers`
-  and `examples/spock/testcontainers`, with TestNG now available under `examples/testng/testcontainers`.
-
-### Scope and limitations
-
-- This is the initial Gradle Plugin Portal release.
-- Initial local verification used Gradle `9.8.1` on Windows with JDK `25`. Broader support requires
-  passing the eight-cell Linux Gradle/JDK matrix for the release revision; Java 17 bytecode alone
-  is not a compatibility claim for untested combinations.
-- Kotlin DSL configuration is exercised; Kotlin-authored tests, Android, Kotlin Multiplatform
-  and native-image test execution are not yet verified.
-- JUnit XML history export, remote history retrieval and automatic updates to versioned timing
-  files are not included.
-- CI remains responsible for launching all shards with identical plan inputs and isolated build
-  directories. ShardPilot does not coordinate or verify completion across CI jobs.
-- Gradle/framework discovery and no-matching-tests failure behavior are retained. In particular,
-  an explicit `--tests` selection can fail on a shard that does not own the selected class.
-- No source-set creation, framework dependency injection, automatic retry, container provisioning,
-  method-level splitting or implicit change to test parallelism is introduced.
-- Service-specific configuration and backend migrations are outside this plugin's initial scope.
+- Requires Java 17 or newer. Consult the [compatibility guide](docs/testing.md#gradle-and-jdk-matrix)
+  for tested Gradle/JDK combinations.
+- CI must launch every shard with identical planning inputs and separate build directories.
+  This initial release does not verify completion across CI jobs.
+- Tests are assigned by class family; individual methods and data-provider rows are not split
+  across shards. Keep framework retries, test parallelism and container provisioning in your build.
+- An explicit Gradle `--tests` request can fail on a shard that does not own the requested class.
+- Kotlin-authored tests, Android, Kotlin Multiplatform and native-image execution were not verified
+  for this release. Refreshing duration history from reports was introduced later in 0.4.0.

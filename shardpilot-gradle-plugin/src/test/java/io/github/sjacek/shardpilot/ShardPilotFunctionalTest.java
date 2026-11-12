@@ -892,7 +892,7 @@ class ShardPilotFunctionalTest {
         // Pin the daemon to the test JVM as well as the distribution; an inherited JAVA_HOME must
         // not silently turn a JDK 17/21 matrix cell into another run on the developer's JDK 25.
         options.add("-Dorg.gradle.java.home=" + System.getProperty("java.home"));
-        return GradleRunner.create().withProjectDir(directory.toFile()).withPluginClasspath()
+        return VerifiedTestKit.create(directory).withPluginClasspath()
                 .withGradleVersion(consumerGradleVersion()).withArguments(options);
     }
 

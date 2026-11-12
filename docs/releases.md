@@ -12,6 +12,11 @@ configuration-cache feature are configured in `shardpilot-gradle-plugin/build.gr
 Root `build.gradle` owns the shared Gradle version and release-tag guard; root `pom.xml` is the
 independent Maven reactor entry point.
 
+All producer CI builds enforce the reviewed [dependency integrity policy](dependency-verification.md)
+before publication. Keep Actions SHA pins and both checksum baselines under review when updating
+build tooling. Maven commands below use the verified launcher; direct Wrapper invocation alone
+only enforces transport checksums.
+
 Review the [publication descriptions](publication-descriptions.md) for the complete Maven Central
 and Gradle Plugin Portal text and its source metadata before creating a release tag.
 
@@ -228,7 +233,8 @@ and `generateMetadataFileForPluginMavenPublication`. These metadata tasks do not
 that the implementation POM/module retains `shardpilot`, the marker targets it and no separate
 `shardpilot-core` publication is required for Gradle consumers.
 
-The Maven reactor has its own build/release artifacts. Run `./mvnw -B -ntp verify` and keep the
+The Maven reactor has its own build/release artifacts. Run
+`python3 -B scripts/maven_verification.py run -- -B -ntp verify` and keep the
 root POM, core/plugin parent versions and Gradle release version aligned. The required reusable
 workflow includes Maven/JDK checks as well as the eight Gradle cells. Maven Wrapper checksum and
 native filters/Invoker fixtures are verified without publisher credentials.
@@ -238,7 +244,8 @@ coordinates and unchanged plugin marker. The separate Maven job publishes the pa
 adapter together with source/Javadoc JARs and PGP signatures. An explicit `central-release` profile
 owns Maven signing and Central configuration; ordinary builds never activate it. Even with the
 profile active, `central.skipUpload=true` defaults to producing a local bundle. Only the credentialed
-job explicitly enables upload. `./mvnw install -DskipITs` remains local installation.
+job explicitly enables upload. `python3 -B scripts/maven_verification.py run -- install -DskipITs`
+remains local installation.
 
 Run `bash scripts/verify-maven-release.sh` before release changes are handed off. This credential-free
 check uses a disposable key, builds the same profile and validates the complete bundle plus all

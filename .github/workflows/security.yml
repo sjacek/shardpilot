@@ -41,27 +41,32 @@ jobs:
       DISTRIBUTION: ${{ matrix.distribution }}
     steps:
       - name: Check out the tested commit
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
           ref: ${{ github.sha }}
       - name: Set up Java
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           distribution: temurin
           java-version: '21'
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: '3.12'
       - name: Read and validate scan policy
         id: policy
         run: python3 -B scripts/security_reports.py policy
+      - name: Verify immutable build inputs
+        run: python3 -B scripts/dependency_policy.py
+      - name: Enable Maven dependency verification
+        if: matrix.distribution == 'maven'
+        run: python3 -B scripts/maven_verification.py prepare
       - name: Verify inventory and scan failure handling
         run: python3 -B -m unittest discover -s scripts -p 'test_security_reports.py' -v
       - name: Download warmed dependencies
         if: inputs.warmed-dependencies == true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           # Inputs are defined by upstream action.yml; keep this IDE workaround local.
           # noinspection UndefinedParamsPresent
@@ -73,7 +78,7 @@ jobs:
         run: python3 -B scripts/ci_dependency_cache.py restore "$DISTRIBUTION"
       - name: Set up Gradle and validate the Wrapper
         if: matrix.distribution == 'gradle'
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
         with:
           cache-disabled: true
       - name: Build Gradle candidate and resolve runtime inventories
@@ -132,7 +137,7 @@ jobs:
         run: python3 -B scripts/security_reports.py summarize --distribution "$DISTRIBUTION"
       - name: Retain SBOM, findings and candidate provenance
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: runtime-security-${{ matrix.distribution }}
           path: build/security/${{ matrix.distribution }}/

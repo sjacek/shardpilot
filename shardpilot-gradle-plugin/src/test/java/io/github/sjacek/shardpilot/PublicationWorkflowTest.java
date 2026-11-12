@@ -25,6 +25,32 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class PublicationWorkflowTest {
     @Test
+    void mavenVerificationStartsBeforeWarmupTestsScansAndCredentialedPublication() throws IOException {
+        var compatibility = mapping(workflow("compatibility").get("jobs"));
+        for (var pair : Map.of("warm-cache", "Warm Maven reactor and native fixture dependencies without running tests",
+                "maven", "Verify Maven core, adapter and real runner builds",
+                "release-artifacts", "Verify the signed release with a disposable key").entrySet()) {
+            var job = mapping(compatibility.get(pair.getKey()));
+            assertMavenVerificationBefore(job, pair.getValue());
+        }
+        var scan = mapping(mapping(workflow("security").get("jobs")).get("scan"));
+        assertMavenVerificationBefore(scan, "Build Maven candidates and resolve runtime inventory");
+        assertEquals("matrix.distribution == 'maven'", stepNamed(scan, "Enable Maven dependency verification").get("if"));
+        var publish = mapping(mapping(workflow("publish").get("jobs")).get("publish-maven"));
+        assertMavenVerificationBefore(publish, "Publish the signed Maven release");
+        assertEquals("inputs.maven_deployment_id == ''", stepNamed(publish, "Enable Maven dependency verification").get("if"),
+                "status-only recovery must not download or load Maven tooling");
+        assertFalse(stepNamed(publish, "Enable Maven dependency verification").toString().contains("secrets."));
+    }
+
+    private static void assertMavenVerificationBefore(Map<?, ?> job, String consumer) {
+        var bootstrap = stepNamed(job, "Enable Maven dependency verification");
+        assertEquals("python3 -B scripts/maven_verification.py prepare", bootstrap.get("run"));
+        assertNull(bootstrap.get("continue-on-error"));
+        assertTrue(sequence(job.get("steps")).indexOf(bootstrap) < sequence(job.get("steps")).indexOf(stepNamed(job, consumer)));
+    }
+
+    @Test
     void bothReleaseTriggersRequireTheSharedMatrixAndSelectExactlyOnePublisher() throws IOException {
         Map<?, ?> release = workflow("publish");
         Map<?, ?> events = mapping(release.get("on"));
@@ -343,6 +369,8 @@ class PublicationWorkflowTest {
         var coordinate = java.util.regex.Pattern.compile("['\"]([\\w.-]+:[\\w.-]+:[\\w.-]+)['\"]");
         try (var sources = Files.list(Path.of("shardpilot-gradle-plugin/src/test/java/io/github/sjacek/shardpilot"))) {
             for (Path source : sources.filter(path -> path.getFileName().toString().endsWith("FunctionalTest.java")).toList()) {
+                // The integrity probe serves a harmless synthetic artifact on loopback, never Central.
+                if (source.getFileName().toString().equals("DependencyVerificationFunctionalTest.java")) continue;
                 var matcher = coordinate.matcher(Files.readString(source));
                 while (matcher.find()) {
                     assertTrue(TestKitCacheWarmup.BUILD.contains(matcher.group(1)),

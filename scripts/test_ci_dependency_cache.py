@@ -123,6 +123,7 @@ class DependencyCacheTest(unittest.TestCase):
     def test_maven_process_preserves_paths_and_arguments_and_propagates_failures(self):
         with patch.object(cache, 'ROOT', self.root / 'with spaces'), \
                 patch.object(cache, 'CACHE', self.root / 'cache with spaces'), \
+                patch.dict(os.environ, {'SHARDPILOT_MAVEN_VERIFICATION': ''}), \
                 patch.object(cache.subprocess, 'run') as run:
             cache.maven('-f', 'a pom.xml', cache.DEPENDENCY_PLUGIN + ':go-offline')
             args, options = run.call_args
@@ -133,6 +134,16 @@ class DependencyCacheTest(unittest.TestCase):
             run.side_effect = subprocess.CalledProcessError(1, 'maven')
             with self.assertRaises(subprocess.CalledProcessError):
                 cache.maven('install', '-DskipTests', '-DskipITs')
+
+    def test_fixture_warmup_preserves_early_checksum_enforcement(self):
+        (self.root / 'pom.xml').write_text('<project xmlns="http://maven.apache.org/POM/4.0.0"><version>0.4.0</version></project>')
+        with patch.object(cache, 'ROOT', self.root), patch.object(cache, 'CACHE', self.root / 'downloads'), \
+                patch.dict(os.environ, {'SHARDPILOT_MAVEN_VERIFICATION': 'enforce'}), \
+                patch.object(cache.maven_verification, 'consumer_environment', return_value={'MAVEN_OPTS': 'verified'}) as prepare, \
+                patch.object(cache.subprocess, 'run') as run:
+            cache.maven('-f', 'fixture/pom.xml', cache.DEPENDENCY_PLUGIN + ':go-offline')
+        prepare.assert_called_once_with(self.root / 'downloads/maven', '0.4.0')
+        self.assertEqual({'MAVEN_OPTS': 'verified'}, run.call_args.kwargs['env'])
 
     def test_invoker_gets_its_own_writable_copy_of_external_dependencies(self):
         downloaded = self.root / 'downloads/maven/org/example/library.jar'

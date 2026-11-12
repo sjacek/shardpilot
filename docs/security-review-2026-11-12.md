@@ -138,3 +138,11 @@ part of stage 2: separate native Gradle/Maven inventories, candidate JAR/class/d
 and pinned Grype scans with versioned DB evidence and a blocking severity policy. It does not
 retroactively audit `58daef5` or registry artifacts, and does not complete producer/provided/test
 inventories, the broader immutable-Actions/dependency-verification policy, or stages 3-6.
+
+## Subsequent dependency integrity implementation
+
+[Build dependency verification](dependency-verification.md) now pins repository-owned workflow
+Actions to reviewed commit SHAs and adds producer/TestKit/Maven integrity baselines and CI guards.
+This is a distinct control from runtime SCA: it binds resolved bytes, not advisory coverage or
+publisher identity. Published-artifact verification, third-party action/toolchain download behavior,
+execution equivalence, isolated execution and reproducible performance remain separate work.

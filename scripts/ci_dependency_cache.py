@@ -7,6 +7,8 @@ import subprocess
 import tarfile
 import xml.etree.ElementTree as ET
 
+import maven_verification
+
 
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / 'build/ci-dependencies'
@@ -61,8 +63,12 @@ def restore(cache=CACHE, archive=ARCHIVE, prefixes=DOWNLOADS):
 def maven(*arguments):
     """Invoke the checked-in Wrapper with argument boundaries intact, including paths with spaces."""
     wrapper = [str(ROOT / 'mvnw.cmd')] if os.name == 'nt' else ['bash', str(ROOT / 'mvnw')]
+    environment = None
+    if '-f' in arguments and os.environ.get('SHARDPILOT_MAVEN_VERIFICATION'):
+        version = ET.parse(ROOT / 'pom.xml').findtext('m:version', namespaces=NS)
+        environment = maven_verification.consumer_environment(CACHE / 'maven', version)
     subprocess.run([*wrapper, '-B', '-ntp', '-Dmaven.repo.local=' + str(CACHE / 'maven'),
-                    *arguments], cwd=ROOT, check=True)
+                    *arguments], cwd=ROOT, check=True, **({'env': environment} if environment is not None else {}))
 
 
 def warm_maven():

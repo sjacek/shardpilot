@@ -29,6 +29,7 @@ YAML manifests and selection reports remain compatible. Current snippets target 
 | [Testing and compatibility](testing.md) | Verify changes and understand what the existing tests actually cover. |
 | [Security and trust boundaries](security.md) | Understand private reporting, build-process permissions, metadata handling and publication responsibilities. |
 | [Runtime SBOMs and vulnerability scanning](dependency-security.md) | Verify separate Gradle/Maven runtime inventories, candidate JAR identities and the CI severity/database policy. |
+| [Build dependency integrity](dependency-verification.md) | Review immutable Actions pins, Gradle/TestKit and Maven checksum enforcement, cache protection and baseline updates. |
 | [12 November 2026 review follow-up](security-review-2026-11-12.md) | Find the exact public reference commit, existing evidence, verification limits and remaining security/performance work. |
 | [Troubleshooting](troubleshooting.md) | Diagnose empty shards, unexpected selection, poor balance or cache behavior. |
 | [Releases and upgrades](releases.md) | Configure protected publication credentials, release from a tested version tag and manage upgrades. |

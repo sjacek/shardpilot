@@ -46,7 +46,7 @@ local_repository=$(native_path "$repository_root/build/release-verification/repo
 effective_pom=$(native_path "$repository_root/build/release-verification/effective-pom.xml")
 # The repository is isolated from the developer's normal candidate installations. The explicit
 # skipUpload flag is mandatory here, independently of the profile's safe default.
-bash ./mvnw -B -ntp -Pcentral-release clean deploy help:effective-pom \
+bash ./mvnw -B -ntp -Pcentral-release clean deploy org.apache.maven.plugins:maven-help-plugin:3.5.2:effective-pom \
   -DskipTests -DskipITs -Dcentral.skipUpload=true \
   "-Dmaven.repo.local=$local_repository" "-Doutput=$effective_pom"
 
