@@ -125,6 +125,12 @@ Workflow and generated Gradle metadata regressions run in the Gradle adapter's t
 
 ## Documentation changes
 
+Write [changelog](CHANGELOG.md) entries for plugin users: explain what they can do, which behavior
+was fixed, and any compatibility or migration action. Keep entries concise and link to usage guides.
+Record test counts, CI/cache implementation, Wrapper maintenance and publication procedures in the
+maintainer documentation rather than the changelog. Mention security work through its effect on
+users and state its scope without implying an audit or protection that was not performed.
+
 Start at the [documentation index](docs/README.md). Keep examples aligned with the public extension
 and distinguish implemented behavior from proposed work. When changing the architecture or assignment
 algorithm, update the related PlantUML source and regenerate its SVG preview; see the

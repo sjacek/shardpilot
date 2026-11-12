@@ -64,14 +64,17 @@ new sums from a failed build, or retain a corrupted verifier JAR. A mismatch nee
 1. Change the intended dependency/plugin version and inspect its upstream release and provenance.
    Use a clean or independently verified cache. Baseline generation is trust on first use, not
    proof of publisher identity or an independent security audit.
-2. For Gradle, explicitly regenerate native metadata outside CI:
+2. For Gradle, explicitly regenerate native metadata outside CI using an isolated resolver cache:
 
    ```shell
-   ./gradlew --write-verification-metadata sha256 help
+   GRADLE_USER_HOME="$PWD/build/verification-refresh/gradle" ./gradlew --no-configuration-cache --refresh-dependencies --write-verification-metadata sha256 help
    ```
 
    The root configuration includes producer and fixture libraries. Review every added coordinate,
-   artifact and checksum. Do not add a broad trust rule to silence a missing entry.
+   artifact and checksum. A previously populated cache can hide parent POMs, imported BOMs and
+   module metadata needed while resolving versions that are later evicted from the final graph.
+   Verify the completed baseline in enforcement mode using another fresh cache, including the
+   supported TestKit warmup versions. Do not add a broad trust rule to silence a missing entry.
 3. For Maven, explicitly collect checksums outside CI using the same lifecycle/profiles as the
    intended build, then review the diff. This mode may execute the dependencies being collected:
 
@@ -113,10 +116,12 @@ an offline synthetic parent resolves with its reviewed checksum, then changed ca
 and a missing checksum each fail before any project plugin runs. CI runs this positive/negative
 control after warmup; logs and a JSON result stay under `build/dependency-verification/` and are
 retained in the `dependency-verification` CI artifact for 14 days.
+The same artifact retains Gradle dependency-verification HTML reports after warmup failures,
+so missing checksums and checksum mismatches can be diagnosed from the downloaded evidence.
 
 ## Local validation on 12 November 2026
 
-The enforcement baseline covers 309 Gradle artifact records and 902 external Maven identities.
+The initial enforcement baseline covered 309 Gradle artifact records and 902 external Maven identities.
 Independent fresh downloads of the 1,136 distinct artifact paths represented across both baselines
 matched the reviewed SHA-256 values from Maven Central or the Gradle Plugin Portal.
 
@@ -133,7 +138,34 @@ matched the reviewed SHA-256 values from Maven Central or the Gradle Plugin Port
 Local evidence stays under ignored `build/`: `dependency-verification/local-test-results.json`,
 `dependency-verification/native-rejection.json`, `dependency-origin-audit/summary.json`,
 `release-verification/report.json` and the `dependency-*-enforce.log` / Python test logs.
-The complete hosted Linux/JDK matrix must still run after the maintainer pushes these changes.
+These initial local runs used existing resolver caches. The first hosted run and its cold-cache
+follow-up are recorded below; local success did not establish a green hosted Linux/JDK matrix.
+
+## Cold-cache CI follow-up
+
+[Run 43242198830](https://github.com/sjacek/shardpilot/actions/runs/43242198830), for commit
+`1a5d421b606da051ee3b35706dfc0a025f326a31`, passed the immutable-Actions policy and the signed Maven
+release check, including nine signatures with upload disabled. Gradle warmup failed because nine
+parent/BOM POM or module descriptors had no checksum entries. Required matrix jobs then failed their
+prerequisite gate; runtime SBOM scans did not run. This was not evidence of failing plugin tests
+or new vulnerability findings.
+
+A separate empty Gradle/TestKit cache reproduced the same nine missing entries locally. They were
+retrieved independently from Maven Central, checked against their declared artifact/version and
+published SHA-1 sidecars, and hashed with SHA-256. Native metadata regeneration added exactly those
+nine entries, preserving every existing checksum and verification setting. The completed baseline
+has 318 Gradle artifact records; the combined Gradle/Maven origin audit matched all 1,144 distinct
+artifact paths. This checks the retrieved bytes, not publisher identity.
+
+Enforcement with a second empty Gradle/TestKit resolver cache passed warmup for Gradle 9.0.0,
+9.1.0 and 9.9.1 plus all 16 native cache-rejection/workflow tests on Temurin 21.0.13, in 3m 39s.
+All 15 Python policy/bootstrap regressions and Actionlint for the three workflows also passed.
+Local evidence is `build/dependency-cold-enforcement.log`,
+`build/dependency-cold-verification/validation.json` and the independent metadata review under
+`build/dependency-cold-verification/reviewed/`.
+
+The warmup evidence artifact now also retains native Gradle verification reports after failure.
+The corrected revision must still pass the hosted matrix after the maintainer commits and pushes it.
 
 ## Remaining boundaries
 

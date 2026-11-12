@@ -88,6 +88,7 @@ jobs:
           path: |
             build/dependency-verification/native-rejection.json
             build/dependency-verification/*-native-checksum.log
+            **/build/reports/dependency-verification/
           if-no-files-found: warn
           retention-days: 14
       - name: Pack downloaded dependencies only
