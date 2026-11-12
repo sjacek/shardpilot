@@ -98,7 +98,7 @@ jobs:
         with:
           # Inputs are defined by download-grype/action.yml at the pinned commit.
           # noinspection UndefinedParamsPresent
-          grype-version: ${{ steps.policy.outputs.scanner-version }}
+          grype-version: ${{ steps.policy.outputs.scanner-release-tag }}
           # noinspection UndefinedParamsPresent
           cache-db: false
       - name: Refresh vulnerability database and record scanner identity

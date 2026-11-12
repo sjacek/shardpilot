@@ -3,7 +3,9 @@ import copy
 from datetime import datetime, timedelta, timezone
 import hashlib
 import json
+import os
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -249,6 +251,19 @@ class SecurityReportsTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     security.summarize('gradle', NOW)
                 self.assertFalse((output / 'summary.json').exists())
+
+    def test_policy_outputs_a_release_tag_for_the_installer_and_plain_binary_version(self):
+        output = self.root / 'github-output'
+        with patch.dict(os.environ, {'GITHUB_OUTPUT': str(output)}), \
+                patch.object(sys, 'argv', ['security_reports.py', 'policy']):
+            self.assertEqual(0, security.main())
+        self.assertEqual({
+            'scanner-version': '0.121.3',
+            'scanner-release-tag': 'v0.121.3',
+            'severity-cutoff': 'high',
+            'db-max-age': '120h',
+        }, dict(line.split('=', 1) for line in output.read_text(encoding='utf-8').splitlines()))
+        self.assertEqual('0.121.3', security.policy()['scannerVersion'])
 
     def test_policy_cannot_drop_unfixed_findings_or_inject_output_values(self):
         for changes in ({'includeUnfixed': False}, {'scannerVersion': '1.2.3\nunsafe=x'},

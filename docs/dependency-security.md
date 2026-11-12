@@ -40,7 +40,10 @@ CI artifacts; Maven's opt-in `security-sbom` profile uses `skipAttach` and adds 
 
 [`security/scan-policy.json`](../security/scan-policy.json) pins Grype **0.121.3**, a **high** blocking
 threshold, inclusion of unfixed vulnerabilities and a maximum DB age of **120 hours**. The download
-action uses the immutable Anchore Scan Action 7.4.2 commit. The job refreshes the DB explicitly,
+action uses the immutable Anchore Scan Action 7.4.2 commit and the release tag `v0.121.3`, so its
+installer is pinned too. The policy keeps the plain version `0.121.3` used in native scanner reports;
+the policy command emits a separate `scanner-release-tag` for the download action.
+The job refreshes the DB explicitly,
 records binary version and DB source/build/schema, and scans locally; it submits no project
 inventory to a scanning API. The explicit Grype configuration avoids auto-discovering another
 project's configuration. Package exclusions, VEX filtering and suppressed runtime matches are
@@ -131,8 +134,11 @@ On 12 November 2026, Windows/Temurin 21.0.13 verification passed:
   detected Log4Shell, returned eight matches (three high/critical) and native exit code **2**.
   No vulnerable JAR was downloaded or executed for that control.
 
-Hosted Linux execution, scheduled execution and the new publication prerequisite still need the
-first pushed workflow run; local verification does not claim those remote executions occurred.
+The first hosted Linux run generated both inventories and verified their candidate artifacts, but
+stopped before scanning: the download action received `0.121.3` instead of the required release
+tag `v0.121.3`. The corrected mapping has a CLI-output regression test. Hosted scans, scheduled
+execution and successful matrix execution behind the new gate still need a successful workflow run;
+local verification does not claim those remote executions occurred.
 
 ## Limits and remaining work
 

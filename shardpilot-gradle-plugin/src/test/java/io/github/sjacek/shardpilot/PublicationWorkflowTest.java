@@ -286,7 +286,7 @@ class PublicationWorkflowTest {
         var install = stepUsing(job, "anchore/scan-action/download-grype@");
         assertEquals("anchore/scan-action/download-grype@27805bf3b4e84b4a5c980df22ed233c00390a439", install.get("uses"));
         assertEquals(false, mapping(install.get("with")).get("cache-db"));
-        assertEquals("${{ steps.policy.outputs.scanner-version }}", mapping(install.get("with")).get("grype-version"));
+        assertEquals("${{ steps.policy.outputs.scanner-release-tag }}", mapping(install.get("with")).get("grype-version"));
         var env = mapping(security.get("env"));
         assertEquals("false", env.get("GRYPE_DB_AUTO_UPDATE"));
         assertEquals("true", env.get("GRYPE_DB_VALIDATE_AGE"));

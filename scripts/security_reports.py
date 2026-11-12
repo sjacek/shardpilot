@@ -274,7 +274,10 @@ def main():
         value = policy()
         if os.environ.get('GITHUB_OUTPUT'):
             with Path(os.environ['GITHUB_OUTPUT']).open('a', encoding='utf-8') as target:
-                target.write(f'scanner-version={value["scannerVersion"]}\nseverity-cutoff={value["severityCutoff"]}\n')
+                target.write(f'scanner-version={value["scannerVersion"]}\n')
+                # The downloader pins its installer by release tag; Grype reports a plain version.
+                target.write(f'scanner-release-tag=v{value["scannerVersion"]}\n')
+                target.write(f'severity-cutoff={value["severityCutoff"]}\n')
                 target.write(f'db-max-age={value["databaseMaxAgeHours"]}h\n')
         else:
             print(json.dumps(value))
