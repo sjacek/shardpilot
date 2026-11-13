@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example.shardpilot</groupId><artifactId>execution-equivalence-failsafe</artifactId><version>1</version>
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <shardpilot.count>1</shardpilot.count><shardpilot.index>1</shardpilot.index>
+    <cohort>baseline</cohort>
+    <execution.fixtureRoot>${project.basedir}/../../../../testing/execution-equivalence/junit</execution.fixtureRoot>
+  </properties>
+  <dependencies>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>6.1.3</version><scope>test</scope></dependency>
+    <dependency><groupId>org.junit.platform</groupId><artifactId>junit-platform-launcher</artifactId><version>6.1.3</version><scope>test</scope></dependency>
+  </dependencies>
+  <build>
+    <testSourceDirectory>${execution.fixtureRoot}/src</testSourceDirectory>
+    <testResources><testResource><directory>${execution.fixtureRoot}/resources</directory></testResource></testResources>
+    <plugins>
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.16.0</version></plugin>
+      <!-- Only Failsafe runs the shared fixture, even though its classes deliberately end in Test. -->
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>3.6.1</version>
+        <configuration><skipTests>true</skipTests></configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>3.6.1</version>
+        <configuration>
+          <includes><include>**/*Test.class</include></includes>
+          <reportsDirectory>${project.build.directory}/executions/${cohort}/xml</reportsDirectory>
+          <summaryFile>${project.build.directory}/executions/${cohort}/failsafe-summary.xml</summaryFile>
+          <systemPropertyVariables><execution.evidence>${project.build.directory}/executions/${cohort}/events.tsv</execution.evidence></systemPropertyVariables>
+          <argLine>-Xmx256m</argLine><forkCount>1</forkCount><reuseForks>true</reuseForks>
+        </configuration>
+        <executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions>
+      </plugin>
+    </plugins>
+  </build>
+  <profiles><profile>
+    <id>sharded</id>
+    <build><plugins>
+      <plugin>
+        <groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>@project.version@</version>
+        <configuration><runner>FAILSAFE</runner><durationsFile>${project.basedir}/durations.tsv</durationsFile></configuration>
+        <executions><execution><id>select</id><phase>pre-integration-test</phase><goals><goal>select</goal></goals></execution></executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId>
+        <configuration><excludesFile>${project.build.directory}/shardpilot/integration/excludes.txt</excludesFile></configuration>
+      </plugin>
+    </plugins></build>
+  </profile></profiles>
+</project>

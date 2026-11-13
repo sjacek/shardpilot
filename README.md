@@ -81,6 +81,10 @@ manifests remain compatible. Installation snippets target 0.4.0; use the
 The [12 November 2026 follow-up](docs/security-review-2026-11-12.md) pins the public commit and
 records successful reference-commit compatibility/publication workflows, separately from
 checks that remain open. Historical release notes retain their preparation/check procedures.
+Candidate [runtime SBOMs and vulnerability scans](docs/dependency-security.md) now distinguish the
+Gradle and Maven distributions and gate CI/publication on their recorded severity/database policy.
+[Build dependency integrity](docs/dependency-verification.md) separately pins workflow Actions and
+checks reviewed dependency bytes before producer and isolated-consumer builds use them.
 
 Version **[0.3.1](docs/releases/0.3.1.md)** is available from both Gradle Plugin Portal and Maven Central
 and includes the explicit Maven homepage fix. Version [0.3.0](docs/releases/0.3.0.md) introduced
@@ -477,7 +481,7 @@ Run both builds when changing the shared core:
 
 ```shell
 ./gradlew check assemble
-./mvnw -B -ntp verify
+python3 -B scripts/maven_verification.py run -- -B -ntp verify
 ```
 
 On Windows, use `gradlew.bat`. Functional tests use Gradle TestKit and temporary projects with
@@ -488,7 +492,7 @@ PowerShell:
 
 ```powershell
 .\gradlew.bat check assemble
-.\mvnw.cmd -B -ntp verify
+python -B scripts/maven_verification.py run -- -B -ntp verify
 ```
 
 Verification covers the planner and parser, weighted and hash-only shards, JUnit Jupiter and
@@ -496,7 +500,7 @@ Spock and native TestNG execution, data-provider rows, nested classes, pre-exist
 custom tasks, empty-shard report cleanup,
 failure propagation, Groovy/Kotlin DSL and configuration-cache reuse. Sources and Javadoc JARs
 are built alongside the plugin JAR; each contains the MIT license.
-The Maven build runs core/adapter unit tests and seven native Invoker/example projects in an isolated
+The Maven build runs core/adapter unit tests, 17 native Invoker fixtures and two runnable examples in an isolated
 repository. Root Gradle `check` does not run that Maven reactor. See the
 [testing guide](docs/testing.md#local-verification) for module report paths and focused commands.
 
@@ -543,7 +547,8 @@ Point `includeBuild` at the **repository root**, not `shardpilot-gradle-plugin`;
 include the adapter and core. The plugin ID `io.github.sjacek.shardpilot` and implementation artifact
 `io.github.sjacek:shardpilot` are unchanged by the source-module move.
 
-For Maven, run `./mvnw -B -ntp install -DskipITs` at the repository root, then build a consuming
+For Maven, run `python3 -B scripts/maven_verification.py run -- -B -ntp install -DskipITs`
+at the repository root, then build a consuming
 POM with `io.github.sjacek:shardpilot-maven-plugin:0.4.0`. This installs the Maven parent, core and
 adapter locally; it does not publish remotely. Maven does not use Gradle's `includeBuild`.
 See the [runnable Maven commands](examples/maven/README.md) for both runners and the reactor.

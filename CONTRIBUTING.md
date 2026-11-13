@@ -27,6 +27,7 @@ See the [module diagram](docs/architecture.md#source-modules-and-artifact-compat
 | `examples/gradle/<framework>/testcontainers` | Independent Gradle consumers using the repository-root composite. |
 | `examples/gradle/junit-jupiter/duration-history` | Docker-free consumer; its build/test inputs also run through TestKit in the Gradle adapter suite. |
 | `examples/maven/junit-jupiter` / `reactor` | Independent Maven consumers; Invoker clones them into isolated test outputs. |
+| `testing/execution-equivalence` / `testing/java` | Native execution fixtures and the independent test-only oracle shared by TestKit and Maven Invoker; excluded from distributed plugin code. |
 
 Import the root Gradle settings for Gradle development and the root POM for Maven development.
 In IntelliJ IDEA, use the root Gradle Wrapper and a supported Gradle JVM, then synchronize
@@ -76,6 +77,11 @@ class ownership. Changes to Gradle integration need TestKit coverage with strict
 existing test filters, task opt-in and failed test propagation. Update both Groovy and Kotlin DSL examples
 when changing the public extension. Do not advertise a compatibility combination without testing it.
 
+Keep [native execution equivalence](docs/execution-equivalence.md) passing for adapter/assignment
+changes: compare unsharded execution with two and four shards, including identity multiplicities,
+outcomes and skips. Preserve the intentional native failure gates and the independent listener-based
+oracle; class manifests must not become a substitute for evidence that invocations actually ran.
+
 History is untrusted metadata: reject malformed numbers and identities, and do not print raw lines.
 The XML timing reader disables DTDs and external entities and reads timing metadata only. Preserve
 that boundary when extending it; retry/failure payloads and arbitrary parser diagnostics must not
@@ -124,6 +130,12 @@ release uploads. [Central setup](docs/maven-central.md) documents the maintainer
 Workflow and generated Gradle metadata regressions run in the Gradle adapter's test suite.
 
 ## Documentation changes
+
+Write [changelog](CHANGELOG.md) entries for plugin users: explain what they can do, which behavior
+was fixed, and any compatibility or migration action. Keep entries concise and link to usage guides.
+Record test counts, CI/cache implementation, Wrapper maintenance and publication procedures in the
+maintainer documentation rather than the changelog. Mention security work through its effect on
+users and state its scope without implying an audit or protection that was not performed.
 
 Start at the [documentation index](docs/README.md). Keep examples aligned with the public extension
 and distinguish implemented behavior from proposed work. When changing the architecture or assignment

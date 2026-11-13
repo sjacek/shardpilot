@@ -1,0 +1,146 @@
+name: Runtime dependency security
+
+on:
+  workflow_call:
+    inputs:
+      warmed-dependencies:
+        description: 'Consume download-only artifacts prepared by the calling compatibility workflow'
+        required: false
+        default: false
+        type: boolean
+  workflow_dispatch:
+  schedule:
+    # Recheck unchanged main sources when the vulnerability database gains new advisories.
+    - cron: '0 5 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_USER_HOME: ${{ github.workspace }}/build/ci-dependencies/gradle
+  MAVEN_USER_HOME: ${{ github.workspace }}/build/ci-dependencies/maven-user-home
+  GRYPE_DB_CACHE_DIR: ${{ github.workspace }}/build/security-tools/grype-db
+  GRYPE_DB_AUTO_UPDATE: 'false'
+  GRYPE_DB_VALIDATE_AGE: 'true'
+  GRYPE_CHECK_FOR_APP_UPDATE: 'false'
+
+jobs:
+  scan:
+    name: Runtime dependency security / ${{ matrix.distribution }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        distribution: [gradle, maven]
+    env:
+      DISTRIBUTION: ${{ matrix.distribution }}
+    steps:
+      - name: Check out the tested commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Set up Java
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.12'
+      - name: Read and validate scan policy
+        id: policy
+        run: python3 -B scripts/security_reports.py policy
+      - name: Verify immutable build inputs
+        run: python3 -B scripts/dependency_policy.py
+      - name: Enable Maven dependency verification
+        if: matrix.distribution == 'maven'
+        run: python3 -B scripts/maven_verification.py prepare
+      - name: Verify inventory and scan failure handling
+        run: python3 -B -m unittest discover -s scripts -p 'test_security_reports.py' -v
+      - name: Download warmed dependencies
+        if: inputs.warmed-dependencies == true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          # Inputs are defined by upstream action.yml; keep this IDE workaround local.
+          # noinspection UndefinedParamsPresent
+          name: ${{ matrix.distribution }}-dependencies
+          # noinspection UndefinedParamsPresent
+          path: build
+      - name: Restore download-only dependencies
+        if: inputs.warmed-dependencies == true
+        run: python3 -B scripts/ci_dependency_cache.py restore "$DISTRIBUTION"
+      - name: Set up Gradle and validate the Wrapper
+        if: matrix.distribution == 'gradle'
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
+        with:
+          cache-disabled: true
+      - name: Build Gradle candidate and resolve runtime inventories
+        if: matrix.distribution == 'gradle'
+        run: >-
+          bash ./gradlew :shardpilot-gradle-plugin:jar
+          :shardpilot-core:cyclonedxDirectBom :shardpilot-gradle-plugin:cyclonedxDirectBom
+          --console=plain --stacktrace
+      - name: Build Maven candidates and resolve runtime inventory
+        if: matrix.distribution == 'maven'
+        # No release profile, upload, test execution or attachment of extra publication artifacts.
+        run: >-
+          bash ./mvnw -B -ntp -Dmaven.repo.local="$GITHUB_WORKSPACE/build/ci-dependencies/maven"
+          -Psecurity-sbom -DskipTests -DskipITs package
+      - name: Bind runtime SBOM to candidate artifacts
+        env:
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: python3 -B scripts/security_reports.py prepare --distribution "$DISTRIBUTION" --commit "$SOURCE_COMMIT"
+      - name: Install pinned Grype
+        id: grype
+        uses: anchore/scan-action/download-grype@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        with:
+          # Inputs are defined by download-grype/action.yml at the pinned commit.
+          # noinspection UndefinedParamsPresent
+          grype-version: ${{ steps.policy.outputs.scanner-release-tag }}
+          # noinspection UndefinedParamsPresent
+          cache-db: false
+      - name: Refresh vulnerability database and record scanner identity
+        env:
+          GRYPE_BIN: ${{ steps.grype.outputs.cmd }}
+          GRYPE_DB_MAX_ALLOWED_BUILT_AGE: ${{ steps.policy.outputs.db-max-age }}
+        run: |
+          set -euo pipefail
+          "$GRYPE_BIN" version -o json > "build/security/$DISTRIBUTION/scanner.json"
+          "$GRYPE_BIN" db update --config security/grype.yaml
+          "$GRYPE_BIN" db status -o json --config security/grype.yaml > "build/security/$DISTRIBUTION/database.json"
+      - name: Scan runtime dependencies
+        id: scan
+        env:
+          GRYPE_BIN: ${{ steps.grype.outputs.cmd }}
+          GRYPE_DB_MAX_ALLOWED_BUILT_AGE: ${{ steps.policy.outputs.db-max-age }}
+          SEVERITY: ${{ steps.policy.outputs.severity-cutoff }}
+        run: |
+          set -euo pipefail
+          if "$GRYPE_BIN" "sbom:build/security/$DISTRIBUTION/bom.cdx.json" --config security/grype.yaml \
+            --output json --file "build/security/$DISTRIBUTION/findings.json" \
+            --fail-on "$SEVERITY" --only-fixed=false --show-suppressed; then
+            scan_exit=0
+          else
+            scan_exit=$?
+          fi
+          printf '{"exitCode":%s}\n' "$scan_exit" > "build/security/$DISTRIBUTION/scan-status.json"
+          exit "$scan_exit"
+      - name: Summarize findings and verify scan evidence
+        if: ${{ always() && (steps.scan.outcome == 'success' || steps.scan.outcome == 'failure') }}
+        run: python3 -B scripts/security_reports.py summarize --distribution "$DISTRIBUTION"
+      - name: Retain SBOM, findings and candidate provenance
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: runtime-security-${{ matrix.distribution }}
+          path: build/security/${{ matrix.distribution }}/
+          overwrite: true
+          if-no-files-found: warn
+          retention-days: 30

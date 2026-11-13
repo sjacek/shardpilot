@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-11-12",
+  "source": "GitHub repository Git refs API; annotated Gradle Actions tag peeled to its commit",
+  "pins": [
+    {
+      "action": "actions/checkout",
+      "tag": "v7",
+      "sha": "3d3c42e5aac5ba805825da76410c181273ba90b1"
+    },
+    {
+      "action": "actions/setup-java",
+      "tag": "v6",
+      "sha": "b843ebf9b913146b38da2eaa7aeddf76074ae1ad"
+    },
+    {
+      "action": "actions/setup-python",
+      "tag": "v7",
+      "sha": "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0"
+    },
+    {
+      "action": "actions/cache/restore",
+      "tag": "v5",
+      "sha": "caa296126883cff596d87d8935842f9db880ef25"
+    },
+    {
+      "action": "actions/cache/save",
+      "tag": "v5",
+      "sha": "caa296126883cff596d87d8935842f9db880ef25"
+    },
+    {
+      "action": "gradle/actions/setup-gradle",
+      "tag": "v6",
+      "sha": "8da46b539cd8fe6ab27ca75128919a18d757604c"
+    },
+    {
+      "action": "actions/upload-artifact",
+      "tag": "v7",
+      "sha": "cf430e030ddbb5b0abf93d22962f4752f3646cd9"
+    },
+    {
+      "action": "actions/download-artifact",
+      "tag": "v7",
+      "sha": "37930b1c2abaa49bbe596cd826c3c89aef350131"
+    },
+    {
+      "action": "anchore/scan-action/download-grype",
+      "tag": "v7.4.2",
+      "sha": "27805bf3b4e84b4a5c980df22ed233c00390a439"
+    }
+  ]
+}

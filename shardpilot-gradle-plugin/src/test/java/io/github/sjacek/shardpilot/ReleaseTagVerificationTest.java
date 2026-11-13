@@ -81,6 +81,6 @@ class ReleaseTagVerificationTest {
                 "-Dorg.gradle.java.home=" + System.getProperty("java.home")));
         options.addAll(List.of(arguments));
         // Release validation belongs to the fixed Wrapper build, not the consumer compatibility target.
-        return GradleRunner.create().withProjectDir(directory.toFile()).withArguments(options);
+        return VerifiedTestKit.create(directory).withArguments(options);
     }
 }

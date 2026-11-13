@@ -25,6 +25,32 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class PublicationWorkflowTest {
     @Test
+    void mavenVerificationStartsBeforeWarmupTestsScansAndCredentialedPublication() throws IOException {
+        var compatibility = mapping(workflow("compatibility").get("jobs"));
+        for (var pair : Map.of("warm-cache", "Warm Maven reactor and native fixture dependencies without running tests",
+                "maven", "Verify Maven core, adapter and real runner builds",
+                "release-artifacts", "Verify the signed release with a disposable key").entrySet()) {
+            var job = mapping(compatibility.get(pair.getKey()));
+            assertMavenVerificationBefore(job, pair.getValue());
+        }
+        var scan = mapping(mapping(workflow("security").get("jobs")).get("scan"));
+        assertMavenVerificationBefore(scan, "Build Maven candidates and resolve runtime inventory");
+        assertEquals("matrix.distribution == 'maven'", stepNamed(scan, "Enable Maven dependency verification").get("if"));
+        var publish = mapping(mapping(workflow("publish").get("jobs")).get("publish-maven"));
+        assertMavenVerificationBefore(publish, "Publish the signed Maven release");
+        assertEquals("inputs.maven_deployment_id == ''", stepNamed(publish, "Enable Maven dependency verification").get("if"),
+                "status-only recovery must not download or load Maven tooling");
+        assertFalse(stepNamed(publish, "Enable Maven dependency verification").toString().contains("secrets."));
+    }
+
+    private static void assertMavenVerificationBefore(Map<?, ?> job, String consumer) {
+        var bootstrap = stepNamed(job, "Enable Maven dependency verification");
+        assertEquals("python3 -B scripts/maven_verification.py prepare", bootstrap.get("run"));
+        assertNull(bootstrap.get("continue-on-error"));
+        assertTrue(sequence(job.get("steps")).indexOf(bootstrap) < sequence(job.get("steps")).indexOf(stepNamed(job, consumer)));
+    }
+
+    @Test
     void bothReleaseTriggersRequireTheSharedMatrixAndSelectExactlyOnePublisher() throws IOException {
         Map<?, ?> release = workflow("publish");
         Map<?, ?> events = mapping(release.get("on"));
@@ -49,7 +75,7 @@ class PublicationWorkflowTest {
 
         for (String publisher : List.of("publish", "publish-maven")) {
             Map<?, ?> publication = mapping(jobs.get(publisher));
-            assertEquals(List.of("validate-tag", "compatibility"), publication.get("needs"));
+            assertEquals(List.of("validate-tag", "compatibility", "published-artifact-audit"), publication.get("needs"));
             String trigger = publisher.equals("publish") ? "push" : "workflow_dispatch";
             assertEquals("github.event_name == '" + trigger + "'", publication.get("if"),
                     "select one destination while retaining default prerequisite success gating");
@@ -58,6 +84,79 @@ class PublicationWorkflowTest {
         for (Object job : jobs.values()) {
             assertNull(mapping(job).get("continue-on-error"), "every release stage must be mandatory");
         }
+    }
+
+    /** The published baseline gate is separate from candidate testing and never receives publisher secrets. */
+    @Test
+    void fullPublishedAuditIsMandatoryBeforeBothPublishersAndSupportsManualRuns() throws IOException {
+        var publication = mapping(workflow("publish").get("jobs"));
+        var gate = mapping(publication.get("published-artifact-audit"));
+        assertEquals("validate-tag", gate.get("needs"));
+        assertEquals("./.github/workflows/published-artifact-audit.yml", gate.get("uses"));
+        assertNull(gate.get("if"));
+        assertNull(gate.get("secrets"));
+        assertNull(gate.get("with"), "release gates use the reviewed published baseline, never the unpublished candidate tag");
+        for (String publisher : List.of("publish", "publish-maven")) {
+            assertTrue(sequence(mapping(publication.get(publisher)).get("needs")).contains("published-artifact-audit"));
+        }
+        var audit = workflow("published-artifact-audit");
+        assertEquals(Set.of("workflow_dispatch", "workflow_call"), mapping(audit.get("on")).keySet());
+        assertEquals(Map.of("contents", "read"), audit.get("permissions"));
+        for (Object event : mapping(audit.get("on")).values()) {
+            var version = mapping(mapping(mapping(event).get("inputs")).get("version"));
+            assertEquals("string", version.get("type"));
+            assertEquals("", version.get("default"));
+            assertEquals(false, version.get("required"));
+            assertNull(mapping(event).get("secrets"));
+        }
+        var job = mapping(mapping(audit.get("jobs")).get("audit"));
+        assertEquals("ubuntu-latest", job.get("runs-on"));
+        assertNull(job.get("environment"));
+        assertNull(job.get("continue-on-error"));
+        var checkout = mapping(stepUsing(job, "actions/checkout@").get("with"));
+        assertEquals("${{ github.sha }}", checkout.get("ref"));
+        assertEquals(false, checkout.get("persist-credentials"));
+        assertEquals(0, checkout.get("fetch-depth"));
+        var execution = stepNamed(job, "Audit published artifacts and exercise evidence rejection");
+        assertEquals("audit", execution.get("id"));
+        assertNull(execution.get("if"));
+        assertNull(execution.get("continue-on-error"));
+        assertEquals(Map.of("AUDIT_VERSION", "${{ inputs.version }}"), execution.get("env"));
+        String commands = execution.get("run").toString();
+        assertTrue(commands.contains("set -euo pipefail"), "tee must not hide a failed audit");
+        assertTrue(commands.contains("scripts/run_published_artifact_audit.py --version \"$AUDIT_VERSION\""));
+        assertTrue(commands.contains("testing/published-artifacts/check_evidence.py"));
+        assertFalse(commands.contains("${{"), "untrusted input enters through a quoted environment variable");
+        assertFalse(commands.contains("--reuse-downloads"));
+        assertFalse(commands.contains("--skip-build"));
+        assertFalse(audit.toString().contains("secrets."));
+        assertFalse(audit.toString().contains("actions/cache"));
+    }
+
+    @Test
+    void publishedAuditRetainsFailureDiagnosticsWithoutUploadingDependencyHomes() throws IOException {
+        var audit = mapping(mapping(workflow("published-artifact-audit").get("jobs")).get("audit"));
+        var summary = stepNamed(audit, "Summarize and package audit evidence");
+        var upload = stepNamed(audit, "Retain audit reports and raw network traces");
+        assertEquals("always()", summary.get("if"));
+        assertEquals("always()", upload.get("if"));
+        assertTrue(mapping(summary.get("env")).get("AUDIT_OUTCOME").toString().contains("steps.audit.outcome"));
+        assertEquals("python3 -B scripts/published_audit_report.py --outcome \"$AUDIT_OUTCOME\"", summary.get("run"));
+        var artifact = mapping(upload.get("with"));
+        assertEquals(30, artifact.get("retention-days"));
+        assertEquals("error", artifact.get("if-no-files-found"));
+        String paths = artifact.get("path").toString();
+        assertTrue(paths.contains("build/published-artifact-audit-report.zip"));
+        assertTrue(paths.contains("build/published-artifact-audit/ci-report.json"));
+        assertFalse(paths.contains("**"));
+        assertFalse(paths.contains("seed"));
+        assertFalse(paths.contains("tool-image"));
+        var policy = mapping(new Load(LoadSettings.builder().build()).loadFromString(
+                Files.readString(Path.of("security/published-artifact-audit.json"))));
+        assertEquals(1, policy.get("schemaVersion"));
+        assertTrue(policy.get("defaultPublishedVersion").toString().matches("[0-9]+\\.[0-9]+\\.[0-9]+"));
+        assertTrue(policy.get("defaultSourceCommit").toString().matches("[a-f0-9]{40}"));
+        assertTrue(policy.get("publisherPrimaryFingerprint").toString().matches("[A-F0-9]{40}"));
     }
 
     @Test
@@ -208,6 +307,11 @@ class PublicationWorkflowTest {
         var workflow = workflow("compatibility");
         var jobs = mapping(workflow.get("jobs"));
         var warmup = mapping(jobs.get("warm-cache"));
+        var security = mapping(jobs.get("dependency-security"));
+        assertEquals("warm-cache", security.get("needs"));
+        assertEquals("./.github/workflows/security.yml", security.get("uses"));
+        assertEquals(Map.of("warmed-dependencies", true), security.get("with"));
+        assertNull(security.get("secrets"));
         assertTestedCheckout(warmup);
         assertNull(warmup.get("if"), "cold PRs must also warm dependencies");
         assertNull(warmup.get("continue-on-error"));
@@ -237,10 +341,10 @@ class PublicationWorkflowTest {
         }
         for (String jobName : List.of("compatibility", "maven")) {
             var job = mapping(jobs.get(jobName));
-            assertEquals("warm-cache", job.get("needs"));
+            assertEquals(List.of("warm-cache", "dependency-security"), job.get("needs"));
             assertEquals("${{ !cancelled() }}", job.get("if"));
-            var guard = stepNamed(job, "Require successful dependency warmup");
-            assertEquals("needs.warm-cache.result != 'success'", guard.get("if"));
+            var guard = stepNamed(job, "Require successful dependency prerequisites");
+            assertEquals("needs.warm-cache.result != 'success' || needs.dependency-security.result != 'success'", guard.get("if"));
             assertTrue(guard.get("run").toString().contains("exit 1"));
             assertEquals(guard, sequence(job.get("steps")).get(0),
                     "a failed warmup must fail required contexts before any cache-dependent work");
@@ -262,10 +366,84 @@ class PublicationWorkflowTest {
     }
 
     @Test
+    void runtimeSecurityUsesSeparateScopesPinnedScannerAndFreshDatabaseWithoutCredentials() throws Exception {
+        var security = workflow("security");
+        assertEquals(Map.of("contents", "read"), security.get("permissions"));
+        assertFalse(security.toString().contains("secrets."));
+        var events = mapping(security.get("on"));
+        assertEquals(Set.of("workflow_call", "workflow_dispatch", "schedule"), events.keySet());
+        assertFalse(sequence(events.get("schedule")).isEmpty(), "new advisories must also be checked without source changes");
+        var callInputs = mapping(mapping(events.get("workflow_call")).get("inputs"));
+        assertEquals(false, mapping(callInputs.get("warmed-dependencies")).get("default"));
+        var job = mapping(mapping(security.get("jobs")).get("scan"));
+        assertEquals(List.of("gradle", "maven"), mapping(mapping(job.get("strategy")).get("matrix")).get("distribution"));
+        assertEquals(false, mapping(job.get("strategy")).get("fail-fast"));
+        assertTestedCheckout(job);
+        for (Object step : sequence(job.get("steps"))) {
+            assertNull(mapping(step).get("continue-on-error"), "scanner and DB failures must never turn into success");
+        }
+        var install = stepUsing(job, "anchore/scan-action/download-grype@");
+        assertEquals("anchore/scan-action/download-grype@27805bf3b4e84b4a5c980df22ed233c00390a439", install.get("uses"));
+        assertEquals(false, mapping(install.get("with")).get("cache-db"));
+        assertEquals("${{ steps.policy.outputs.scanner-release-tag }}", mapping(install.get("with")).get("grype-version"));
+        var env = mapping(security.get("env"));
+        assertEquals("false", env.get("GRYPE_DB_AUTO_UPDATE"));
+        assertEquals("true", env.get("GRYPE_DB_VALIDATE_AGE"));
+        String database = stepNamed(job, "Refresh vulnerability database and record scanner identity").get("run").toString();
+        assertTrue(database.contains("db update --config security/grype.yaml"));
+        assertTrue(database.contains("db status -o json"));
+        assertTrue(database.contains("version -o json"));
+        String scan = stepNamed(job, "Scan runtime dependencies").get("run").toString();
+        assertTrue(scan.contains("sbom:build/security/$DISTRIBUTION/bom.cdx.json"));
+        assertTrue(scan.contains("--only-fixed=false --show-suppressed"));
+        assertTrue(scan.contains("--fail-on \"$SEVERITY\""));
+        assertTrue(scan.contains("scan-status.json"));
+        assertTrue(scan.contains("exit \"$scan_exit\""));
+        var summary = stepNamed(job, "Summarize findings and verify scan evidence");
+        assertTrue(summary.get("if").toString().contains("always()"));
+        assertTrue(summary.get("if").toString().contains("steps.scan.outcome == 'failure'"));
+        var retained = stepNamed(job, "Retain SBOM, findings and candidate provenance");
+        assertEquals("always()", retained.get("if"));
+        assertEquals("build/security/${{ matrix.distribution }}/", mapping(retained.get("with")).get("path"));
+        assertEquals(30, mapping(retained.get("with")).get("retention-days"));
+        var policy = mapping(new Load(LoadSettings.builder().build())
+                .loadFromString(Files.readString(Path.of("security/scan-policy.json"))));
+        assertEquals("0.121.3", policy.get("scannerVersion"));
+        assertEquals("high", policy.get("severityCutoff"));
+        assertEquals(true, policy.get("includeUnfixed"));
+        assertEquals(120, policy.get("databaseMaxAgeHours"));
+    }
+
+    @Test
+    void nativeSbomGeneratorsExcludeTestsProvidedApisAndPublicationAttachments() throws Exception {
+        var factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        var document = factory.newDocumentBuilder().parse(Path.of("pom.xml").toFile());
+        var xpath = javax.xml.xpath.XPathFactory.newInstance().newXPath();
+        String plugin = "/project/profiles/profile[id='security-sbom']/build/plugins/plugin[artifactId='cyclonedx-maven-plugin']";
+        assertEquals("2.9.3", xpath.evaluate(plugin + "/version", document));
+        for (String included : List.of("includeCompileScope", "includeRuntimeScope", "skipAttach")) {
+            assertEquals("true", xpath.evaluate(plugin + "/configuration/" + included, document));
+        }
+        for (String excluded : List.of("includeProvidedScope", "includeSystemScope", "includeTestScope")) {
+            assertEquals("false", xpath.evaluate(plugin + "/configuration/" + excluded, document));
+        }
+        assertEquals("makeBom", xpath.evaluate(plugin + "/executions/execution/goals/goal", document));
+        assertTrue(Files.readString(Path.of("build.gradle")).contains("id 'org.cyclonedx.bom' version '3.5.1'"));
+        for (String module : List.of("shardpilot-core", "shardpilot-gradle-plugin")) {
+            String build = Files.readString(Path.of(module, "build.gradle"));
+            assertTrue(build.contains("includeConfigs = ['runtimeClasspath']"));
+            assertTrue(build.contains("includeBuildEnvironment = false"));
+        }
+    }
+
+    @Test
     void warmupIncludesEveryVersionedLibraryUsedByRealFunctionalFixtures() throws IOException {
         var coordinate = java.util.regex.Pattern.compile("['\"]([\\w.-]+:[\\w.-]+:[\\w.-]+)['\"]");
         try (var sources = Files.list(Path.of("shardpilot-gradle-plugin/src/test/java/io/github/sjacek/shardpilot"))) {
             for (Path source : sources.filter(path -> path.getFileName().toString().endsWith("FunctionalTest.java")).toList()) {
+                // The integrity probe serves a harmless synthetic artifact on loopback, never Central.
+                if (source.getFileName().toString().equals("DependencyVerificationFunctionalTest.java")) continue;
                 var matcher = coordinate.matcher(Files.readString(source));
                 while (matcher.find()) {
                     assertTrue(TestKitCacheWarmup.BUILD.contains(matcher.group(1)),

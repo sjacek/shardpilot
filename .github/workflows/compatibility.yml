@@ -28,23 +28,29 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Check out sources
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
           ref: ${{ github.sha }}
       - name: Set up the warmup JDK
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           # JDK 21 can run all three consumer distributions, including Gradle 9.0.0.
           distribution: temurin
           java-version: '21'
       - name: Set up Python for dependency snapshots
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: '3.12'
+      - name: Verify immutable build inputs
+        run: python3 -B scripts/dependency_policy.py
+      - name: Verify published artifact audit guards
+        run: python3 -B -m unittest discover -s testing/published-artifacts -p 'test_*.py' -v
+      - name: Enable Maven dependency verification
+        run: python3 -B scripts/maven_verification.py prepare
       - name: Restore downloaded dependencies
         id: dependencies
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         # restore/action.yml at v5 defines these inputs; older IDE action metadata may lag.
         with:
           # noinspection UndefinedParamsPresent
@@ -52,13 +58,13 @@ jobs:
             build/gradle-dependencies.tar
             build/maven-dependencies.tar
           # noinspection UndefinedParamsPresent
-          key: ci-dependencies-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.gradle', '**/pom.xml', 'gradle.properties', '**/gradle-wrapper.properties', '.mvn/wrapper/maven-wrapper.properties', 'shardpilot-gradle-plugin/src/test/**/*.java', 'scripts/ci_dependency_cache.py', '.github/workflows/compatibility.yml') }}
+          key: ci-dependencies-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.gradle', '**/pom.xml', 'gradle.properties', '**/gradle-wrapper.properties', '.mvn/wrapper/maven-wrapper.properties', '.mvn/checksums.sha256', 'gradle/verification-metadata.xml', 'security/dependency-verification.json', 'shardpilot-gradle-plugin/src/test/**/*.java', 'scripts/ci_dependency_cache.py', 'scripts/maven_verification.py', '.github/workflows/compatibility.yml') }}
           # noinspection UndefinedParamsPresent
-          restore-keys: ci-dependencies-v1-${{ runner.os }}-${{ runner.arch }}-
+          restore-keys: ci-dependencies-v2-${{ runner.os }}-${{ runner.arch }}-
       - name: Unpack downloaded dependencies
         run: python3 -B scripts/ci_dependency_cache.py restore
       - name: Set up Gradle and validate the Wrapper
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
         with:
           # One download-only snapshot owns these paths; do not layer a second Gradle cache over it.
           cache-disabled: true
@@ -72,12 +78,27 @@ jobs:
         run: python3 -B scripts/ci_dependency_cache.py warm-maven
       - name: Verify dependency snapshot handling
         run: python3 -B -m unittest discover -s scripts -p 'test_ci_dependency_cache.py' -v
+      - name: Verify dependency policy and verifier bootstrap failures
+        run: python3 -B -m unittest discover -s scripts -p 'test_dependency*.py' -v
+      - name: Verify native Maven checksum rejection
+        run: python3 -B scripts/verify_dependency_rejection.py
+      - name: Retain dependency verification evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: dependency-verification
+          path: |
+            build/dependency-verification/native-rejection.json
+            build/dependency-verification/*-native-checksum.log
+            **/build/reports/dependency-verification/
+          if-no-files-found: warn
+          retention-days: 14
       - name: Pack downloaded dependencies only
         if: steps.dependencies.outputs.cache-hit != 'true'
         run: python3 -B scripts/ci_dependency_cache.py pack
       - name: Save downloaded dependencies from the default branch
         if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.dependencies.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
         # save/action.yml at v5 defines both inputs; suppress only these known parameters.
         with:
           # noinspection UndefinedParamsPresent
@@ -88,7 +109,7 @@ jobs:
           key: ${{ steps.dependencies.outputs.cache-primary-key }}
       - name: Share warmed Gradle dependencies with this run
         # Same-run artifacts also work on PRs/forks that cannot write the default branch cache.
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: gradle-dependencies
           path: build/gradle-dependencies.tar
@@ -97,7 +118,7 @@ jobs:
           retention-days: 1
           compression-level: 0
       - name: Share warmed Maven dependencies with this run
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: maven-dependencies
           path: build/maven-dependencies.tar
@@ -106,9 +127,16 @@ jobs:
           retention-days: 1
           compression-level: 0
 
+  dependency-security:
+    name: Check runtime dependencies
+    needs: warm-cache
+    uses: ./.github/workflows/security.yml
+    with:
+      warmed-dependencies: true
+
   compatibility:
     name: Gradle ${{ matrix.gradle }} / JDK ${{ matrix.java }}
-    needs: warm-cache
+    needs: [warm-cache, dependency-security]
     # A failed warmup must fail required checks, not silently skip them as successful statuses.
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
@@ -124,27 +152,27 @@ jobs:
           - gradle: '9.0.0'
             java: '25'
     steps:
-      - name: Require successful dependency warmup
-        if: needs.warm-cache.result != 'success'
+      - name: Require successful dependency prerequisites
+        if: needs.warm-cache.result != 'success' || needs.dependency-security.result != 'success'
         run: |
-          echo '::error::Dependency warmup failed; compatibility tests cannot be skipped.'
+          echo '::error::Dependency warmup or security scan failed; compatibility tests cannot be skipped.'
           exit 1
       - name: Check out sources
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
           ref: ${{ github.sha }}
       - name: Set up the matrix JDK
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
       - name: Set up Gradle and validate the Wrapper
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
         with:
           cache-disabled: true
       - name: Download warmed dependencies
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         # action.yml at v7 defines name/path; retain validation elsewhere in this workflow.
         with:
           # noinspection UndefinedParamsPresent
@@ -162,7 +190,7 @@ jobs:
           --stacktrace --console=plain
       - name: Retain test and validation reports
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: compatibility-gradle-${{ matrix.gradle }}-jdk-${{ matrix.java }}
           path: |
@@ -179,27 +207,29 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out sources
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
           ref: ${{ github.sha }}
       - name: Set up Java for release verification
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           distribution: temurin
           java-version: '25'
-      - name: Verify the signed release with a disposable key
-        run: bash scripts/verify-maven-release.sh
       - name: Set up Python for publication recovery tests
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: '3.12'
+      - name: Enable Maven dependency verification
+        run: python3 -B scripts/maven_verification.py prepare
+      - name: Verify the signed release with a disposable key
+        run: bash scripts/verify-maven-release.sh
       - name: Verify resilient Central status polling without publication credentials
         # Unit and loopback HTTP tests never contact Central or run a real Maven upload.
         run: python3 -B -m unittest discover -s scripts -p 'test_central_publication*.py' -v
       - name: Retain release verification evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: compatibility-signed-maven-release
           # The disposable private key lives only in a temporary directory and is never uploaded.
@@ -209,7 +239,7 @@ jobs:
 
   maven:
     name: Maven 3.10.0 / JDK ${{ matrix.java }}
-    needs: warm-cache
+    needs: [warm-cache, dependency-security]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -218,23 +248,23 @@ jobs:
       matrix:
         java: ['17', '21', '25']
     steps:
-      - name: Require successful dependency warmup
-        if: needs.warm-cache.result != 'success'
+      - name: Require successful dependency prerequisites
+        if: needs.warm-cache.result != 'success' || needs.dependency-security.result != 'success'
         run: |
-          echo '::error::Dependency warmup failed; compatibility tests cannot be skipped.'
+          echo '::error::Dependency warmup or security scan failed; compatibility tests cannot be skipped.'
           exit 1
       - name: Check out sources
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
           ref: ${{ github.sha }}
       - name: Set up the matrix JDK
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
       - name: Download warmed dependencies
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         # action.yml at v7 defines name/path; retain validation elsewhere in this workflow.
         with:
           # noinspection UndefinedParamsPresent
@@ -245,11 +275,17 @@ jobs:
         run: python3 -B scripts/ci_dependency_cache.py restore maven
       - name: Seed the isolated Invoker repository
         run: python3 -B scripts/ci_dependency_cache.py seed-invoker
+      - name: Set up Python for dependency verification
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.12'
+      - name: Enable Maven dependency verification
+        run: python3 -B scripts/maven_verification.py prepare
       - name: Verify Maven core, adapter and real runner builds
         run: bash ./mvnw -B -ntp -Dmaven.repo.local="$GITHUB_WORKSPACE/build/ci-dependencies/maven" verify
       - name: Retain Maven tests and Invoker evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: compatibility-maven-jdk-${{ matrix.java }}
           path: |
@@ -257,6 +293,8 @@ jobs:
             shardpilot-maven-plugin/target/surefire-reports/
             shardpilot-maven-plugin/target/invoker-reports/
             shardpilot-maven-plugin/target/it/**/build.log
+            shardpilot-maven-plugin/target/it/execution-equivalence-*/target/executions/
+            shardpilot-maven-plugin/target/it/execution-equivalence-*/build*.log
             shardpilot-maven-plugin/target/examples/**/build.log
             shardpilot-maven-plugin/target/examples/**/coverage.html
           if-no-files-found: warn

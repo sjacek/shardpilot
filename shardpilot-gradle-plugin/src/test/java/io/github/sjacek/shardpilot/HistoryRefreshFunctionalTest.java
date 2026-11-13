@@ -461,7 +461,7 @@ class HistoryRefreshFunctionalTest {
     private GradleRunner runner(String... arguments) {
         var args = new ArrayList<>(List.of(arguments));
         args.addAll(List.of("--console=plain", "--stacktrace", "-Dorg.gradle.java.home=" + System.getProperty("java.home")));
-        return GradleRunner.create().withProjectDir(directory.toFile()).withPluginClasspath()
+        return VerifiedTestKit.create(directory).withPluginClasspath()
                 .withGradleVersion(System.getProperty("shardpilot.test.gradleVersion", org.gradle.util.GradleVersion.current().getVersion()))
                 .withArguments(args);
     }

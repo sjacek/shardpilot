@@ -1,0 +1,72 @@
+name: Published artifact audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Already published stable version; empty uses the reviewed policy baseline'
+        required: false
+        default: ''
+        type: string
+  workflow_call:
+    inputs:
+      version:
+        description: 'Already published version, not the unpublished release candidate'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Verify registry bytes and isolated execution
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Check out audit tooling and release tags
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+          # Source JARs are compared with the audited tag, not the tooling checkout.
+          fetch-depth: 0
+      - name: Set up the audit launcher
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.12'
+      - name: Verify immutable build inputs
+        run: python3 -B scripts/dependency_policy.py
+      - name: Check Linux Docker availability
+        run: docker info --format '{{.OSType}}' | grep -x linux
+      - name: Audit published artifacts and exercise evidence rejection
+        id: audit
+        env:
+          # Validate this untrusted input in Python; never interpolate it into shell source.
+          AUDIT_VERSION: ${{ inputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/published-artifact-audit
+          python3 -B scripts/run_published_artifact_audit.py --version "$AUDIT_VERSION" \
+            2>&1 | tee build/published-artifact-audit/launcher.log
+          python3 -B testing/published-artifacts/check_evidence.py build/published-artifact-audit \
+            2>&1 | tee build/published-artifact-audit/evidence-check.log
+      - name: Summarize and package audit evidence
+        if: always()
+        env:
+          AUDIT_OUTCOME: ${{ steps.audit.outcome || 'skipped' }}
+        run: python3 -B scripts/published_audit_report.py --outcome "$AUDIT_OUTCOME"
+      - name: Retain audit reports and raw network traces
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: published-artifact-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/published-artifact-audit-report.zip
+            build/published-artifact-audit-report.zip.sha256
+            build/published-artifact-audit/ci-report.json
+            build/published-artifact-audit/ci-summary.md
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,8 @@
+version: 2
+updates:
+  # SHA updates remain reviewable PRs; verification baselines are never rewritten by CI.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

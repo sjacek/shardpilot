@@ -356,7 +356,7 @@ class TestSelectionFunctionalTest {
     private GradleRunner runner(String... arguments) {
         var options = new ArrayList<>(List.of(arguments));
         options.addAll(List.of("--stacktrace", "--console=plain", "-Dorg.gradle.java.home=" + System.getProperty("java.home")));
-        return GradleRunner.create().withProjectDir(directory.toFile()).withPluginClasspath()
+        return VerifiedTestKit.create(directory).withPluginClasspath()
                 .withGradleVersion(System.getProperty("shardpilot.test.gradleVersion", org.gradle.util.GradleVersion.current().getVersion()))
                 .withArguments(options);
     }

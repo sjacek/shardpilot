@@ -15,12 +15,13 @@ skinparam noteBorderColor #D97706
 component "Push a new immutable release tag\nAutomatic Gradle publication" as tag
 component "Later: manual workflow dispatch\nSelect the same existing tag with --ref\nMaven Central publication" as manual
 component "Require a tag ref\nTag equals Gradle / Maven version\nCheck out its exact commit SHA" as validate
-package "Required checks at the exact commit SHA - no release secrets" {
+package "Required gates - no release secrets" {
   component "8 Gradle / JDK cells\ncheck + assemble" as gradleChecks
   component "3 Maven / JDK jobs\nverify + native fixtures" as mavenChecks
   component "Signed Maven bundle check\nDisposable key; no upload\n9 artifacts + signatures + checksums" as bundle
+  component "Published baseline audit\nPublic registry bytes + signed tag\nOffline execution + strace + evidence" as audit
 }
-component "All 12 checks pass" as gate #DCFCE7
+component "All 12 compatibility checks\nand published-baseline audit pass" as gate #DCFCE7
 component "gradle-plugin-portal environment\nPortal credentials\nValidate + publishPlugins" as gradlePublish
 component "maven-central environment\nUpload once; save deployment ID\ncentral-release / waitUntil=uploaded" as mavenPublish
 component "Poll the same deployment ID\nRetry transient status errors\nResume by ID without Maven upload" as status
@@ -32,9 +33,11 @@ manual --> validate
 validate --> gradleChecks
 validate --> mavenChecks
 validate --> bundle
+validate --> audit
 gradleChecks --> gate
 mavenChecks --> gate
 bundle --> gate
+audit --> gate
 gate --> gradlePublish : tag push only
 gate --> mavenPublish : manual run only
 gradlePublish --> portal
@@ -44,6 +47,8 @@ status --> central : status reads only
 
 note bottom of gate
   Each run executes all 12 checks for the tag's SHA.
+  The artifact audit checks an already published version.
+  It does not certify unpublished candidate registry bytes.
   Manual Maven runs skip the Gradle publisher.
   Central recovery uses the accepted deployment ID.
   Never upload an accepted bundle again.

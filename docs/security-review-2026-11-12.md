@@ -120,7 +120,7 @@ availability or enable repository settings.
    results with their limitations. Recheck the relevant matrix before any implementation/release change;
    an external review remains a separate activity.
 
-Stages 2-6 remain planned work, not completed checks. The initial policy follow-up established
+At the initial follow-up, stages 2-6 remained planned work, not completed checks. The policy follow-up established
 trust-boundary documentation and reference evidence without changing runtime code or CI behavior.
 
 ## Subsequent build-tool update
@@ -130,3 +130,51 @@ The working tree now separately updates the build Wrapper and newest consumer CI
 [Gradle 9.9.1](testing.md#gradle-991-wrapper-upgrade). Those changes and their verification are
 not part of the original `58daef5` snapshot or the initial Gradle 9.8.2 checks recorded above.
 Do not attribute the new Wrapper bytes or matrix to the already published reference artifacts.
+
+## Subsequent runtime SBOM and SCA implementation
+
+The [runtime dependency workflow](dependency-security.md) implements the runtime-distribution
+part of stage 2: separate native Gradle/Maven inventories, candidate JAR/class/descriptor checks,
+and pinned Grype scans with versioned DB evidence and a blocking severity policy. It does not
+retroactively audit `58daef5` or registry artifacts, and does not complete producer/provided/test
+inventories, the broader immutable-Actions/dependency-verification policy, or stages 3-6.
+
+## Subsequent dependency integrity implementation
+
+[Build dependency verification](dependency-verification.md) now pins repository-owned workflow
+Actions to reviewed commit SHAs and adds producer/TestKit/Maven integrity baselines and CI guards.
+This is a distinct control from runtime SCA: it binds resolved bytes, not advisory coverage or
+publisher identity. Published-artifact verification, third-party action/toolchain download behavior,
+execution equivalence, isolated execution and reproducible performance remain separate work.
+
+## Subsequent native execution-equivalence regressions
+
+[Native execution equivalence](execution-equivalence.md) now supplies deterministic no-plugin
+references and two/four-node execution comparisons for Gradle Jupiter, Spock and TestNG, plus
+Maven Jupiter through Surefire and Failsafe. It compares native identities, exact occurrence counts,
+outcomes and skips independently of class manifests, retaining original events and comparison JSON.
+Negative oracle tests reject lost/duplicated runs and swapped outcomes even when aggregate counts match.
+
+This addresses a bounded fixture-based part of stage 3. It does not establish equivalence for all
+consumer suites, retries or dynamic identities; isolated published-artifact execution, broader
+network observation and real-suite performance measurements remain separate work.
+
+## Subsequent public 0.4.0 artifact and network observation
+
+The [published-artifact audit](published-artifact-audit.md#local-result-12-november-2026) now verifies
+the actual 0.4.0 registry cohort, Central checksums/nine artifact signatures, the signed tag and
+tag-matched Java source JARs. Portal module hashes and marker wiring are checked separately;
+the absence of Portal detached signatures/sidecar SHA-256/SHA-512 is recorded explicitly.
+
+Fourteen credential-free offline runs in network-none Linux containers exercise an unapplied-plugin
+reference plus two/four-node Gradle Jupiter and Maven Surefire/Failsafe cohorts. Original native XML,
+engine identities/outcomes and syscall traces were re-read independently. The four unions match
+their references; no non-loopback IP/DNS attempt was observed in the measured consumers, while a
+deliberate blocked connection was captured by the same tracer. Nine mutated evidence copies were
+rejected and the audit guard suite passed seventeen unit cases.
+
+This supplies bounded maintainer evidence for stage 4 and the registry-byte part of stage 2 for
+0.4.0; it is not an independent audit, complete telemetry proof, reproducible binary-build proof
+or coverage of every registry version/consumer/feature. Real-suite performance measurements,
+broader producer/provided/test vulnerability inventories and operational private-reporting setup
+verification remain separate work.

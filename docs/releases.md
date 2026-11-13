@@ -12,12 +12,18 @@ configuration-cache feature are configured in `shardpilot-gradle-plugin/build.gr
 Root `build.gradle` owns the shared Gradle version and release-tag guard; root `pom.xml` is the
 independent Maven reactor entry point.
 
+All producer CI builds enforce the reviewed [dependency integrity policy](dependency-verification.md)
+before publication. Keep Actions SHA pins and both checksum baselines under review when updating
+build tooling. Maven commands below use the verified launcher; direct Wrapper invocation alone
+only enforces transport checksums.
+
 Review the [publication descriptions](publication-descriptions.md) for the complete Maven Central
 and Gradle Plugin Portal text and its source metadata before creating a release tag.
 
 The [publication workflow](../.github/workflows/publish.yml) submits the Gradle plugin automatically
-after a matching stable version tag and a successful compatibility matrix. A manual run from that
-same tag publishes Maven Central later, with its own complete compatibility gate. The maintainer controls
+after a matching stable version tag, a successful compatibility matrix and the
+[full published-baseline audit](published-artifact-audit.md#full-audit-in-github-actions). A manual run from that
+same tag publishes Maven Central later, with both gates repeated. The maintainer controls
 commits, tag creation, publisher credentials and release-environment protection rules.
 
 ## Keep required checks aligned with the matrix
@@ -33,8 +39,10 @@ gate has 12 required contexts, emitted by GitHub Actions:
 | `Maven 3.10.0 / JDK N` | 17, 21, 25 | 3 |
 | `Signed Maven release bundle (no upload)` | Fixed release-verification runtime | 1 |
 
-The dependency warmup is a prerequisite of the two matrices. Their existing required contexts
-fail explicitly when warmup fails; adding the cache does not require renaming these 12 checks.
+Dependency warmup and both runtime security scans are prerequisites of the two matrices. Their
+existing required contexts fail explicitly when a prerequisite fails; these gates do not require
+renaming the 12 checks. The reusable compatibility workflow also blocks publication when either
+[runtime SBOM/security job](dependency-security.md) fails.
 
 `N` above is replaced with the literal JDK number in each required name. These are job names,
 without the workflow title or `(push)` / `(pull_request)` event suffix shown in parts of the UI.
@@ -116,7 +124,7 @@ namespace was already verified for Asyncwright; ShardPilot uses the same namespa
 
 Do not store values in repository files, workflow YAML, command-line arguments or logs. The
 environment secrets are used only by the final publishing step; they are not passed to tag
-validation or the reusable compatibility workflow. Missing/empty credentials fail before upload.
+validation, the reusable compatibility workflow or the published-artifact audit. Missing/empty credentials fail before upload.
 
 Restrict both environments to version tags such as `v*`, not arbitrary branches. Protect creation
 and updates of release tags with a repository ruleset so only trusted maintainers can release
@@ -142,12 +150,14 @@ It does not create tags, change the changelog or create a GitHub Release.
    accepts only `vMAJOR.MINOR.PATCH` with no leading zeroes, suffixes or build metadata, and checks
    equality with the evaluated `project.version`. Snapshots and prerelease tags are not released
    by this workflow.
-3. Commit and push the intended release revision, including both workflow files and
+3. Commit and push the intended release revision, including the publication, compatibility and audit workflows and
    `gradle/release-verification.gradle`. The maintainer then creates and pushes the immutable
    tag `v0.4.0` on that revision. Future versions use the same `v` prefix and must match the build.
 4. Follow **Actions → Publish ShardPilot**, run **Gradle Plugin Portal / v0.4.0**. The job chain is tag validation → reusable
    compatibility workflow (eight Gradle cells, three Maven/JDK jobs and signed-bundle verification)
-   → Gradle publication. Gradle performs Portal validation (`--validate-only`)
+   plus the separate published-baseline audit → Gradle publication. The audit checks the last complete
+   published version from `security/published-artifact-audit.json`, not the unpublished candidate.
+   Gradle performs Portal validation (`--validate-only`)
    before upload; the Maven publisher is skipped in this tag-push run. Any failed,
    cancelled or skipped prerequisite prevents publication. No separate tag-triggered matrix is
    launched by the compatibility workflow.
@@ -178,7 +188,7 @@ on the default branch and included in the release tag. See the
 There is no separate version/tag input that could disagree with the selected checkout.
 
 Follow **Maven Central / v0.4.0**. This run checks out the tag's exact commit SHA, revalidates the
-version and reruns all 12 compatibility checks. It then signs the parent/core/adapter cohort,
+version and reruns all 12 compatibility checks plus the published-baseline audit. It then signs the parent/core/adapter cohort,
 uploads it and waits for Central publication. The Gradle publisher is skipped. Verify ordinary
 Maven resolution in a fresh consumer without local candidate artifacts afterwards.
 
@@ -226,7 +236,8 @@ and `generateMetadataFileForPluginMavenPublication`. These metadata tasks do not
 that the implementation POM/module retains `shardpilot`, the marker targets it and no separate
 `shardpilot-core` publication is required for Gradle consumers.
 
-The Maven reactor has its own build/release artifacts. Run `./mvnw -B -ntp verify` and keep the
+The Maven reactor has its own build/release artifacts. Run
+`python3 -B scripts/maven_verification.py run -- -B -ntp verify` and keep the
 root POM, core/plugin parent versions and Gradle release version aligned. The required reusable
 workflow includes Maven/JDK checks as well as the eight Gradle cells. Maven Wrapper checksum and
 native filters/Invoker fixtures are verified without publisher credentials.
@@ -236,7 +247,8 @@ coordinates and unchanged plugin marker. The separate Maven job publishes the pa
 adapter together with source/Javadoc JARs and PGP signatures. An explicit `central-release` profile
 owns Maven signing and Central configuration; ordinary builds never activate it. Even with the
 profile active, `central.skipUpload=true` defaults to producing a local bundle. Only the credentialed
-job explicitly enables upload. `./mvnw install -DskipITs` remains local installation.
+job explicitly enables upload. `python3 -B scripts/maven_verification.py run -- install -DskipITs`
+remains local installation.
 
 Run `bash scripts/verify-maven-release.sh` before release changes are handed off. This credential-free
 check uses a disposable key, builds the same profile and validates the complete bundle plus all
