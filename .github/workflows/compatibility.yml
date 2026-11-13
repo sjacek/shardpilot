@@ -33,7 +33,7 @@ jobs:
           persist-credentials: false
           ref: ${{ github.sha }}
       - name: Set up the warmup JDK
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           # JDK 21 can run all three consumer distributions, including Gradle 9.0.0.
           distribution: temurin
@@ -175,7 +175,7 @@ jobs:
           persist-credentials: false
           ref: ${{ github.sha }}
       - name: Set up the matrix JDK
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
@@ -224,7 +224,7 @@ jobs:
           persist-credentials: false
           ref: ${{ github.sha }}
       - name: Set up Java for release verification
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
           java-version: '25'
@@ -272,7 +272,7 @@ jobs:
           persist-credentials: false
           ref: ${{ github.sha }}
       - name: Set up the matrix JDK
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
