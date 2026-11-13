@@ -103,3 +103,8 @@ Adding `SECURITY.md` does not change this setting. The 12 November follow-up did
 repository settings or establish that private reporting was enabled. Until the channel is
 available, the security policy allows a public request for a private contact with no vulnerability
 details, consistent with [GitHub's reporter guidance](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/report-privately).
+
+On **13 November 2026**, the repository's private-reporting setting was found disabled, enabled,
+then checked through `GET /repos/sjacek/shardpilot/private-vulnerability-reporting`, which returned
+`{"enabled":true}`. This confirms the repository setting; it does not claim a submitted report
+or a form test from another user's account. Keep the reporting link in `SECURITY.md` available.

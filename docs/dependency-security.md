@@ -24,10 +24,15 @@ its source project, configuration/profile/selection and original native scope. N
 markers remain in provenance, while the dedicated scan document marks these components required
 for that scan, so the scanner does not silently skip them as non-runtime packages.
 
-Gradle API/TestKit dependencies supplied as local distribution JARs have real file hashes and
-`pkg:generic/gradle/` identities, not invented Maven coordinates. Their version identifies the
-providing Gradle distribution. This accounts for the exact files but **does not decompose SDK JARs
-or guarantee advisory matching for embedded libraries**. The buildscript resolver's synthetic
+Third-party SDK JARs are matched by exact SHA-256 against reviewed Maven Central artifact identities
+in `security/gradle-sdk-artifacts.json`. Thirteen SDK libraries now have their actual Maven PURL and
+library version, with the supplying Gradle version recorded separately. This registry performs no
+remote lookup in CI. Changed bytes or an unreviewed third-party SDK file fail preparation.
+
+Generated Gradle API/TestKit JARs and the internal installation beacon retain real file hashes and
+`pkg:generic/gradle/` identities. Their version identifies the providing Gradle distribution. This
+**does not decompose their bundled classes or guarantee advisory matching for embedded code**.
+The buildscript resolver's synthetic
 `unspecified/unspecified` configuration root is mapped to the owning project; it is not reported
 as a fictitious external library. Raw native graphs are retained unchanged.
 
@@ -92,7 +97,7 @@ For each distribution, `build/security/<distribution>/` contains:
 | --- | --- |
 | `bom.cdx.json`, `inventory.json`, `findings.json`, `scan-status.json`, `summary.json`, `summary.md` | Runtime inventory, candidate binding, native scanner JSON/exit code and validated result. |
 | `build/`, `test/`, `provided/` | The same SBOM/inventory/findings/status/summary files for each additional scope. |
-| `<scope>/native/` | Unmodified native BOMs, resolution reports, scope evidence and POMs, with hashes in that scope's inventory. |
+| `<scope>/native/` | Unmodified native BOMs, resolution reports, scope evidence, POMs and the SDK identity registry, with hashes in that scope's inventory. |
 | `scanner.json`, `database.json` | Actual scanner and fresh DB identities, also copied into the individual scope reports. |
 | `scopes-summary.json`, `scopes-summary.md` | Result for **all four scopes**, with a separate status for each; also added to the job UI. |
 
@@ -150,9 +155,9 @@ python3 -B -m unittest discover -s scripts -p 'test_*.py' -v
 ./gradlew :shardpilot-gradle-plugin:test --tests io.github.sjacek.shardpilot.PublicationWorkflowTest
 ```
 
-## Local findings: 13 November 2026
+## Initial findings before remediation: 13 November 2026
 
-Local Grype 0.121.3 scans used DB `v6.1.10`, built **2026-11-13T06:20:21Z**. Both runtime inventories
+Initial local Grype 0.121.3 scans used DB `v6.1.10`, built **2026-11-13T06:20:21Z**. Both runtime inventories
 had zero matches. Extended scopes exposed findings that were outside the former runtime boundary:
 
 | Distribution / scope | Critical | High | Medium | Result |
@@ -195,10 +200,13 @@ complete suite passed on the Linux/Python 3.12 environment used for CI script va
 
 ## Limits
 
+See the [13 November remediation follow-up](dependency-remediation-2026-11-13.md) for scoped
+producer dependency updates, exact SDK identities, current scans and the unresolved Jetty boundary.
+
 A zero-match result means no matching advisory in the recorded inventory/DB, not absence of
 vulnerabilities, exploitability/reachability analysis or an independent audit. Unreported shaded
-or vendored code can be missed. Generic SDK file identities have the advisory-matching limitation
-above. The provided report inventories the build's actual API baseline; it is not a separate SBOM
+or vendored code can be missed. Generated/internal SDK files retain the advisory-matching limitation
+above even after identifying the thirteen third-party JARs. The provided report inventories the build's actual API baseline; it is not a separate SBOM
 of every Gradle/JDK/Maven combination in the compatibility matrix. Fixture project classpaths and
 the selected Surefire provider are covered; arbitrary consumer build environments are not.
 CI operating-system packages, JDKs, scanner internals, arbitrary action internals and every nested

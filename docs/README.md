@@ -30,6 +30,7 @@ YAML manifests and selection reports remain compatible. Current snippets target 
 | [Native execution equivalence](execution-equivalence.md) | Compare native test identities, invocation counts, outcomes and skips against two/four shards for the deterministic Gradle/Maven fixtures. |
 | [Security and trust boundaries](security.md) | Understand private reporting, build-process permissions, metadata handling and publication responsibilities. |
 | [SBOMs and dependency vulnerability scanning](dependency-security.md) | Separate Gradle/Maven runtime, build, test and provided inventories, candidate identities, native evidence and the CI severity/database gate. |
+| [Producer dependency remediation](dependency-remediation-2026-11-13.md) | Scoped security updates, reviewed Gradle SDK identities, candidate-bound cache warmup and the remaining Jetty blocker. |
 | [Build dependency integrity](dependency-verification.md) | Review immutable Actions pins, Gradle/TestKit and Maven checksum enforcement, cache protection and baseline updates. |
 | [12 November 2026 review follow-up](security-review-2026-11-12.md) | Find the exact public reference commit, existing evidence, verification limits and remaining security/performance work. |
 | [Published artifact audit](published-artifact-audit.md) | Verify registry bytes and signatures, then observe warmed consumers in isolated Linux containers. |

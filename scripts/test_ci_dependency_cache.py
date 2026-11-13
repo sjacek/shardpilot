@@ -156,6 +156,17 @@ class DependencyCacheTest(unittest.TestCase):
         seeded.write_text('isolated')
         self.assertEqual('download', downloaded.read_text())
 
+    def test_reactor_offline_resolution_enforces_invocation_bound_candidate_checksums(self):
+        (self.root / 'pom.xml').write_text('<project xmlns="http://maven.apache.org/POM/4.0.0"><version>0.4.0</version></project>')
+        with patch.object(cache, 'ROOT', self.root), patch.object(cache, 'CACHE', self.root / 'downloads'), \
+                patch.dict(os.environ, {'SHARDPILOT_MAVEN_VERIFICATION': 'enforce'}), \
+                patch.object(cache.maven_verification, 'consumer_environment', return_value={'MAVEN_OPTS': 'candidate-checksums'}) as prepare, \
+                patch.object(cache.subprocess, 'run') as run:
+            cache.maven(cache.DEPENDENCY_PLUGIN + ':go-offline', '-Psecurity-sbom', with_candidates=True)
+        prepare.assert_called_once_with(self.root / 'downloads/maven', '0.4.0')
+        self.assertEqual({'MAVEN_OPTS': 'candidate-checksums'}, run.call_args.kwargs['env'])
+        self.assertTrue(run.call_args.kwargs['check'])
+
     def test_maven_warmup_filters_fixture_versions_and_never_runs_fixture_lifecycles(self):
         pom = '''<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion>
             <version>0.4.0</version><properties><surefire.version>3.6.1</surefire.version></properties>
@@ -173,6 +184,7 @@ class DependencyCacheTest(unittest.TestCase):
         calls = [call.args for call in maven.call_args_list]
         self.assertEqual(('install', '-DskipTests', '-DskipITs'), calls[0])
         self.assertEqual((cache.DEPENDENCY_PLUGIN + ':go-offline', '-Psecurity-sbom'), calls[1])
+        self.assertEqual({'with_candidates': True}, maven.call_args_list[1].kwargs)
         self.assertEqual(('-Psecurity-sbom,central-release', '-Dcentral.skipUpload=true',
                           cache.DEPENDENCY_PLUGIN + ':resolve-plugins'), calls[2])
         for command in calls[3:-1]:

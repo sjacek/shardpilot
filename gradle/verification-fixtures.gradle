@@ -8,6 +8,13 @@ configurations {
     }
 }
 dependencies {
+    // This download-only configuration has no Java variant attributes. Constrain the actual
+    // Groovy YAML libraries directly rather than relying on a platform's Java runtime variant.
+    constraints {
+        verificationFixtures 'com.fasterxml.jackson.core:jackson-core:2.22.4'
+        verificationFixtures 'com.fasterxml.jackson.core:jackson-databind:2.22.4'
+        verificationFixtures 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.4'
+    }
     verificationFixtures platform('org.junit:junit-bom:6.1.3')
     verificationFixtures 'org.junit.jupiter:junit-jupiter'
     verificationFixtures 'org.junit.platform:junit-platform-launcher'

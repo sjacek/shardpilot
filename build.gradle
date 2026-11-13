@@ -1,3 +1,11 @@
+buildscript {
+    repositories { mavenCentral() }
+    dependencies {
+        // Align the generator's Jackson modules on patched releases without changing its API.
+        classpath platform('com.fasterxml.jackson:jackson-bom:2.22.4')
+    }
+}
+
 plugins {
     id 'base'
     id 'com.gradle.plugin-publish' version '2.2.1' apply false

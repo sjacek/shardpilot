@@ -126,6 +126,7 @@ test {
             rootProject.file('scripts/run_published_artifact_audit.py'), rootProject.file('scripts/published_audit_report.py'))
             .withPropertyName('publishedArtifactAudit')
     inputs.files(rootProject.file('security/scan-policy.json'), rootProject.file('security/grype.yaml'),
+            rootProject.file('security/gradle-sdk-artifacts.json'),
             rootProject.file('scripts/security_reports.py'), rootProject.file('scripts/security_scopes.py'),
             rootProject.file('scripts/maven_security_inventory.py'), rootProject.file('gradle/security-inventories.gradle'))
             .withPropertyName('dependencySecurityPolicy')

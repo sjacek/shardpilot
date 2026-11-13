@@ -35,6 +35,41 @@ class SecurityScopesTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             reports.validate_bom(merged)
 
+    def test_sdk_maven_identity_requires_exact_reviewed_artifact_bytes(self):
+        sdk = {'name': 'groovy-4.0.33.jar', 'version': '9.9.1', 'sha256': 'a' * 64,
+               'configuration': 'compileClasspath'}
+        entry = {'file': sdk['name'], 'group': 'org.apache.groovy', 'name': 'groovy', 'version': '4.0.33',
+                 'sha256': sdk['sha256'],
+                 'source': 'https://repo.maven.apache.org/maven2/org/apache/groovy/groovy/4.0.33/groovy-4.0.33.jar'}
+        registry = {'schemaVersion': 1, 'artifacts': [entry]}
+        component = scopes.sdk_component(sdk, registry)
+        self.assertEqual('pkg:maven/org.apache.groovy/groovy@4.0.33?type=jar', component['purl'])
+        self.assertEqual('4.0.33', component['version'], 'a library version must not be replaced by the Gradle version')
+        self.assertIn({'name': 'shardpilot:provided-by-gradle-version', 'value': '9.9.1'}, component['properties'])
+        for change in ('hash', 'source', 'coordinate', 'duplicate'):
+            value = copy.deepcopy(registry)
+            if change == 'hash':
+                value['artifacts'][0]['sha256'] = 'b' * 64
+            elif change == 'source':
+                value['artifacts'][0]['source'] = 'https://unreviewed.invalid/groovy.jar'
+            elif change == 'coordinate':
+                value['artifacts'][0]['version'] = '4.0.32'
+                value['artifacts'][0]['source'] = entry['source'].replace('/4.0.33/', '/4.0.32/')
+            else:
+                value['artifacts'].append(copy.deepcopy(entry))
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                scopes.sdk_component(sdk, value)
+
+    def test_sdk_generated_files_remain_explicit_and_unreviewed_libraries_block_preparation(self):
+        sdk = {'name': 'gradle-api-9.9.1.jar', 'version': '9.9.1', 'sha256': 'a' * 64,
+               'configuration': 'compileClasspath'}
+        registry = {'schemaVersion': 1, 'artifacts': []}
+        component = scopes.sdk_component(sdk, registry)
+        self.assertTrue(component['purl'].startswith('pkg:generic/gradle/'))
+        sdk['name'] = 'unknown-library-1.0.jar'
+        with self.assertRaisesRegex(ValueError, 'Unreviewed third-party'):
+            scopes.sdk_component(sdk, registry)
+
     def test_scope_merge_preserves_multiple_origins_and_rejects_conflicting_bytes(self):
         library = fixtures.component('example', 'shared-library')
         library['hashes'] = [{'alg': 'SHA-256', 'content': 'a' * 64}]

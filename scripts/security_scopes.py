@@ -33,6 +33,39 @@ def property_value(component, name, value):
         values.append(entry)
 
 
+def sdk_component(sdk, registry):
+    """Use Maven coordinates only after exact SDK bytes match a reviewed Central artifact."""
+    entries = [entry for entry in registry.get('artifacts', []) if entry.get('file') == sdk['name']]
+    if registry.get('schemaVersion') != 1 or len(entries) > 1:
+        raise ValueError('Invalid or ambiguous Gradle SDK registry')
+    if entries:
+        entry = entries[0]
+        expected = ('https://repo.maven.apache.org/maven2/' + entry['group'].replace('.', '/') + '/'
+                    + entry['name'] + '/' + entry['version'] + '/' + entry['file'])
+        if entry['file'] != entry['name'] + '-' + entry['version'] + '.jar' \
+                or entry.get('source') != expected or entry['sha256'] != sdk['sha256'] \
+                or not re.fullmatch(r'[a-f0-9]{64}', entry['sha256']):
+            raise ValueError('Gradle SDK bytes or identity differ from the reviewed Central artifact')
+        group, name, version = (entry[key] for key in ('group', 'name', 'version'))
+        purl = f'pkg:maven/{group}/{name}@{version}?type=jar'
+        kind = 'reviewed-maven-artifact-by-sha256'
+    else:
+        # These generated/internal Gradle files have no equivalent Central artifact. A newly
+        # introduced third-party SDK library requires review, rather than silently losing CVE coverage.
+        if sdk['name'] not in (f'gradle-api-{sdk["version"]}.jar', f'gradle-test-kit-{sdk["version"]}.jar',
+                               f'gradle-installation-beacon-{sdk["version"]}.jar'):
+            raise ValueError('Unreviewed third-party Gradle SDK file: ' + sdk['name'])
+        group, name, version = 'gradle', sdk['name'], sdk['version']
+        purl = f'pkg:generic/gradle/{quote(name, safe=".-")}@{quote(version, safe=".-")}'
+        kind = 'gradle-distribution-file'
+    return {'type': 'library', 'group': group, 'name': name, 'version': version, 'bom-ref': purl, 'purl': purl,
+            'hashes': [{'alg': 'SHA-256', 'content': sdk['sha256']}],
+            'properties': [{'name': 'shardpilot:identity-kind', 'value': kind},
+                           {'name': 'shardpilot:sdk-file', 'value': sdk['name']},
+                           {'name': 'shardpilot:provided-by-gradle-version', 'value': sdk['version']},
+                           {'name': 'shardpilot:configuration', 'value': sdk['configuration']}]}
+
+
 def maven_build_inventory(path, root):
     """Read resolve-plugins' native realm membership, not an unrelated local-repository crawl.
 
@@ -243,13 +276,15 @@ def prepare(distribution, commit):
                         raise ValueError('Wrong Gradle scope provenance')
                     origin['configurations'] = evidence['configurations']
                     origin['gradleVersion'] = evidence['gradleVersion']
+                    registry_path = reports.ROOT / 'security/gradle-sdk-artifacts.json'
+                    registry = reports.read_json(registry_path) if evidence['localArtifacts'] else None
+                    if registry is not None:
+                        inputs.append({'file': registry_path.relative_to(reports.ROOT).as_posix(),
+                                       'sha256': reports.sha256(registry_path)})
                     for sdk in evidence['localArtifacts']:
-                        purl = f'pkg:generic/gradle/{quote(sdk["name"], safe=".-")}@{quote(sdk["version"], safe=".-")}'
-                        document.setdefault('components', []).append({
-                            'type': 'library', 'group': 'gradle', 'name': sdk['name'], 'version': sdk['version'],
-                            'bom-ref': purl, 'purl': purl, 'hashes': [{'alg': 'SHA-256', 'content': sdk['sha256']}],
-                            'properties': [{'name': 'shardpilot:identity-kind', 'value': 'gradle-distribution-file'},
-                                           {'name': 'shardpilot:configuration', 'value': sdk['configuration']}]})
+                        component = sdk_component(sdk, registry)
+                        purl = component['purl']
+                        document.setdefault('components', []).append(component)
                         native_root = document['metadata']['component']['bom-ref']
                         edge = next((item for item in document.setdefault('dependencies', []) if item['ref'] == native_root), None)
                         if edge is None:

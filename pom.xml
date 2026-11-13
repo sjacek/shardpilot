@@ -39,16 +39,92 @@
     <junit.version>6.1.3</junit.version>
     <surefire.version>3.6.1</surefire.version>
     <skipITs>false</skipITs>
+    <!-- Producer-plugin realms do not inherit project dependencyManagement. Keep their
+         security updates explicit and scoped; these are not ShardPilot runtime libraries. -->
+    <tooling.jackson.version>2.22.4</tooling.jackson.version>
+    <tooling.guava.version>33.7.2-jre</tooling.guava.version>
+    <tooling.plexus3.version>3.6.2</tooling.plexus3.version>
+    <tooling.plexus4.version>4.0.3</tooling.plexus4.version>
+    <tooling.archiver.version>4.15.0</tooling.archiver.version>
+    <tooling.beanutils.version>1.11.0</tooling.beanutils.version>
+    <tooling.jsoup.version>1.23.2</tooling.jsoup.version>
+    <tooling.bouncycastle.version>1.87</tooling.bouncycastle.version>
   </properties>
   <dependencyManagement><dependencies>
     <dependency><groupId>org.junit</groupId><artifactId>junit-bom</artifactId><version>${junit.version}</version><type>pom</type><scope>import</scope></dependency>
+    <!-- Maven's provided API graph includes Guava. Keep the API baseline while selecting
+         patched transitive bytes for producer compilation/tests; no runtime dependency is added. -->
+    <dependency><groupId>com.google.guava</groupId><artifactId>guava</artifactId><version>${tooling.guava.version}</version></dependency>
   </dependencies></dependencyManagement>
   <build><pluginManagement><plugins>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.16.0</version></plugin>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>${surefire.version}</version></plugin>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>${surefire.version}</version></plugin>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.5.1</version></plugin>
-    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-help-plugin</artifactId><version>3.5.2</version></plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-help-plugin</artifactId><version>3.5.2</version>
+      <dependencies><dependency><groupId>org.jsoup</groupId><artifactId>jsoup</artifactId><version>${tooling.jsoup.version}</version></dependency></dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-clean-plugin</artifactId><version>3.5.0</version>
+      <dependencies><dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-utils</artifactId><version>${tooling.plexus4.version}</version></dependency></dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-resources-plugin</artifactId><version>3.5.0</version>
+      <dependencies><dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-utils</artifactId><version>${tooling.plexus3.version}</version></dependency></dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-source-plugin</artifactId><version>3.4.0</version>
+      <dependencies>
+        <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-utils</artifactId><version>${tooling.plexus4.version}</version></dependency>
+        <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-archiver</artifactId><version>${tooling.archiver.version}</version></dependency>
+      </dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.12.0</version>
+      <dependencies>
+        <dependency><groupId>commons-beanutils</groupId><artifactId>commons-beanutils</artifactId><version>${tooling.beanutils.version}</version></dependency>
+        <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-utils</artifactId><version>${tooling.plexus4.version}</version></dependency>
+        <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-archiver</artifactId><version>${tooling.archiver.version}</version></dependency>
+      </dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-site-plugin</artifactId><version>3.22.0</version>
+      <dependencies>
+        <dependency><groupId>commons-beanutils</groupId><artifactId>commons-beanutils</artifactId><version>${tooling.beanutils.version}</version></dependency>
+        <dependency><groupId>org.jsoup</groupId><artifactId>jsoup</artifactId><version>${tooling.jsoup.version}</version></dependency>
+      </dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId><version>3.11.0</version>
+      <dependencies><dependency><groupId>commons-beanutils</groupId><artifactId>commons-beanutils</artifactId><version>${tooling.beanutils.version}</version></dependency></dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-invoker-plugin</artifactId><version>3.10.1</version>
+      <dependencies>
+        <dependency><groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId><version>3.18.0</version></dependency>
+        <dependency><groupId>org.iq80.snappy</groupId><artifactId>snappy</artifactId><version>0.5</version></dependency>
+      </dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-gpg-plugin</artifactId><version>3.2.8</version>
+      <dependencies>
+        <dependency><groupId>org.bouncycastle</groupId><artifactId>bcprov-jdk18on</artifactId><version>${tooling.bouncycastle.version}</version></dependency>
+        <dependency><groupId>org.bouncycastle</groupId><artifactId>bcpg-jdk18on</artifactId><version>${tooling.bouncycastle.version}</version></dependency>
+        <dependency><groupId>org.bouncycastle</groupId><artifactId>bcutil-jdk18on</artifactId><version>${tooling.bouncycastle.version}</version></dependency>
+        <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-utils</artifactId><version>${tooling.plexus3.version}</version></dependency>
+      </dependencies>
+    </plugin>
+    <plugin><groupId>org.cyclonedx</groupId><artifactId>cyclonedx-maven-plugin</artifactId><version>2.9.3</version>
+      <dependencies>
+        <dependency><groupId>org.cyclonedx</groupId><artifactId>cyclonedx-core-java</artifactId><version>11.0.1</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-core</artifactId><version>${tooling.jackson.version}</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId><version>${tooling.jackson.version}</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.dataformat</groupId><artifactId>jackson-dataformat-xml</artifactId><version>${tooling.jackson.version}</version></dependency>
+      </dependencies>
+    </plugin>
+    <plugin><groupId>org.sonatype.central</groupId><artifactId>central-publishing-maven-plugin</artifactId><version>0.12.0</version>
+      <dependencies>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-core</artifactId><version>${tooling.jackson.version}</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId><version>${tooling.jackson.version}</version></dependency>
+        <dependency><groupId>com.google.guava</groupId><artifactId>guava</artifactId><version>${tooling.guava.version}</version></dependency>
+        <dependency><groupId>org.apache.httpcomponents.client5</groupId><artifactId>httpclient5</artifactId><version>5.6.5</version></dependency>
+        <dependency><groupId>org.apache.httpcomponents.core5</groupId><artifactId>httpcore5</artifactId><version>5.4.4</version></dependency>
+        <dependency><groupId>org.apache.httpcomponents.core5</groupId><artifactId>httpcore5-h2</artifactId><version>5.4.4</version></dependency>
+        <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-utils</artifactId><version>${tooling.plexus3.version}</version></dependency>
+      </dependencies>
+    </plugin>
   </plugins></pluginManagement></build>
   <profiles>
     <profile>

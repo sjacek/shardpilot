@@ -196,3 +196,17 @@ realms, and are not proof of exploitation in the distributed ShardPilot runtime.
 SDK file identities preserve exact bytes but do not guarantee advisory coverage of bundled code.
 The expanded hosted workflow still needs verification after the next push. Real-suite performance
 measurement remains deferred, and operational private-reporting setup remains a separate check.
+
+## Producer remediation and private-reporting setup
+
+The [13 November remediation follow-up](dependency-remediation-2026-11-13.md) records scoped
+producer dependency updates, native build/signature checks and thirteen SDK libraries identified
+by exact reviewed Maven artifact hashes. The GitHub private-reporting setting was enabled and
+confirmed through the repository API. This is an operational setting check, not a claim that a
+report was submitted from another user's account.
+
+The latest hosted `bb712b0` run stopped in cache warmup on a missing local-candidate checksum,
+before SCA or matrix execution. The helper now passes a five-file invocation-bound candidate
+baseline to that offline-resolution step. The expanded local scans still retain the Maven Site /
+Jetty blocker; there is no exception or lowered threshold. A new hosted run remains necessary
+after the maintainer pushes these changes. Performance measurement remains deferred.
