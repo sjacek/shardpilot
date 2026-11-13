@@ -3,7 +3,7 @@
 [Security boundaries](security.md) | [Review follow-up](security-review-2026-11-12.md) |
 [Dependency integrity](dependency-verification.md)
 
-This maintainer check defaults to public **0.4.0** distribution bytes, separately from the development
+This maintainer check defaults to public **0.5.0** distribution bytes, separately from the development
 checkout and locally built release candidates. It is bounded execution evidence, not an independent
 security certification, a reproducible-binary-build proof or a guarantee about every consumer.
 
@@ -15,10 +15,10 @@ metadata and its three JARs. Downloads retain original/final HTTPS URLs, sizes a
 
 - Maven Central SHA-256/SHA-512 sidecars are compared with the downloaded bytes. Its nine detached
   OpenPGP signatures are checked separately using a fresh public-only GnuPG home.
-- The Gradle marker must point to `io.github.sjacek:shardpilot:0.4.0`. Module metadata's artifact
+- The Gradle marker must point to `io.github.sjacek:shardpilot:0.5.0`. Module metadata's artifact
   SHA-256s must match the actual binary/source/Javadoc JARs. Absent Portal sidecars/signatures are
   recorded as absent, rather than presented as independently verified signatures.
-- Java sources in each source JAR must match the appropriate modules of `v0.4.0`; only CRLF/LF
+- Java sources in each source JAR must match the appropriate modules of `v0.5.0`; only CRLF/LF
   differences are normalized. Missing/extra/changed Java sources fail verification. ZIP entries
   are checked for duplicates, traversal, absolute paths, symlinks and excessive expansion.
 - Published class-file versions must not exceed Java 17. Source comparisons do not prove that
@@ -103,8 +103,13 @@ credentials, repository writes, workflow dispatch, commit or push are required.
 ```shell
 python3 -B scripts/run_published_artifact_audit.py
 # Explicitly select an already published stable release:
-python3 -B scripts/run_published_artifact_audit.py --version 0.4.0
+python3 -B scripts/run_published_artifact_audit.py --version 0.5.0
 ```
+
+The launcher, registry-download CLI and host-side fixture runner all take their default from
+`security/published-artifact-audit.json`. The launcher passes the selected version explicitly to
+each sandbox; the repository policy is not mounted there. An explicit `--version 0.4.0` still
+audits that older release against its own signed tag without changing the default policy.
 
 On Windows use an installed Python executable. A different output directory can preserve an earlier
 cohort. `--reuse-downloads` explicitly reuses locally retained registry/tag bytes after checking artifact
@@ -155,7 +160,7 @@ The workflow must first be present on the default branch for manual dispatch to 
 The equivalent manual command is:
 
 ```shell
-gh workflow run published-artifact-audit.yml --repo sjacek/shardpilot --ref main -f version=0.4.0
+gh workflow run published-artifact-audit.yml --repo sjacek/shardpilot --ref main -f version=0.5.0
 ```
 
 The workflow checks out the triggering tooling SHA with complete tag history, downloads public
@@ -173,12 +178,15 @@ No new required branch-check context is necessary: the audit is a release-job de
 
 **Pre-publication scope:** a new candidate cannot be downloaded from both registries before it has
 been published. The pre-release gate therefore audits the last complete **published baseline**, not
-the candidate. The policy currently binds `0.4.0` to commit
-`58daef5436a01295ce46feea56aa307c41bbd0a0` and the reviewed publisher fingerprint. Candidate behavior
+the candidate. The policy currently binds `0.5.0` to commit
+`dacbfbdb07e61f37ffa524fb286a97483c6c93e9` and the reviewed publisher fingerprint. Candidate behavior
 is checked by the compatibility matrix and signed-bundle verification. After both registries expose
 a new release, run the audit explicitly for that version before updating the baseline policy in a
 reviewed change. Do not advance the baseline to an unpublished candidate or move an existing tag.
 Update the baseline regression in `testing/published-artifacts/test_audit.py` together with the policy.
+Retain a compact evidence record under `docs/evidence/` that binds the successful published audit
+to the version, source commit, publisher identity and original report archive. Keep older records
+and their original request/policy snapshots unchanged.
 Different artifact layouts/API or Java-target changes require reviewing the fixture/checks as well.
 
 The packaging and upload steps use `always()`. They retain one versioned run artifact for **30 days**:
@@ -196,9 +204,41 @@ fails packaging verification. Forced runner termination can prevent final steps,
 best-effort retention rather than a guarantee after runner loss. Existing immutable release tags
 do not acquire new workflows; this gate applies to future tags containing these changes.
 
+## Published 0.5.0 baseline: 13 November 2026
+
+[Run 43446236408](https://github.com/sjacek/shardpilot/actions/runs/43446236408) completed successfully
+after both registries exposed **0.5.0**. Its tooling and audited source commit are
+`dacbfbdb07e61f37ffa524fb286a97483c6c93e9`; signed tag `v0.5.0` has tag-object ID
+`b0c8d1fc51614857a6085b177c4ef64d1bec9bc7`. The
+[retained compact evidence](evidence/published-0.5.0-2026-11-13.json) records the registry hashes,
+signer, native/event/trace evidence hashes, isolation settings and nine rejected mutations.
+
+| Check | Observed result |
+| --- | --- |
+| Registry and signatures | 15 files: nine Central files and six Portal files; nine Central signatures plus the signed tag verified with the unchanged reviewed publisher key. |
+| Isolated Gradle | Reference: eight native executions; two nodes: 4 + 4; four nodes: 2 + 2 + 2 + 2. |
+| Isolated Maven | Surefire/Failsafe reference: sixteen executions; two nodes: 8 + 8; four nodes: 4 + 4 + 4 + 4. |
+| Equivalence | All four identity/multiplicity/outcome comparisons passed. |
+| Network | Zero non-loopback IP or DNS attempts in fourteen measured runs; the deliberate blocked control attempt was recorded. |
+| Independent recheck | Downloaded report archive checksums matched; local re-reading passed, including rejection of all nine private-copy evidence mutations. |
+
+The run artifact is `published-artifact-audit-43446236408-1`, ID `14049180349`, with outer ZIP
+SHA-256 `8cd6ad36818bf0f28a8c7a66668cc30d25370efdb9d4e2bc9a587e45e0589f7a`.
+Its inner `published-artifact-audit-report.zip` has SHA-256
+`f21e61f2e1b9a39cdf41e7d39ddc19205029455e88ae41827fbad34a8383729d`.
+Download the full raw reports from the run before the 30-day retention expires if longer-term
+review is needed; the committed compact record does not contain the raw traces or registry JARs.
+
+This post-publication result supports advancing the default baseline to 0.5.0. The run itself
+explicitly selected 0.5.0 while its tooling policy still defaulted to 0.4.0; that historical
+`auditRequest` and tooling snapshot remain unchanged in the evidence record. Future audit runs
+from a revision containing the updated policy use 0.5.0 when no version is supplied. Existing
+immutable tags retain their original policy. The bounded-scenario and authentication limits
+above still apply; this audit does not replace dependency vulnerability scans.
+
 ## Local result: 12 November 2026
 
-The [retained compact evidence](evidence/published-0.4.0-2026-11-12.json) binds the public release
+This historical **0.4.0** [compact evidence](evidence/published-0.4.0-2026-11-12.json) binds the public release
 to commit `58daef5436a01295ce46feea56aa307c41bbd0a0`. This was a local maintainer execution on
 Windows with Linux Docker containers, not a hosted CI run or independent third-party assessment.
 
@@ -233,9 +273,6 @@ published **0.4.0** baseline. The workflow retains its verdict, report archive, 
 traces and mutation-control evidence as described above. Download those artifacts before their
 30-day retention expires if longer-term independent review is needed.
 
-The checkout now prepares **0.5.0, not yet published**. The policy, default version and audited source
-commit remain pinned to 0.4.0; they must not be changed merely to match the project version.
-The pre-publication gate audits 0.4.0 while candidate CI checks 0.5.0. After both registries publish
-0.5.0, run this workflow with `version=0.5.0`, inspect the complete cohort, then review policy and
-baseline regression changes together. Neither the green source CI nor this older registry audit
-establishes the signature or network behavior of unpublished 0.5.0 bytes.
+The 0.5.0 publication gates also audited 0.4.0, since the candidate was not yet available in both
+registries. That older audit did not establish the behavior of the new release; the separate
+post-publication 0.5.0 result above supplies its registry and execution evidence.

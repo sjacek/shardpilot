@@ -8,9 +8,9 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 ## Unreleased
 
-No changes recorded after the 0.5.0 release preparation.
+No user-facing changes recorded after the 0.5.0 release.
 
-## [0.5.0](docs/releases/0.5.0.md) — not yet published
+## [0.5.0](docs/releases/0.5.0.md) — 2026-11-13
 
 ### Added
 

@@ -2,8 +2,8 @@
 
 [Documentation index](README.md) · [Release procedure](releases.md)
 
-These English descriptions prepare the purpose and scope of the 0.5.0 artifacts, not yet published. They are
-configured in the build metadata that will be submitted with a release. The metadata files are
+These English descriptions document the purpose and scope of the published 0.5.0 artifacts. They are
+configured in the build metadata submitted with the release. The metadata files are
 the source of truth; update the matching text here when changing them. Published earlier versions
 keep their own release metadata.
 

@@ -2,11 +2,13 @@
 
 [Documentation index](README.md)
 
-Version **[0.5.0](releases/0.5.0.md)** is prepared in this checkout, **not yet published**.
+Version **[0.5.0](releases/0.5.0.md)** was published to Gradle Plugin Portal and Maven Central on **13 November 2026**.
 It adds explicit YAML test selection for Gradle and Maven, with isolated suite evidence and
 strict selection validation. Existing configuration remains compatible when selection is absent.
-See the [upgrade and release checklist](releases/0.5.0.md). The last published/audited baseline
-remains [0.4.0](releases/0.4.0.md); its immutable registry policy is not advanced during preparation.
+See the [upgrade and release evidence](releases/0.5.0.md). The default published/audited baseline
+is now [0.5.0](published-artifact-audit.md#published-050-baseline-13-november-2026), after a successful
+post-publication audit of both registries. The procedure below applies to future releases;
+do not recreate `v0.5.0` or upload its immutable artifacts again.
 The build uses `com.gradle.plugin-publish` 2.2.1 and produces plugin, source and Javadoc JARs,
 Maven publication metadata and the `publishPlugins` task. Project/SCM URLs, tags and the tested
 configuration-cache feature are configured in `shardpilot-gradle-plugin/build.gradle`.

@@ -1,0 +1,24 @@
+{
+  "tool": "image_gen.imagegen",
+  "avatar": {
+    "prompt": "Create a NEW SHARDPILOT PROJECT VARIANT of the supplied Grinnotech Platform avatar family. The reference images are style references only; keep their exact visual language, not their existing role glyphs. Deliver ONE single finished square repository avatar, not a presentation sheet. Full-bleed solid dark forest-green background #063D26 all the way to the square corners. A broad pale mint isometric parallelogram field, about 76% canvas width, occupies the lower half. Leave its front third visibly empty as open space. On the back part of the field build THREE separate equally sized green module stacks, each two cubes high, laid out in a balanced parallel row rather than ascending steps. Lime top faces #A0EF3B, medium green right faces #388E24, dark green left faces #07532B, thin precise dark separation between modules, same isometric projection as the references. In front of the three stacks stand one clean upright dark-green control panel supported by a low green cubic base. On the panel place a SINGLE large bold pale mint fan-out glyph: one vertical input stem from below splits at one junction into THREE equal branches, pointing up-left, straight up, and up-right, each ending in one simple arrowhead aimed toward a respective stack. This unmistakably represents one test suite divided into three parallel balanced shards, with one pilot controlling distribution. The fan-out symbol is the focal point and occupies most of the panel; no tiny marks or extra symbols. Keep all three stack tops visible behind the panel. Premium minimal geometric brand illustration, crisp flat polygon faces, harmonious sparse composition. Exactly the monochrome forest/lime/mint palette and modular language of the reference family. No letters, no words, no name, no numbers, no typography, no watermark, no outer border, no inset card, no rounded outer corners, no software interface, no airplanes, no mascots. No textures, no bevels, no chrome, no cast shadows or glow. Consistent vector-like isometric illustration, not photorealistic 3D. Optically centered, generous safe margins so all geometry survives circular avatar cropping. Clear at 192 and 48 pixels. Square 1024x1024 composition.",
+    "styleReferences": [
+      "Grinnotech Platform group avatar",
+      "Grinnotech Platform gitlab-profile avatar"
+    ],
+    "master": "masters/shardpilot-avatar.png",
+    "originalSource": "C:\\Users\\jacek\\.codex\\generated_images\\01a1d525-6e3e-7363-9ebd-e1ba345ad90e\\exec-df16d9af-df34-4256-9f7e-d2a84a3f335d.png"
+  },
+  "icon": {
+    "source": "shardpilot-icon.svg",
+    "method": "Authored SVG geometry based on the selected avatar control panel and its three-way fan-out symbol",
+    "pngExport": "Headless browser render of SVG followed by proportional PNG exports",
+    "transparentSurroundings": true
+  },
+  "colors": {
+    "forest": "#063D26",
+    "lime": "#A0EF3B",
+    "side": "#388E24",
+    "mint": "#CDFFD8"
+  }
+}

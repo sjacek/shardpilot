@@ -1,5 +1,14 @@
 # ShardPilot
 
+<table role="presentation">
+<tr>
+<td>
+
+[![ShardPilot avatar: three parallel green shard towers and a mint fan-out arrow.](assets/branding/shardpilot-avatar-256.png)](assets/branding/README.md)
+
+</td>
+<td>
+
 ShardPilot helps shorten CI feedback for large JVM unit and integration test suites by splitting
 test classes into deterministic shards that run in parallel CI jobs. It provides a Gradle `Test`
 adapter and a Maven Surefire/Failsafe adapter over one shared core. The Gradle adapter can also
@@ -11,6 +20,10 @@ test-runner replacement or telemetry. YAML manifests use SnakeYAML Engine in the
 Optional [explicit selection](docs/test-selection.md) runs a consumer-owned YAML class subset with
 one or multiple shards, validates it against full eligibility and keeps separate selection reports.
 The consumer decides when a short suite is sufficient; native test results remain an independent gate.
+
+</td>
+</tr>
+</table>
 
 Plugin ID: `io.github.sjacek.shardpilot` · License: [MIT](LICENSE).
 
@@ -73,14 +86,13 @@ collects the results. It does not create CI jobs or coordinate their completion.
 
 ## Status
 
-This checkout prepares **[0.5.0](docs/releases/0.5.0.md)** with opt-in
+**[0.5.0](docs/releases/0.5.0.md)** is published in Gradle Plugin Portal and Maven Central, with opt-in
 [explicit test selection](docs/test-selection.md) for Gradle and Maven. Installation snippets
-target this candidate; it is **not yet published**. Use the
-[local development setup](#local-plugin-development) to evaluate it before publication.
-The last published and audited reference remains **[0.4.0](docs/releases/0.4.0.md)**;
-its history refresh and existing sharding configuration remain compatible.
+target this release; the [local development setup](#local-plugin-development) supports source changes.
+The default [published-artifact audit](docs/published-artifact-audit.md#published-050-baseline-13-november-2026)
+now uses **0.5.0**, bound to its signed tag and retained registry/isolation evidence.
 The [audit follow-up](docs/security-review-2026-11-12.md#current-status-13-november-2026)
-separates published-artifact evidence, the green source CI cohort and remaining release checks.
+separates published-artifact evidence, the green source CI cohort and remaining assurance work.
 Candidate [SBOMs and vulnerability scans](docs/dependency-security.md) distinguish Gradle and Maven,
 with separate runtime, build, test and provided reports. Runtime, supported build tooling, test and provided scopes gate CI/publication under the
 recorded severity/database policy. Maven's additional full-tooling report retains inherited
