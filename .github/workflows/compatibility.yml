@@ -50,7 +50,7 @@ jobs:
         run: python3 -B scripts/maven_verification.py prepare
       - name: Restore downloaded dependencies
         id: dependencies
-        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         # restore/action.yml at v5 defines these inputs; older IDE action metadata may lag.
         with:
           # noinspection UndefinedParamsPresent
