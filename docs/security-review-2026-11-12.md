@@ -8,6 +8,25 @@ remaining work. It is not an independent penetration test, a dependency vulnerab
 production-security approval. The report's recommendations are inputs to this review, not
 instructions that authorize changes to GitHub settings, publication or consumer infrastructure.
 
+## Current status: 13 November 2026
+
+This section supersedes the outstanding-work wording in the dated implementation stages below.
+Those stages retain what was known at the time; they are not the current release verdict.
+
+| Area | Confirmed evidence | Boundary / next step |
+| --- | --- | --- |
+| Private reporting | GitHub repository API confirmed Private Vulnerability Reporting enabled on 13 November. | A signed-in external reporter's access/submission was not independently exercised. |
+| Published artifacts and isolation | Public **0.4.0**, signed tag/source cohort and fourteen offline consumers are covered by retained local evidence and successful [hosted audit 43342517533](https://github.com/sjacek/shardpilot/actions/runs/43342517533), tooling commit `8f618ae345791b22972b4d25124f2c106631b084`. | This verifies the published baseline, not unpublished 0.5.0. [Audit procedure and limits](published-artifact-audit.md). |
+| Source compatibility and signing | [Run 43418902994](https://github.com/sjacek/shardpilot/actions/runs/43418902994), source `ac2d28f745051886f2850094486f7bb8f008ba80`, passed all fifteen jobs: warmup, eight Gradle cells, three Maven cells, upload-disabled signing and two security jobs. | Source still declared 0.4.0. The 0.5.0 preparation changes need their own hosted cohort. |
+| Dependency security and integrity | Actions pinned to SHAs; reviewed byte baselines; four blocking scopes per distribution pass. Maven guard controls pass fourteen offline cases. | Maven full-tooling diagnostic retains **two High and two Medium** Site/Jetty findings. No suppression, fixed-CVE or zero-vulnerability claim. [Full follow-up](dependency-remediation-2026-11-13.md#hosted-confirmation-13-november-2026). |
+| Execution equivalence | Deterministic Gradle Jupiter/Spock/TestNG and Maven Surefire/Failsafe compare full execution with two/four shards, including identities, multiplicities, outcomes and skips. | Bounded fixtures, not all consumer suites or feature combinations. |
+| Required gates | Fourteen main checks retain the eleven matrix cells, signed bundle and two distribution scans; release jobs also require the full published-baseline audit. | Candidate publication remains a separate maintainer action after green release-commit CI. |
+| Performance and external assurance | Real-suite benchmark explicitly deferred. | No measured speedup, independent audit or production-security certification is claimed. |
+
+The checkout prepares [0.5.0](releases/0.5.0.md), with **no publication yet**. After both registries
+expose the new release, rerun the full published-artifact audit for 0.5.0 before reviewing an update
+to the immutable published baseline. Preserve the 0.4.0 evidence and source identities.
+
 ## Reference snapshot
 
 The user identified the reviewed version as the public GitHub state visible on 12 November 2026.
@@ -36,7 +55,7 @@ git rev-parse 'HEAD^{tree}'
 git show -s --format='%H %T %s' 'v0.4.0^{}'
 ```
 
-## Classification of the report's findings
+## Initial classification of the report's findings
 
 "Present" below means there is specific repository or historical CI evidence. It does not mean
 that every attack scenario or remote setting has been verified.
@@ -100,7 +119,7 @@ validated UTF-8, 126 relative file-link targets in the seven changed Markdown do
 tree/tag identities and the policy's private-reporting URL. It did not verify external website
 availability or enable repository settings.
 
-## Next stages and acceptance criteria
+## Initial stages and acceptance criteria (historical)
 
 1. **Operational private reporting:** review the policy, enable/verify GitHub's private reporting
    setting and confirm that a signed-in reporter can reach the form without submitting a real report.
@@ -194,7 +213,7 @@ blocked the current tooling/API dependency set. See the scope table and limitati
 dependency-security guide: these findings need triage/remediation, including build-only plugin
 realms, and are not proof of exploitation in the distributed ShardPilot runtime. Generic Gradle
 SDK file identities preserve exact bytes but do not guarantee advisory coverage of bundled code.
-The expanded hosted workflow still needs verification after the next push. Real-suite performance
+At this stage, the expanded hosted workflow still needed verification after a push. Real-suite performance
 measurement remains deferred, and operational private-reporting setup remains a separate check.
 
 ## Producer remediation and private-reporting setup
@@ -205,8 +224,9 @@ by exact reviewed Maven artifact hashes. The GitHub private-reporting setting wa
 confirmed through the repository API. This is an operational setting check, not a claim that a
 report was submitted from another user's account.
 
-The latest hosted `bb712b0` run stopped in cache warmup on a missing local-candidate checksum,
-before SCA or matrix execution. The helper now passes a five-file invocation-bound candidate
-baseline to that offline-resolution step. The expanded local scans still retain the Maven Site /
-Jetty blocker; there is no exception or lowered threshold. A new hosted run remains necessary
-after the maintainer pushes these changes. Performance measurement remains deferred.
+The earlier hosted `bb712b0` run stopped in cache warmup on a missing local-candidate checksum,
+before SCA or matrix execution. The helper then added a five-file invocation-bound candidate
+baseline to that offline-resolution step. At that stage, the all-realms Maven gate still blocked
+on Site/Jetty. The later explicit producer tooling boundary and green hosted confirmation are
+recorded in the [current status](#current-status-13-november-2026) above. Findings remain visible,
+the blocking threshold is unchanged, and real-suite performance measurement remains deferred.

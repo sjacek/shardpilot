@@ -5,6 +5,44 @@
 Run checks from the ShardPilot repository, not a consuming application's build. The Wrapper pins
 the Gradle version; use a JDK supported by that Gradle runtime.
 
+## 0.5.0 release preparation
+
+The checkout prepares **[0.5.0](releases/0.5.0.md), not yet published**. Gradle and the Maven
+reactor/example pins share this version. `verifyReleaseTag -PreleaseTag=v0.5.0` checks equality
+without creating a tag. Historical sections below retain the toolchains and results recorded
+for their original revisions.
+
+The Docker-free [Gradle selection example](../examples/gradle/junit-jupiter/test-selection/README.md)
+is copied from the actual repository inputs into TestKit. Its regression compares native identities
+for one node and the union of two nodes, preserving per-node XML and rejecting duplicates or Gamma
+execution. The [Maven selection example](../examples/maven/test-selection/README.md) is a third
+runnable Invoker consumer; its post-build hook verifies the original two-node XML, exact class
+identities, execution counts, successful outcomes and selection coverage. Existing negative selection
+fixtures and native full-versus-2/4-shard equivalence checks remain required.
+
+Use the [release checklist](releases/0.5.0.md#release-checks-and-maintainer-handoff) for full builds,
+Python guards and signing with upload disabled. The
+[published-artifact baseline](published-artifact-audit.md) stays at 0.4.0 during preparation;
+0.5.0 needs fresh hosted CI and a separate registry audit after both registries publish it.
+
+### Local candidate evidence: 13 November 2026
+
+On Windows/JDK 25, the 0.5.0 working tree passed native Maven `verify`: **302 unit tests**,
+**17 Invoker projects** and **three runnable examples**, with no failures/errors/skips. The new
+Maven smoke example also passed a separate one-node run with exactly Alpha and Beta observed.
+The upload-disabled release bundle passed **nine artifacts, nine signatures and 54 entries**,
+using a disposable signing identity. Native Maven XML/Invoker reports were archived locally before
+that bundle check cleaned Maven targets.
+
+The final full Gradle `check assemble verifyReleaseTag -PreleaseTag=v0.5.0` passed with
+**347 test cases** (165 core and 182 adapter), zero failures/errors/skips. The core task reused its
+unchanged successful result; the complete adapter suite reran. The new example also passed its
+focused native one/two-node regression, with XML retained independently for both nodes. Linux/Python 3.12
+passed **97 script tests** in a network-disabled read-only container. The integrity policy retained
+**378 Gradle artifact records, 984 Maven records and 44 pinned Action references**. All **442**
+local file-link targets inspected in current documentation existed. These local checks do not
+establish the candidate's hosted compatibility matrix, fresh SCA reports or registry-byte audit.
+
 ## Local verification
 
 ```shell

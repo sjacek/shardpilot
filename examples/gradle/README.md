@@ -7,6 +7,7 @@ Each scenario is an independent Gradle consumer build, not a subproject of the p
 | --- | --- | --- |
 | JUnit Jupiter | [PostgreSQL and RabbitMQ with Testcontainers](junit-jupiter/testcontainers/README.md) | Available |
 | JUnit Jupiter | [Duration-history refresh without Docker](junit-jupiter/duration-history/README.md) | Available |
+| JUnit Jupiter | [Explicit selection without Docker](junit-jupiter/test-selection/README.md) | Prepared for 0.5.0 |
 | Spock | [PostgreSQL and RabbitMQ with Testcontainers](spock/testcontainers/README.md) | Available |
 | TestNG | [PostgreSQL and RabbitMQ with Testcontainers](testng/testcontainers/README.md) | Available |
 
@@ -25,7 +26,8 @@ PowerShell:
 ```
 
 All three Testcontainers examples require Docker. Follow their READMEs for shard selection and prerequisites;
-the parent plugin's `check` does not automatically execute example builds.
+the parent plugin's `check` does not automatically start these container builds. The Docker-free history
+and selection examples are copied into temporary builds and verified through TestKit.
 
 ## Import into IntelliJ IDEA
 

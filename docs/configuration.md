@@ -62,7 +62,7 @@ An explicit `shardPilot.testProcesses { ... }` block sets `maxHeapSize`, `maxPar
 and/or `forkEvery` on the owning Gradle `Test` task. See the
 [Groovy and Kotlin examples](../README.md#optional-test-process-settings).
 Version 0.1.0 does not provide this API; it is available in
-[0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1) and retained by 0.4.0.
+[0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1) and retained by 0.5.0.
 
 | Property | Gradle type | Meaning |
 | --- | --- | --- |
@@ -82,7 +82,7 @@ There is no automatic memory detection, memory-driven scheduling, retry or failu
 ```groovy
 plugins {
     id 'java'
-    id 'io.github.sjacek.shardpilot' version '0.4.0'
+    id 'io.github.sjacek.shardpilot' version '0.5.0'
 }
 
 tasks.named('test', Test) {
@@ -115,7 +115,7 @@ import io.github.sjacek.shardpilot.ShardPilotExtension
 
 plugins {
     java
-    id("io.github.sjacek.shardpilot") version "0.4.0"
+    id("io.github.sjacek.shardpilot") version "0.5.0"
 }
 
 tasks.test {
@@ -224,7 +224,7 @@ The HTML file opens locally without scripts, network resources or a web server.
 See [HTML statuses](shard-verification.md#reading-html-statuses) and
 [GitLab publication](shard-verification.md#finding-a-class-assignment-in-gitlab).
 
-## Optional history refresh (0.4.0)
+## Optional history refresh (since 0.4.0)
 
 Configure `shardPilot.history {}` once per owner, outside deferred task configuration, as with
 `verification {}`. It is independent of sharding enablement. No refresh task exists until opt-in.

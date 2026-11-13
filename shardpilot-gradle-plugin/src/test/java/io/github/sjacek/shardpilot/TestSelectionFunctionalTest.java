@@ -28,6 +28,38 @@ class TestSelectionFunctionalTest {
     @TempDir
     Path directory;
 
+    /** Exercise the documented consumer itself, including original XML from both local nodes. */
+    @Test
+    void runnableExampleExecutesTheSameChosenClassesOnOneAndTwoNodes() throws Exception {
+        Path source = Path.of("examples/gradle/junit-jupiter/test-selection");
+        for (String name : List.of("build.gradle", "selection.yaml", "durations.tsv")) {
+            Files.copy(source.resolve(name), directory.resolve(name));
+        }
+        try (var files = Files.walk(source.resolve("src"))) {
+            for (Path file : files.filter(Files::isRegularFile).toList()) {
+                Path target = directory.resolve(source.relativize(file));
+                Files.createDirectories(target.getParent());
+                Files.copy(file, target);
+            }
+        }
+        // TestKit supplies the candidate classpath; the standalone consumer uses includeBuild.
+        write("settings.gradle", "rootProject.name = 'selection-example-test'\n");
+        Set<String> expected = Set.of("example.selection.AlphaTest#retainsItsNativeOutcome()",
+                "example.selection.BetaTest#retainsItsNativeOutcome()");
+        runner("test").build();
+        assertEquals(expected, cases());
+        runner("clean", "prepareTestShardManifests", "-Pshardpilot.count=2").build();
+        for (int index = 1; index <= 2; index++) {
+            runner("test", "-Pshardpilot.count=2", "-Pshardpilot.index=" + index).build();
+        }
+        runner("verifyTestShards", "-Pshardpilot.count=2").build();
+        assertEquals(expected, cases());
+        assertEquals(Set.of("example.selection.AlphaTest", "example.selection.BetaTest"),
+                ClassManifest.read(output("plan/baseline.yaml"), false));
+        assertEquals(3, ClassManifest.read(output("selection/eligible.yaml"), false).size());
+        assertTrue(Files.readString(output("coverage.html")).contains("Verification: PASSED"));
+    }
+
     @Test
     void singleShardExpandsFamiliesKeepsFullArtifactsAndReusesConfigurationCache() throws Exception {
         fixture();
@@ -332,7 +364,7 @@ class TestSelectionFunctionalTest {
         if (!Files.isDirectory(output("test-results"))) return names;
         var factory = DocumentBuilderFactory.newInstance();
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        try (var files = Files.list(output("test-results"))) {
+        try (var files = Files.walk(output("test-results"))) {
             for (Path file : files.filter(path -> path.getFileName().toString().endsWith(".xml")).toList()) {
                 var cases = factory.newDocumentBuilder().parse(file.toFile()).getElementsByTagName("testcase");
                 for (int index = 0; index < cases.getLength(); index++) {

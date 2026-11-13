@@ -2,10 +2,11 @@
 
 [Documentation index](README.md)
 
-Version **[0.4.0](releases/0.4.0.md)** adds opt-in Gradle/Maven duration-history refresh with
-candidate TSV and diagnostic JSON. See its [upgrade and verification notes](releases/0.4.0.md).
-Existing sharding, YAML manifests and selection reports remain compatible with
-[0.3.1](releases/0.3.1.md); the refresh task/goal requires explicit invocation.
+Version **[0.5.0](releases/0.5.0.md)** is prepared in this checkout, **not yet published**.
+It adds explicit YAML test selection for Gradle and Maven, with isolated suite evidence and
+strict selection validation. Existing configuration remains compatible when selection is absent.
+See the [upgrade and release checklist](releases/0.5.0.md). The last published/audited baseline
+remains [0.4.0](releases/0.4.0.md); its immutable registry policy is not advanced during preparation.
 The build uses `com.gradle.plugin-publish` 2.2.1 and produces plugin, source and Javadoc JARs,
 Maven publication metadata and the `publishPlugins` task. Project/SCM URLs, tags and the tested
 configuration-cache feature are configured in `shardpilot-gradle-plugin/build.gradle`.
@@ -148,18 +149,18 @@ It does not create tags, change the changelog or create a GitHub Release.
 
 ## Publish from a version tag
 
-1. Set `version` in root `build.gradle` to the new release version, currently `0.4.0`.
+1. Set `version` in root `build.gradle` to the new release version, currently `0.5.0`.
    Align root `pom.xml`, core/plugin module parent versions and pinned example POM versions.
    `PublicationWorkflowTest` checks Maven reactor versions against the evaluated Gradle version.
    Published versions must not be overwritten. Do not derive the version from a tag or source revision.
-2. Run local checks and `bash ./gradlew verifyReleaseTag -PreleaseTag=v0.4.0`. This offline guard
+2. Run local checks and `bash ./gradlew verifyReleaseTag -PreleaseTag=v0.5.0`. This offline guard
    accepts only `vMAJOR.MINOR.PATCH` with no leading zeroes, suffixes or build metadata, and checks
    equality with the evaluated `project.version`. Snapshots and prerelease tags are not released
    by this workflow.
 3. Commit and push the intended release revision, including the publication, compatibility and audit workflows and
    `gradle/release-verification.gradle`. The maintainer then creates and pushes the immutable
-   tag `v0.4.0` on that revision. Future versions use the same `v` prefix and must match the build.
-4. Follow **Actions → Publish ShardPilot**, run **Gradle Plugin Portal / v0.4.0**. The job chain is tag validation → reusable
+   tag `v0.5.0` on that revision. Future versions use the same `v` prefix and must match the build.
+4. Follow **Actions → Publish ShardPilot**, run **Gradle Plugin Portal / v0.5.0**. The job chain is tag validation → reusable
    compatibility workflow (eight Gradle cells, three Maven/JDK jobs and signed-bundle verification)
    plus the separate published-baseline audit → Gradle publication. The audit checks the last complete
    published version from `security/published-artifact-audit.json`, not the unpublished candidate.
@@ -184,7 +185,7 @@ The `workflow_dispatch` path publishes only Maven Central. Configure its environ
 then run **Publish ShardPilot** with the existing release tag as the workflow ref. From GitHub CLI:
 
 ```shell
-gh workflow run publish.yml --repo sjacek/shardpilot --ref v0.4.0
+gh workflow run publish.yml --repo sjacek/shardpilot --ref v0.5.0
 ```
 
 Use the CLI command to select the tag explicitly. A manual run from `main` fails before checkout:
@@ -193,8 +194,8 @@ on the default branch and included in the release tag. See the
 [GitHub CLI ref option](https://cli.github.com/manual/gh_workflow_run).
 There is no separate version/tag input that could disagree with the selected checkout.
 
-Follow **Maven Central / v0.4.0**. This run checks out the tag's exact commit SHA, revalidates the
-version and reruns all 12 compatibility checks plus the published-baseline audit. It then signs the parent/core/adapter cohort,
+Follow **Maven Central / v0.5.0**. This run checks out the tag's exact commit SHA, revalidates the
+version and reruns the eleven native matrix cells, signed-bundle verification, both dependency security jobs and the published-baseline audit. It then signs the parent/core/adapter cohort,
 uploads it and waits for Central publication. The Gradle publisher is skipped. Verify ordinary
 Maven resolution in a fresh consumer without local candidate artifacts afterwards.
 
@@ -228,13 +229,13 @@ remote marker artifacts and metadata are correct.
 Source-module names and distribution coordinates serve different purposes. The Gradle adapter's
 module move must not rename its published `shardpilot` artifact or plugin marker.
 
-| Distribution | Coordinates at 0.4.0 | Local output / dependency boundary |
+| Distribution | Coordinates at 0.5.0 | Local output / dependency boundary |
 | --- | --- | --- |
-| Gradle implementation | `io.github.sjacek:shardpilot:0.4.0` | `shardpilot-gradle-plugin/build/libs/shardpilot-0.4.0.jar`; core classes bundled, SnakeYAML resolved at runtime. |
-| Gradle marker | `io.github.sjacek.shardpilot:io.github.sjacek.shardpilot.gradle.plugin:0.4.0` | Generated marker POM depends on the unchanged implementation coordinates. |
-| Maven parent | `io.github.sjacek:shardpilot-parent:0.4.0` | Root `pom.xml`; parent POM required to resolve the Maven modules' models. |
-| Maven core | `io.github.sjacek:shardpilot-core:0.4.0` | `shardpilot-core/target/shardpilot-core-0.4.0.jar`; shared logic and normal SnakeYAML dependency. |
-| Maven adapter | `io.github.sjacek:shardpilot-maven-plugin:0.4.0` | `shardpilot-maven-plugin/target/shardpilot-maven-plugin-0.4.0.jar`; generated native plugin descriptor and core dependency. |
+| Gradle implementation | `io.github.sjacek:shardpilot:0.5.0` | `shardpilot-gradle-plugin/build/libs/shardpilot-0.5.0.jar`; core classes bundled, SnakeYAML resolved at runtime. |
+| Gradle marker | `io.github.sjacek.shardpilot:io.github.sjacek.shardpilot.gradle.plugin:0.5.0` | Generated marker POM depends on the unchanged implementation coordinates. |
+| Maven parent | `io.github.sjacek:shardpilot-parent:0.5.0` | Root `pom.xml`; parent POM required to resolve the Maven modules' models. |
+| Maven core | `io.github.sjacek:shardpilot-core:0.5.0` | `shardpilot-core/target/shardpilot-core-0.5.0.jar`; shared logic and normal SnakeYAML dependency. |
+| Maven adapter | `io.github.sjacek:shardpilot-maven-plugin:0.5.0` | `shardpilot-maven-plugin/target/shardpilot-maven-plugin-0.5.0.jar`; generated native plugin descriptor and core dependency. |
 
 Inspect generated Gradle metadata under `shardpilot-gradle-plugin/build/publications/` using
 `generatePomFileForPluginMavenPublication`, `generatePomFileForShardpilotPluginMarkerMavenPublication`

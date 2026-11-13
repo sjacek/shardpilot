@@ -4,7 +4,7 @@
 [Gradle example](../examples/gradle/junit-jupiter/duration-history/README.md) ·
 [Maven example](../examples/maven/README.md#refresh-both-suite-histories)
 
-Version 0.4.0 can read **existing** JUnit XML and create a candidate UTF-8 TSV plus diagnostic JSON.
+Since 0.4.0, ShardPilot can read **existing** JUnit XML and create a candidate UTF-8 TSV plus diagnostic JSON.
 It never runs tests, compiles classes, fetches remote artifacts or overwrites maintained history.
 Collect one project/suite/revision cohort, inspect the report and diff, then adopt the candidate
 in a separate consumer change. Keep the old history immutable until every shard has finished.
@@ -84,7 +84,7 @@ unchanged request can be up-to-date or restored from the build cache; failed exe
 
 ## Maven configuration
 
-Declare `io.github.sjacek:shardpilot-maven-plugin:0.4.0` in the consuming POM; retain the
+Declare `io.github.sjacek:shardpilot-maven-plugin:0.5.0` in the consuming POM; retain the
 [native runner wiring](maven.md#configure-a-native-runner). Invoke only the standalone goal:
 
 ```shell

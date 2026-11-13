@@ -5,7 +5,7 @@
 This independent consumer resolves the local checkout through an included build. It runs two
 families (one has a nested test), prepares/verifies YAML manifests and generates candidate
 TSV/JSON from both nodes' existing XML. Synthetic old weights include one removed class to
-demonstrate pruning. No published 0.4.0 plugin, database, broker or Docker is required.
+demonstrate pruning. The composite uses the local candidate (now 0.5.0); no published plugin, database, broker or Docker is required.
 
 For IntelliJ IDEA editing, link this directory's `settings.gradle` as a separate Gradle
 project. It is not a root subproject and has no separate Wrapper: select the root Wrapper's

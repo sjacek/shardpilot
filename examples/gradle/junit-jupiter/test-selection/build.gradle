@@ -1,0 +1,43 @@
+plugins {
+    id 'java'
+    id 'io.github.sjacek.shardpilot'
+}
+repositories { mavenCentral() }
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+tasks.withType(JavaCompile).configureEach { options.release = 17 }
+dependencies {
+    testImplementation platform('org.junit:junit-bom:6.1.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    include '**/*Test.class'
+    exclude '**/*$*.class'
+    shardPilot {
+        enabled = true
+        durationsFile = layout.projectDirectory.file('durations.tsv')
+    }
+}
+// Eligibility describes all legal native candidates, independently of the chosen subset.
+def eligible = sourceSets.test.output.classesDirs.asFileTree.matching {
+    include '**/*Test.class'
+    exclude '**/*$*.class'
+}
+// Register sibling tasks outside deferred test configuration.
+def pilot = tasks.named('test', Test).get().shardPilot
+pilot.selection {
+    manifestFile = layout.projectDirectory.file('selection.yaml')
+    suite = 'smoke'
+    eligibleClasses.from(eligible)
+}
+pilot.verification { eligibleClasses.from(eligible) }
+// selection() establishes its default report namespace. Override only after that wiring.
+// Preserve native XML from both local nodes; CI normally uses isolated workspaces.
+String node = providers.gradleProperty('shardpilot.index').getOrElse('1')
+tasks.named('test', Test) {
+    reports.junitXml.outputLocation = layout.buildDirectory.dir('shardpilot/test/selections/smoke/test-results/' + node)
+}

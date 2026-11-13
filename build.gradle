@@ -14,7 +14,7 @@ plugins {
 
 allprojects {
     group = 'io.github.sjacek'
-    version = '0.4.0'
+    version = '0.5.0'
 }
 
 // The Gradle adapter uses this text for both its Portal listing and publication POMs.
@@ -23,6 +23,7 @@ project.setDescription('ShardPilot helps shorten CI feedback for large JVM unit 
         'Gradle Test tasks into deterministic, non-overlapping class-level shards for parallel CI jobs. ' +
         'It balances class families using historical test durations, with stable hashing when timing data is unavailable. ' +
         'Works with existing JUnit Jupiter, Spock and TestNG tasks while preserving nested test families and configured test filters. ' +
+        'Opt-in YAML selection manifests run a chosen test subset on one or multiple shards with separate suite evidence. ' +
         'Optional per-task controls set worker heap size, parallel forks and process recycling. ' +
         'Opt-in YAML class manifests and standalone JSON and HTML reports compare planned assignments with class selections collected from CI jobs. ' +
         'Opt-in history refresh creates candidate TSV and JSON from existing JUnit XML without rerunning tests or modifying maintained history. ' +

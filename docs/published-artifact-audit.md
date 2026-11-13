@@ -224,3 +224,18 @@ canonical execution checks read only the fresh `isolated/` cohort.
 
 The observed lack of outbound attempts is limited to the authored scenarios and these artifact bytes.
 The Portal's unsigned metadata and source checks remain distinct from Central's OpenPGP evidence.
+
+## Hosted baseline result: 13 November 2026
+
+[Run 43342517533](https://github.com/sjacek/shardpilot/actions/runs/43342517533), manually dispatched
+with tooling commit `8f618ae345791b22972b4d25124f2c106631b084`, completed successfully for the
+published **0.4.0** baseline. The workflow retains its verdict, report archive, registry bytes,
+traces and mutation-control evidence as described above. Download those artifacts before their
+30-day retention expires if longer-term independent review is needed.
+
+The checkout now prepares **0.5.0, not yet published**. The policy, default version and audited source
+commit remain pinned to 0.4.0; they must not be changed merely to match the project version.
+The pre-publication gate audits 0.4.0 while candidate CI checks 0.5.0. After both registries publish
+0.5.0, run this workflow with `version=0.5.0`, inspect the complete cohort, then review policy and
+baseline regression changes together. Neither the green source CI nor this older registry audit
+establishes the signature or network behavior of unpublished 0.5.0 bytes.

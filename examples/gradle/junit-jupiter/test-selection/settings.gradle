@@ -1,0 +1,5 @@
+pluginManagement {
+    // Use this checkout while 0.5.0 is being prepared, without consulting a plugin registry.
+    includeBuild('../../../..')
+}
+rootProject.name = 'shardpilot-jupiter-selection-example'

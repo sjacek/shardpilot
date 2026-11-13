@@ -7,6 +7,9 @@ outside the original runtime scans. This follow-up updates those selected depend
 improves SDK identification and repairs the cache warmup failure observed in hosted CI.
 The existing high-severity gate, inclusion of unfixed findings and complete report retention remain.
 
+For the final hosted verdict, see [hosted confirmation](#hosted-confirmation-13-november-2026).
+Earlier sections retain the initial failing scopes and remediation sequence.
+
 ## Scoped updates
 
 | Boundary | Change |
@@ -89,7 +92,7 @@ scope scans report no matches. Maven runtime, test and provided scopes report no
 The Maven build inventory still reports **two High and two Medium matches** from Maven Site's
 Jetty 9.4.58 dependency family. It has no remaining Critical matches in this scan.
 
-### Remaining Jetty issue
+### Initial Jetty blocker (before the explicit tooling boundary)
 
 Maven Site 3.22.0 still uses Jetty 9.4. The public Maven Central metadata ends that branch at
 9.4.58.v20250814; the patched 9.4 releases referenced by the advisories are not available there.
@@ -132,8 +135,8 @@ same two High and two Medium matches and an intentionally failing security gate.
 ruleset was reread after the approved update: fourteen checks are required, all twelve previous
 contexts are retained, and every other rule is unchanged.
 
-The parallel scheduling and explanatory-report changes still require a maintainer push before
-their new hosted cohort can be verified. Real-suite performance measurement remains deferred.
+At this stage, the parallel scheduling and explanatory-report changes still required a push
+before a new hosted cohort could be verified. Real-suite performance measurement remains deferred.
 
 ## Private reporting
 
@@ -165,8 +168,7 @@ verification (302 unit tests, 17 Invoker cases and two examples), and fourteen o
 guard controls. The final guard also passed the repeated 302-unit-test run and signed-bundle
 verification for nine artifacts/signatures with upload disabled. Native inventories and Grype
 scans passed the four blocking Maven scopes; `build-full` retained the same two High and two
-Medium Jetty matches with an aggregate passing gate. These are local results; the new hosted
-pipeline cohort still requires a maintainer commit and push.
+Medium Jetty matches with an aggregate passing gate. These were local results, before the hosted confirmation recorded below.
 
 References: [CycloneDX core validation advisory](https://github.com/advisories/GHSA-6fhj-vr9j-g45r),
 [Bouncy Castle advisory](https://github.com/advisories/GHSA-9pwp-9qqc-pr26),
@@ -175,3 +177,45 @@ References: [CycloneDX core validation advisory](https://github.com/advisories/G
 [Jetty authentication advisory](https://github.com/advisories/GHSA-2fvj-hgj9-j2gr),
 [Jetty security reports](https://jetty.org/security.html),
 [public Jetty version metadata](https://repo.maven.apache.org/maven2/org/eclipse/jetty/jetty-server/maven-metadata.xml).
+
+## Hosted confirmation: 13 November 2026
+
+[Compatibility run 43418902994](https://github.com/sjacek/shardpilot/actions/runs/43418902994)
+completed successfully for source **`ac2d28f745051886f2850094486f7bb8f008ba80`**, from
+11:40:12 to 11:50:30 UTC. All fifteen jobs passed: warmup, eight Gradle/JDK combinations,
+three Maven/JDK combinations, upload-disabled signed-bundle verification and the two security jobs.
+Matrix cells ran independently of the scans after warmup. This is source CI with project version
+0.4.0, not a registry audit or verification of the later 0.5.0 preparation changes.
+
+| Maven report | Retained findings | Gate role / result |
+| --- | --- | --- |
+| `runtime` | None reported | Blocking / passed |
+| `build` | None reported | Blocking / passed |
+| `test` | None reported | Blocking / passed |
+| `provided` | None reported | Blocking / passed |
+| `build-full` | **2 High, 2 Medium** | Diagnostic findings, required valid evidence; native scanner exit 2 retained |
+
+The full report retains `GHSA-355h-qmc2-wpwf`, `GHSA-2fvj-hgj9-j2gr`,
+`GHSA-qh8g-58pp-2wxh` and `GHSA-7p3p-8qv8-m2vh` in the Jetty 9.4.58.v20250814 family.
+Its report verdict stays false; the aggregate passes because findings in this complete inherited
+realm report are diagnostic under the explicit policy. Operational, stale or contradictory evidence
+still blocks. Grype **0.121.3**, database schema **v6.1.10**, built **2026-11-13T06:20:21Z**,
+was used with the unchanged High cutoff, including unfixed matches and no VEX/package filters.
+The four Gradle blocking scope reports also passed.
+
+The retained native guard report passed **fourteen controls**: one valid build and thirteen expected
+rejections covering Site phase/prefix/coordinate/version/default-goal/environment forms, Site bindings,
+active profiles and unclassified direct/build/managed/report plugins. Raw logs confirm the actual
+startup guard rejected each negative case, rather than a missing offline dependency.
+The report binds guard JAR SHA-256
+`b2fa97e33de12ef1d967c7ed7aa56c3937a305c5df1d5e3a643b2b547bd015a3`
+and probe-source SHA-256
+`8d66990dfd98fd947f79e1059bdf9a37ea87fb4078d14496de9fb5efdbadc2bc`;
+the guard hash matches the JAR retained in the build inventory. The bundle check retained nine
+artifacts, nine signatures and 54 bundle entries without uploading.
+
+The main ruleset keeps fourteen required contexts, including both security jobs. This boundary
+makes the supported tooling scope explicit; it does not remediate inherited Jetty or allow Site.
+Future plugin/lifecycle changes require classification and native guard review before use.
+Candidate 0.5.0 requires fresh CI after version/example edits. Published 0.4.0 audit evidence remains
+separate, and real-suite performance measurement remains deferred.

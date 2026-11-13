@@ -14,7 +14,7 @@ The consumer decides when a short suite is sufficient; native test results remai
 
 Plugin ID: `io.github.sjacek.shardpilot` · License: [MIT](LICENSE).
 
-Maven coordinates: `io.github.sjacek:shardpilot-maven-plugin:0.4.0`. See the
+Maven coordinates: `io.github.sjacek:shardpilot-maven-plugin:0.5.0`. See the
 [Maven setup guide](docs/maven.md) and [example POMs](examples/maven/README.md). Gradle users retain
 the same plugin ID, public DSL, implementation coordinates and included-build entry point.
 
@@ -73,17 +73,18 @@ collects the results. It does not create CI jobs or coordinate their completion.
 
 ## Status
 
-The reference stable tag is **[0.4.0](docs/releases/0.4.0.md)** with opt-in duration-history refresh
-for Gradle and Maven. Generate a candidate TSV and diagnostic JSON from existing JUnit XML,
-review the result, then adopt it for a later pipeline. Existing sharding settings and YAML
-manifests remain compatible. Installation snippets target 0.4.0; use the
-[local development setup](#local-plugin-development) to evaluate local checkout changes.
-The [12 November 2026 follow-up](docs/security-review-2026-11-12.md) pins the public commit and
-records successful reference-commit compatibility/publication workflows, separately from
-checks that remain open. Historical release notes retain their preparation/check procedures.
+This checkout prepares **[0.5.0](docs/releases/0.5.0.md)** with opt-in
+[explicit test selection](docs/test-selection.md) for Gradle and Maven. Installation snippets
+target this candidate; it is **not yet published**. Use the
+[local development setup](#local-plugin-development) to evaluate it before publication.
+The last published and audited reference remains **[0.4.0](docs/releases/0.4.0.md)**;
+its history refresh and existing sharding configuration remain compatible.
+The [audit follow-up](docs/security-review-2026-11-12.md#current-status-13-november-2026)
+separates published-artifact evidence, the green source CI cohort and remaining release checks.
 Candidate [SBOMs and vulnerability scans](docs/dependency-security.md) distinguish Gradle and Maven,
-with separate runtime, build, test and provided reports. Every scope gates CI/publication under
-the recorded severity/database policy; overlapping results remain separately attributable.
+with separate runtime, build, test and provided reports. Runtime, supported build tooling, test and provided scopes gate CI/publication under the
+recorded severity/database policy. Maven's additional full-tooling report retains inherited
+Site/Jetty findings as diagnostics; ShardPilot producer CI prohibits executing Site or unclassified plugins.
 [Build dependency integrity](docs/dependency-verification.md) separately pins workflow Actions and
 checks reviewed dependency bytes before producer and isolated-consumer builds use them.
 
@@ -134,7 +135,7 @@ In the consumer's `build.gradle`:
 ```groovy
 plugins {
     id 'java'
-    id 'io.github.sjacek.shardpilot' version '0.4.0'
+    id 'io.github.sjacek.shardpilot' version '0.5.0'
 }
 ```
 
@@ -143,7 +144,7 @@ Or, in `build.gradle.kts`:
 ```kotlin
 plugins {
     java
-    id("io.github.sjacek.shardpilot") version "0.4.0"
+    id("io.github.sjacek.shardpilot") version "0.5.0"
 }
 ```
 
@@ -194,7 +195,7 @@ import io.github.sjacek.shardpilot.ShardPilotExtension
 
 plugins {
     java
-    id("io.github.sjacek.shardpilot") version "0.4.0"
+    id("io.github.sjacek.shardpilot") version "0.5.0"
 }
 
 tasks.test {
@@ -219,8 +220,8 @@ The `shardPilot` extension belongs to each `Test` task, not to the root project.
 
 ### Optional test-process settings
 
-Version **0.4.0** retains the explicit `testProcesses` block for Gradle's existing worker JVMs.
-Set the plugin version in the installation examples above to `0.4.0`, or use the
+Version **0.5.0** retains the explicit `testProcesses` block for Gradle's existing worker JVMs.
+Set the plugin version in the installation examples above to `0.5.0`, or use the
 [local development override](#local-plugin-development) to verify this checkout:
 
 ```groovy
@@ -329,7 +330,7 @@ Only classes are distributed. Methods stay together, and framework parallelism i
 enabled or disabled. Startup, container reuse, Spring context locality and unknown classes can
 affect wall-clock balance; recorded seconds are not a promise of a particular speedup.
 
-## Refresh duration history (0.4.0)
+## Refresh duration history (since 0.4.0)
 
 Register the refresh task once, outside a deferred owner configuration action:
 
@@ -357,7 +358,7 @@ See the [policy and option reference](docs/history-refresh.md),
 
 ## Optional class-manifest verification
 
-Version **0.4.0** can prepare a common plan, record the real candidate
+Version **0.5.0** can prepare a common plan, record the real candidate
 selection before each test task and verify the artifacts collected from every CI shard. Configure
 it once on the owning `Test` task; existing builds gain no verification tasks or task dependencies until they opt in.
 
@@ -550,7 +551,7 @@ include the adapter and core. The plugin ID `io.github.sjacek.shardpilot` and im
 
 For Maven, run `python3 -B scripts/maven_verification.py run -- -B -ntp install -DskipITs`
 at the repository root, then build a consuming
-POM with `io.github.sjacek:shardpilot-maven-plugin:0.4.0`. This installs the Maven parent, core and
+POM with `io.github.sjacek:shardpilot-maven-plugin:0.5.0`. This installs the Maven parent, core and
 adapter locally; it does not publish remotely. Maven does not use Gradle's `includeBuild`.
 See the [runnable Maven commands](examples/maven/README.md) for both runners and the reactor.
 

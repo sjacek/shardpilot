@@ -4,11 +4,12 @@ ShardPilot splits the classes of an opted-in Gradle `Test` task between independ
 Each execution calculates ownership locally from the same inputs. The Maven adapter applies that
 same core to Surefire/Failsafe. There is no coordinator service or replacement test engine.
 
-The reference stable tag is [0.4.0](releases/0.4.0.md): opt-in history refresh for both adapters,
-with candidate TSV and diagnostic JSON from existing JUnit XML. Existing sharding configuration,
-YAML manifests and selection reports remain compatible. Current snippets target 0.4.0; use the
-[local development setup](../README.md#local-plugin-development) for local checkout changes. The
-[release notes](releases/0.4.0.md) separate local checks from the release-commit CI/publication gates.
+This checkout prepares [0.5.0](releases/0.5.0.md), including explicit selection of a test
+subset for either adapter. Current snippets target **0.5.0, not yet published**; use the
+[local development setup](../README.md#local-plugin-development) before publication.
+The last published/audited reference remains [0.4.0](releases/0.4.0.md).
+[Current audit status](security-review-2026-11-12.md#current-status-13-november-2026)
+distinguishes historical registry evidence, source CI checks and outstanding release gates.
 
 ## Guides
 
@@ -30,7 +31,7 @@ YAML manifests and selection reports remain compatible. Current snippets target 
 | [Native execution equivalence](execution-equivalence.md) | Compare native test identities, invocation counts, outcomes and skips against two/four shards for the deterministic Gradle/Maven fixtures. |
 | [Security and trust boundaries](security.md) | Understand private reporting, build-process permissions, metadata handling and publication responsibilities. |
 | [SBOMs and dependency vulnerability scanning](dependency-security.md) | Separate Gradle/Maven runtime, build, test and provided inventories, candidate identities, native evidence and the CI severity/database gate. |
-| [Producer dependency remediation](dependency-remediation-2026-11-13.md) | Scoped security updates, reviewed Gradle SDK identities, candidate-bound cache warmup and the remaining Jetty blocker. |
+| [Producer dependency remediation](dependency-remediation-2026-11-13.md) | Scoped updates, verified green CI, the blocking Maven tooling boundary and retained Site/Jetty diagnostics. |
 | [Build dependency integrity](dependency-verification.md) | Review immutable Actions pins, Gradle/TestKit and Maven checksum enforcement, cache protection and baseline updates. |
 | [12 November 2026 review follow-up](security-review-2026-11-12.md) | Find the exact public reference commit, existing evidence, verification limits and remaining security/performance work. |
 | [Published artifact audit](published-artifact-audit.md) | Verify registry bytes and signatures, then observe warmed consumers in isolated Linux containers. |
