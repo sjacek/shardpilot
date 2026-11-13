@@ -64,7 +64,11 @@ def validate_bom(bom, tooling=False):
         sdk = tooling and purl.startswith('pkg:generic/gradle/') and any(
             item == {'name': 'shardpilot:identity-kind', 'value': 'gradle-distribution-file'}
             for item in component.get('properties', []))
-        if not reference or reference in refs or not (purl.startswith('pkg:maven/') or sdk):
+        guard = tooling and identity(component)[:2] == ('shardpilot', 'maven-tooling-guard') \
+            and re.fullmatch(r'[a-f0-9]{64}', component['version']) \
+            and purl == 'pkg:generic/shardpilot/maven-tooling-guard@' + component['version'] \
+            and {'name': 'shardpilot:identity-kind', 'value': 'authored-maven-startup-guard'} in component.get('properties', [])
+        if not reference or reference in refs or not (purl.startswith('pkg:maven/') or sdk or guard):
             raise ValueError('Missing or duplicate component reference/PURL')
         if component.get('scope') == 'excluded' or (not tooling and any(
                 item.get('name') == 'cdx:maven:package:test' and item.get('value') == 'true'
@@ -254,7 +258,9 @@ def summarize(distribution, now=None, scope='runtime'):
     blocked = sum(counts[level] for level in SEVERITIES[SEVERITIES.index(config['severityCutoff']):])
     if bool(blocked) != (scan_status['exitCode'] == 2):
         raise ValueError('Scanner exit status and reported severity result disagree')
+    diagnostic = distribution == 'maven' and scope == 'build-full'
     summary = {'schemaVersion': 1, 'distribution': distribution, 'scope': scope, 'sourceCommit': inventory['sourceCommit'],
+               'gateRole': 'diagnostic-findings-required-evidence' if diagnostic else 'blocking',
                'sbomSha256': inventory['sbomSha256'], 'scanner': scanner, 'database': database,
                'policy': config, 'scanExitCode': scan_status['exitCode'],
                'severityCounts': dict(counts), 'blockingMatches': blocked,
@@ -262,8 +268,9 @@ def summarize(distribution, now=None, scope='runtime'):
     write_json(output / 'summary.json', summary)
     markdown = (f'### ShardPilot {distribution}: {scope} dependency scan\n\n'
                 f'Grype `{config["scannerVersion"]}`, database built `{database["built"]}`. '
-                f'Blocking threshold: **{config["severityCutoff"]}**, including unfixed findings.\n\n'
-                f'Blocking matches: **{blocked}**. Severity counts: `{json.dumps(dict(counts))}`.\n\n'
+                f'Review threshold: **{config["severityCutoff"]}**, including unfixed findings.\n\n'
+                f'{"Diagnostic full inventory; valid scan evidence remains required. " if diagnostic else "Blocking scope. "}'
+                f'Matches at threshold: **{blocked}**. Severity counts: `{json.dumps(dict(counts))}`.\n\n'
                 'Scope boundaries and limitations are recorded in inventory.json. This is dependency analysis, not an independent audit.\n')
     (output / 'summary.md').write_text(markdown, encoding='utf-8')
     if os.environ.get('GITHUB_STEP_SUMMARY'):

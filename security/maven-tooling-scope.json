@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "guardApiVersion": "3.9.16",
+  "plugins": [
+    {"coordinate": "org.apache.maven.plugins:maven-clean-plugin", "prefix": "clean", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-compiler-plugin", "prefix": "compiler", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-dependency-plugin", "prefix": "dependency", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-deploy-plugin", "prefix": "deploy", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-failsafe-plugin", "prefix": "failsafe", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-gpg-plugin", "prefix": "gpg", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-help-plugin", "prefix": "help", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-install-plugin", "prefix": "install", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-invoker-plugin", "prefix": "invoker", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-jar-plugin", "prefix": "jar", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-javadoc-plugin", "prefix": "javadoc", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-plugin-plugin", "prefix": "plugin", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-resources-plugin", "prefix": "resources", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-source-plugin", "prefix": "source", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-surefire-plugin", "prefix": "surefire", "scope": "blocking"},
+    {"coordinate": "org.cyclonedx:cyclonedx-maven-plugin", "prefix": "cyclonedx", "scope": "blocking"},
+    {"coordinate": "org.sonatype.central:central-publishing-maven-plugin", "prefix": "central-publishing", "scope": "blocking"},
+    {"coordinate": "io.github.sjacek:shardpilot-maven-plugin", "prefix": "shardpilot", "scope": "blocking"},
+    {"coordinate": "org.apache.maven.plugins:maven-site-plugin", "prefix": "site", "scope": "inherited",
+      "reason": "Only Maven's default site lifecycle bindings are supported in the inventory; executing Site is forbidden by the producer guard."}
+  ]
+}

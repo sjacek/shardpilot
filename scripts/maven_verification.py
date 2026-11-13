@@ -10,6 +10,8 @@ import sys
 import tempfile
 import urllib.request
 
+import maven_tooling
+
 
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE = ROOT / '.mvn/checksums.sha256'
@@ -87,8 +89,9 @@ def environment(collect=False, original=None):
     previous = env.get('MAVEN_OPTS', '')
     if any(value in previous for value in ('codes.rafael.mavenchecksumextension.', 'maven.ext.class.path')):
         raise ValueError('Conflicting Maven verifier JVM options')
+    guard = maven_tooling.guard(ROOT)
     mode = 'collect' if collect else 'enforce'
-    env['MAVEN_OPTS'] = (previous + ' -Dmaven.ext.class.path=' + quoted(verifier)
+    env['MAVEN_OPTS'] = (previous + ' -Dmaven.ext.class.path=' + quoted(os.pathsep.join(map(str, (verifier, guard))))
                          + ' -Dcodes.rafael.mavenchecksumextension.file=' + quoted(BASELINE.resolve())
                          + ' -Dcodes.rafael.mavenchecksumextension.mode=' + mode
                          + ' -Dcodes.rafael.mavenchecksumextension.algorithm=SHA-256'

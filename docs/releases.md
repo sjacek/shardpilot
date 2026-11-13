@@ -46,6 +46,9 @@ then run independently, so native results remain available when a vulnerability 
 Failed warmup still explicitly fails the matrix contexts. The two security contexts must remain
 required independently of the existing 12 checks. The reusable compatibility workflow also blocks publication when either
 [SBOM/security job for any runtime/build/test/provided scope](dependency-security.md) fails.
+Maven's complete `build-full` tooling report retains inherited Site/Jetty findings separately.
+Those findings alone are diagnostic; missing/invalid full evidence, Site execution attempts or
+unclassified plugin coordinates still fail the required Maven security check.
 
 `N` above is replaced with the literal JDK number in each required name. These are job names,
 without the workflow title or `(push)` / `(pull_request)` event suffix shown in parts of the UI.

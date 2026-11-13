@@ -62,6 +62,12 @@ jobs:
       - name: Enable Maven dependency verification
         if: matrix.distribution == 'maven'
         run: python3 -B scripts/maven_verification.py prepare
+      - name: Verify native Maven tooling restrictions
+        if: matrix.distribution == 'maven'
+        run: python3 -B scripts/verify_maven_tooling.py
+      - name: Verify Maven tooling scope policy
+        if: matrix.distribution == 'maven'
+        run: python3 -B -m unittest discover -s scripts -p 'test_maven_tooling.py' -v
       - name: Verify inventory and scan failure handling
         run: python3 -B -m unittest discover -s scripts -p 'test_security*.py' -v
       - name: Download warmed dependencies
@@ -127,5 +133,15 @@ jobs:
           name: dependency-security-${{ matrix.distribution }}
           path: build/security/${{ matrix.distribution }}/
           overwrite: true
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Retain Maven tooling controls
+        if: ${{ always() && matrix.distribution == 'maven' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: maven-tooling-controls
+          path: |
+            build/dependency-verification/tooling-guard-native.json
+            build/dependency-verification/tooling-guard-native-*.log
           if-no-files-found: warn
           retention-days: 30

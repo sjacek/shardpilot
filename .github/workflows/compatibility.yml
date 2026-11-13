@@ -58,7 +58,7 @@ jobs:
             build/gradle-dependencies.tar
             build/maven-dependencies.tar
           # noinspection UndefinedParamsPresent
-          key: ci-dependencies-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.gradle', '**/pom.xml', 'gradle.properties', '**/gradle-wrapper.properties', '.mvn/wrapper/maven-wrapper.properties', '.mvn/checksums.sha256', 'gradle/verification-metadata.xml', 'security/dependency-verification.json', 'shardpilot-gradle-plugin/src/test/**/*.java', 'scripts/ci_dependency_cache.py', 'scripts/maven_verification.py', 'scripts/maven_security_inventory.py', '.github/workflows/compatibility.yml') }}
+          key: ci-dependencies-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.gradle', '**/pom.xml', 'gradle.properties', '**/gradle-wrapper.properties', '.mvn/wrapper/maven-wrapper.properties', '.mvn/checksums.sha256', 'gradle/verification-metadata.xml', 'security/dependency-verification.json', 'security/maven-tooling-scope.json', 'build-logic/maven-tooling-guard/**', 'scripts/maven_tooling.py', 'shardpilot-gradle-plugin/src/test/**/*.java', 'scripts/ci_dependency_cache.py', 'scripts/maven_verification.py', 'scripts/maven_security_inventory.py', '.github/workflows/compatibility.yml') }}
           # noinspection UndefinedParamsPresent
           restore-keys: ci-dependencies-v2-${{ runner.os }}-${{ runner.arch }}-
       - name: Unpack downloaded dependencies
@@ -83,6 +83,10 @@ jobs:
         run: python3 -B -m unittest discover -s scripts -p 'test_dependency*.py' -v
       - name: Verify native Maven checksum rejection
         run: python3 -B scripts/verify_dependency_rejection.py
+      - name: Verify native Maven tooling restrictions
+        run: python3 -B scripts/verify_maven_tooling.py
+      - name: Verify Maven tooling scope policy
+        run: python3 -B -m unittest discover -s scripts -p 'test_maven_tooling.py' -v
       - name: Retain dependency verification evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -91,6 +95,8 @@ jobs:
           path: |
             build/dependency-verification/native-rejection.json
             build/dependency-verification/*-native-checksum.log
+            build/dependency-verification/tooling-guard-native.json
+            build/dependency-verification/tooling-guard-native-*.log
             **/build/reports/dependency-verification/
           if-no-files-found: warn
           retention-days: 14

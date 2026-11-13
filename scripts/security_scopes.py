@@ -10,11 +10,16 @@ import shutil
 from urllib.parse import quote
 
 import security_reports as reports
+import maven_tooling
 
 
 SCOPES = ('runtime', 'build', 'test', 'provided')
 MODULES = {'gradle': ('', 'shardpilot-core', 'shardpilot-gradle-plugin'),
            'maven': ('', 'shardpilot-core', 'shardpilot-maven-plugin')}
+
+
+def scan_scopes(distribution):
+    return SCOPES + (('build-full',) if distribution == 'maven' else ())
 
 
 def directory(distribution, scope):
@@ -238,7 +243,7 @@ def maven_fixture_inventory(tree, repository):
 def prepare(distribution, commit):
     base = directory(distribution, 'runtime')
     # Invalidate every old scope and the aggregate before any resolution/assembly can fail.
-    for scope in SCOPES:
+    for scope in scan_scopes(distribution):
         for name in ('bom.cdx.json', 'inventory.json', 'findings.json', 'scan-status.json', 'scan-error.json',
                      'scanner.json', 'database.json', 'summary.json', 'summary.md'):
             (directory(distribution, scope) / name).unlink(missing_ok=True)
@@ -247,18 +252,21 @@ def prepare(distribution, commit):
     reports.prepare(distribution, commit)
     runtime = reports.read_json(base / 'inventory.json')
     candidate = reports.read_json(base / 'bom.cdx.json')['metadata']['component']
-    for scope in SCOPES[1:]:
+    for scope in scan_scopes(distribution)[1:]:
         sources, inputs = [], []
         for module in MODULES[distribution]:
             native = native_directory(distribution, module)
-            if distribution == 'maven' and scope != 'build' and not module:
+            if distribution == 'maven' and scope not in ('build', 'build-full') and not module:
                 # Parent packaging has no compile/test classpath. Child makeBom reports are mandatory.
                 continue
             origin = {'project': module or ':', 'scope': scope}
-            if distribution == 'maven' and scope == 'build':
+            if distribution == 'maven' and scope in ('build', 'build-full'):
                 path = native / 'build/plugins.raw.txt'
                 origin['profiles'] = ['security-sbom', 'central-release']
                 document = maven_build_inventory(path, copy.deepcopy(candidate))
+                if scope == 'build':
+                    document = maven_tooling.select_blocking(document, maven_tooling.policy(reports.ROOT))
+                    origin['selection'] = 'reviewed blocking plugin realms, including shared transitive libraries'
             else:
                 path = native / scope / 'bom.raw.json'
                 document = reports.read_json(path)
@@ -313,14 +321,18 @@ def prepare(distribution, commit):
                 document = maven_fixture_inventory(reports.read_json(reports.ROOT / fixture['file']), repository)
                 sources.append((document, {'scope': scope, 'project': fixture['pom'],
                                            'selection': 'native Invoker/example/provider dependency tree'}))
-        if distribution == 'maven' and scope == 'build':
+        if distribution == 'maven' and scope in ('build', 'build-full'):
             # Explain inherited/managed tooling without filtering any plugin realm from scanning.
             model_path = reports.ROOT / 'build/reports/security/maven/tooling-model.json'
             model = reports.read_json(model_path)
             if model.get('schemaVersion') != 1 or model.get('interpretation') != 'effective-bindings-not-execution-proof' \
                     or not model.get('projects'):
                 raise ValueError('Missing sanitized effective Maven tooling model')
+            maven_tooling.review_model(model, maven_tooling.policy(reports.ROOT))
             inputs.append({'file': model_path.relative_to(reports.ROOT).as_posix(), 'sha256': reports.sha256(model_path)})
+            guard_document, guard_inputs = maven_tooling.guard_inventory(candidate, reports.ROOT)
+            sources.append((guard_document, {'scope': scope, 'selection': 'authored startup guard and verified compile APIs'}))
+            inputs.extend(guard_inputs)
             # The checksum verifier is a JVM startup extension rather than a POM plugin realm.
             # Its compact JAR is independently hash-pinned before Maven starts.
             config_path = reports.ROOT / 'security/dependency-verification.json'
@@ -366,7 +378,7 @@ def prepare(distribution, commit):
 def scan(distribution, executable):
     """Complete every scope even after a severity failure; preserve each native exit status."""
     failed = False
-    for scope in SCOPES:
+    for scope in scan_scopes(distribution):
         output = directory(distribution, scope)
         for name in ('findings.json', 'scan-status.json', 'scan-error.json', 'summary.json', 'summary.md'):
             (output / name).unlink(missing_ok=True)
@@ -380,7 +392,8 @@ def scan(distribution, executable):
             reports.write_json(output / 'scan-error.json', {'error': str(failure)})
             status = 1
         reports.write_json(output / 'scan-status.json', {'exitCode': status})
-        failed |= status != 0
+        # Diagnostic findings are retained, but missing/failed scans still fail the gate.
+        failed |= status != 0 and not (scope == 'build-full' and status == 2)
     return 1 if failed else 0
 
 
@@ -390,7 +403,7 @@ def summarize(distribution, now=None):
     for name in ('scopes-summary.json', 'scopes-summary.md'):
         (base / name).unlink(missing_ok=True)
     results = {}
-    for scope in SCOPES:
+    for scope in scan_scopes(distribution):
         output = directory(distribution, scope)
         for name in ('summary.json', 'summary.md'):
             (output / name).unlink(missing_ok=True)
@@ -412,12 +425,17 @@ def summarize(distribution, now=None):
             results[scope] = reports.read_json(output / 'summary.json')
         except (OSError, ValueError, KeyError, TypeError) as failure:
             results[scope] = {'passed': False, 'error': str(failure)}
-    passed = all(value['passed'] for value in results.values())
+    passed = all(value['passed'] for scope, value in results.items() if scope != 'build-full') \
+        and ('build-full' not in results or 'error' not in results['build-full'])
     reports.write_json(base / 'scopes-summary.json', {'schemaVersion': 1, 'distribution': distribution,
-                                                    'passed': passed, 'scopes': results})
+                                                    'passed': passed, 'blockingScopes': list(SCOPES),
+                                                    'diagnosticScopes': ['build-full'] if distribution == 'maven' else [],
+                                                    'scopes': results})
     markdown = f'### ShardPilot {distribution}: all dependency scopes\n\n'
-    markdown += '| Scope | Result |\n| --- | --- |\n'
-    markdown += ''.join(f'| {scope} | {"PASS" if value["passed"] else "FAIL"} |\n' for scope, value in results.items())
+    markdown += '| Scope | Gate | Result |\n| --- | --- | --- |\n'
+    markdown += ''.join(f'| {scope} | {"Diagnostic findings; evidence required" if scope == "build-full" else "Required"} | '
+                        f'{"ERROR" if "error" in value else "PASS" if value["passed"] else "FINDINGS" if scope == "build-full" else "FAIL"} |\n'
+                        for scope, value in results.items())
     markdown += '\nScopes can overlap. Consult each findings.json; do not sum them as unique vulnerabilities.\n'
     (base / 'scopes-summary.md').write_text(markdown, encoding='utf-8')
     if os.environ.get('GITHUB_STEP_SUMMARY'):

@@ -35,6 +35,19 @@ class PublicationWorkflowTest {
         }
         var scan = mapping(mapping(workflow("security").get("jobs")).get("scan"));
         assertMavenVerificationBefore(scan, "Build Maven candidates and resolve dependency inventories");
+        assertEquals("python3 -B scripts/verify_maven_tooling.py",
+                stepNamed(mapping(compatibility.get("warm-cache")),
+                        "Verify native Maven tooling restrictions").get("run"));
+        var nativeGuard = stepNamed(scan, "Verify native Maven tooling restrictions");
+        assertEquals("matrix.distribution == 'maven'", nativeGuard.get("if"));
+        assertNull(nativeGuard.get("continue-on-error"));
+        for (var job : List.of(mapping(compatibility.get("warm-cache")), scan)) {
+            var policyTests = stepNamed(job, "Verify Maven tooling scope policy");
+            assertEquals("python3 -B -m unittest discover -s scripts -p 'test_maven_tooling.py' -v", policyTests.get("run"));
+            assertNull(policyTests.get("continue-on-error"));
+        }
+        assertTrue(sequence(scan.get("steps")).indexOf(nativeGuard)
+                < sequence(scan.get("steps")).indexOf(stepNamed(scan, "Build Maven candidates and resolve dependency inventories")));
         assertEquals("matrix.distribution == 'maven'", stepNamed(scan, "Enable Maven dependency verification").get("if"));
         var publish = mapping(mapping(workflow("publish").get("jobs")).get("publish-maven"));
         assertMavenVerificationBefore(publish, "Publish the signed Maven release");

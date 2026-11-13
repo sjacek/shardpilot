@@ -2,8 +2,9 @@
 
 [Documentation index](README.md) | [Trust boundaries](security.md) | [Release gates](releases.md)
 
-ShardPilot keeps **Gradle and Maven** inventories separate. Each distribution has four
-CycloneDX 1.6 reports: **runtime, build, test and provided**. They describe resolved dependencies
+ShardPilot keeps **Gradle and Maven** inventories separate. Both distributions have four blocking
+CycloneDX 1.6 reports: **runtime, build, test and provided**. Maven additionally retains a complete
+**build-full** diagnostic report, including inherited tooling. They describe resolved dependencies
 of the checked-out candidate and its verification tooling. They do not claim to scan already
 published registry bytes, the entire runner, or every supported consumer installation.
 
@@ -12,7 +13,8 @@ published registry bytes, the entire runner, or every supported consumer install
 | Scope | Gradle | Maven |
 | --- | --- | --- |
 | Runtime | Native CycloneDX Gradle plugin 3.5.1, `runtimeClasspath` in both modules; embedded core class bytes are checked against the candidate JAR. | Native CycloneDX Maven plugin 2.9.3, compile/runtime scopes; coordinates must match the candidate plugin descriptor. |
-| Build | Root/module buildscript `classpath`, including Plugin Publish, CycloneDX and their resolved transitives. | Dependency plugin 3.11.0 `resolve-plugins` for all reactor projects with `security-sbom,central-release`: effective build/report plugins, their added dependencies and transitives. Includes the independently pinned startup checksum verifier. |
+| Build | Root/module buildscript `classpath`, including Plugin Publish, CycloneDX and their resolved transitives. | Native `resolve-plugins` for all reactor projects with `security-sbom,central-release`, selecting complete realms classified **blocking** by `security/maven-tooling-scope.json`. Includes startup checksum verification, the authored tooling guard and its verified compile APIs. |
+| Build-full | Not applicable. | The same complete native plugin inventory, including inherited Site/Jetty realms, plus startup tooling. Findings are diagnostic; missing or invalid evidence still fails CI. |
 | Test | Module test compile/runtime classpaths, the Jupiter/Spock/TestNG execution fixture classpaths and root `verificationFixtures`, including the declared lazy Groovy compiler inputs. Gradle API/TestKit file dependencies are retained too. | Complete reactor test classpaths, native dependency trees of the actual Invoker/example POMs, and an explicit model of the dynamically selected Surefire JUnit provider using the reactor's managed JUnit versions. |
 | Provided | A resolvable view of `compileOnly` plus SDK file dependencies from the actual compile classpath. | Transitive closure of effective direct `provided` roots, selected using native `dependency:tree` JSON and the fully resolved CycloneDX graph. |
 
@@ -54,12 +56,39 @@ inventory's `inputs`/`retainedFile` records. It distinguishes effective build pl
 managed-only declarations and records execution IDs, phases and goals from the effective POM.
 Site-only bindings are labelled `site-lifecycle-only`. These are model bindings, not proof of
 execution; a directly invoked plugin can be used without any bound execution. All resolved
-realms remain in the same SBOM and severity gate regardless of the label.
+realms remain in `build-full`; the blocking subset is selected by reviewed coordinates, not by
+this descriptive label. A library shared by blocking and inherited realms remains blocking.
 
 Only explicit plugin identity and binding fields are retained. The complete effective POM can
 contain interpolated local settings, so it is generated in a temporary directory and removed
 after extraction, including on failure. Arbitrary properties and plugin configuration are never
 copied into the uploaded explanatory report.
+
+## Explicit Maven tooling boundary
+
+`security/maven-tooling-scope.json` classifies every supported producer/fixture plugin by its
+group/artifact coordinate and CLI prefix. Classification is independent of version selection;
+the native resolver and checksum baseline still enforce the actual version and artifact bytes.
+Unknown resolved realms or effective build/managed/report plugins fail, even when they have no
+known vulnerability. Additions require review of this policy and the affected native inventories.
+
+Only `org.apache.maven.plugins:maven-site-plugin` is inherited-only. Its locally pinned version
+is retained because deleting it restores Maven's older default. The producer does not support
+executing the site lifecycle or Site goals. `build-full` continues to show its Jetty findings;
+this is a reviewed scope change, **not a Jetty fix or a claim that the full tooling graph is clean**.
+
+The verified Maven launcher compiles a producer-only `AbstractMavenLifecycleParticipant` from
+`build-logic/maven-tooling-guard/MavenToolingGuard.java` against three checksum-verified Maven API
+JARs. The generated JAR bundles only authored classes/policy and is loaded alongside the existing
+checksum verifier before project goals execute. It rejects Site lifecycle phases, prefix and fully
+qualified goals, including goals supplied through `MAVEN_ARGS` or a POM default goal. Effective
+models reject unknown plugin coordinates, build extensions and non-default Site bindings, including
+active profiles. Native offline controls include a passing build and rejected execution attempts.
+
+The guard is scoped to verified producer Maven invocations and inherited Invoker options. It is
+not shipped to plugin consumers and is not a sandbox for arbitrary repository code or a caller
+that deliberately bypasses the verified launcher. A policy change must not remove the native
+controls, checksum verification, either required distribution check, or full report retention.
 
 ## CI and release gating
 
@@ -82,13 +111,14 @@ The opt-in `security-sbom` profile uses `skipAttach`; reports are not publicatio
 
 The jobs use read-only repository permissions and no publisher secrets. They run manually, from
 the reusable compatibility workflow, and daily against the default branch. Both compatibility
-matrices require successful warmup and successful security checks. A failure explicitly fails the
-existing required contexts; publication depends on the whole successful reusable workflow.
+matrices require successful warmup and run independently of the scans. Both security contexts
+remain independently required; publication depends on the whole successful reusable workflow.
 A scheduled finding does not revoke a previously published release.
 
-The scan loop continues through all four scopes after a severity failure or process error. It
+The scan loop continues through all four blocking scopes and Maven's full diagnostic scope after a severity failure or process error. It
 records every native exit code, then independently validates every report. One failed, missing,
-invalid or inconsistent scope fails the entire distribution. A clean runtime report alone is
+invalid or inconsistent report fails the entire distribution. High/Critical findings fail the
+four blocking scopes; findings alone in `build-full` do not fail the aggregate. A clean runtime report alone is
 never sufficient. Artifacts upload with `always()`; earlier generator failures can retain only
 partial evidence. No `continue-on-error` converts a security failure into success.
 
@@ -101,7 +131,7 @@ refreshes the DB and records its source/build/schema. The scanner runs locally, 
 project inventories to an analysis API. Package exclusions, VEX filtering and suppressed matches
 are rejected by the reporting policy.
 
-High and critical matches block even without a fix. Medium, low, negligible and unknown results
+High and critical matches in blocking scopes block even without a fix. Medium, low, negligible and unknown results
 remain available for triage. Stale/different DBs, unexpected scanner versions, changed SBOMs or
 native evidence, another scanned file, contradictory exit statuses and different candidate/commit
 cohorts fail closed. Preparation invalidates previous findings and summaries before building a
@@ -115,7 +145,8 @@ For each distribution, `build/security/<distribution>/` contains:
 | `build/`, `test/`, `provided/` | The same SBOM/inventory/findings/status/summary files for each additional scope. |
 | `<scope>/native/` | Unmodified native BOMs, resolution reports, scope evidence, POMs and the SDK identity registry, with hashes in that scope's inventory. |
 | `scanner.json`, `database.json` | Actual scanner and fresh DB identities, also copied into the individual scope reports. |
-| `scopes-summary.json`, `scopes-summary.md` | Result for **all four scopes**, with a separate status for each; also added to the job UI. |
+| `build-full/` (Maven) | Complete tooling SBOM, full findings, native exit status, provenance and diagnostic summary. |
+| `scopes-summary.json`, `scopes-summary.md` | Results for all scopes, explicit `blockingScopes`/`diagnosticScopes` and the aggregate gate; also added to the job UI. |
 
 Artifacts **`dependency-security-gradle`** and **`dependency-security-maven`** retain the reports
 for 30 days, including after severity failures. Full vulnerability DBs, downloaded JARs, signing
@@ -132,7 +163,7 @@ its published checksum. From the repository root:
 
 ```shell
 ./gradlew securityInventories --no-configuration-cache
-python3 -B -c "import os,sys; sys.path.insert(0,'scripts'); import maven_verification as v; os.environ.update(v.environment()); import maven_security_inventory as s; s.main()"
+python3 -B -c "import os,sys; sys.path.insert(0,'scripts'); import maven_verification as v; os.environ.update(v.environment()); import verify_maven_tooling as g; g.verify(); import maven_security_inventory as s; s.main()"
 python3 -B scripts/security_scopes.py prepare --distribution gradle
 python3 -B scripts/security_scopes.py prepare --distribution maven
 ```
@@ -140,7 +171,7 @@ python3 -B scripts/security_scopes.py prepare --distribution maven
 The inline local command bootstraps the verifier before calling the Maven helper; it enforces
 committed hashes rather than collecting new ones. GitHub Actions instead runs
 `scripts/maven_verification.py prepare` to write settings to `GITHUB_ENV`, then invokes
-`scripts/maven_security_inventory.py` in that verified environment.
+the native tooling controls and `scripts/maven_security_inventory.py` in that verified environment.
 
 Preparation records the immutable Git SHA and working-tree dirtiness; a modified checkout is
 not asserted to be a clean copy of that commit. CI supplies the SHA explicitly. On PowerShell,

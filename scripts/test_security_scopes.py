@@ -14,6 +14,20 @@ import test_security_reports as fixtures
 
 
 class SecurityScopesTest(unittest.TestCase):
+    def test_authored_guard_identity_is_allowed_only_in_tooling_and_with_an_exact_source_identity(self):
+        candidate = fixtures.component('example', 'candidate')
+        guard = fixtures.component('shardpilot', 'maven-tooling-guard')
+        guard.update(version='a' * 64, purl='pkg:generic/shardpilot/maven-tooling-guard@' + 'a' * 64)
+        guard['bom-ref'] = guard['purl']
+        guard['properties'] = [{'name': 'shardpilot:identity-kind', 'value': 'authored-maven-startup-guard'}]
+        document = fixtures.bom(candidate, [guard], [(candidate, [guard])])
+        reports.validate_bom(document, tooling=True)
+        with self.assertRaises(ValueError):
+            reports.validate_bom(document)
+        document['components'][0]['properties'] = []
+        with self.assertRaises(ValueError):
+            reports.validate_bom(document, tooling=True)
+
     def setUp(self):
         self.fixture = fixtures.SecurityReportsTest()
         self.fixture.setUp()
@@ -256,10 +270,13 @@ class SecurityScopesTest(unittest.TestCase):
                 maven_security_inventory.fixture_inventories()
             self.assertFalse(manifest.exists())
 
-    def seed_scans(self):
+    def seed_scans(self, distribution='gradle'):
         base, native, _ = self.fixture.scan()
         inventory = reports.read_json(base / 'inventory.json')
-        for scope in scopes.SCOPES[1:]:
+        if distribution == 'maven':
+            inventory['distribution'] = distribution
+            reports.write_json(base / 'inventory.json', inventory)
+        for scope in scopes.scan_scopes(distribution)[1:]:
             output = base / scope
             document = reports.read_json(base / 'bom.cdx.json')
             reports.write_json(output / 'bom.cdx.json', document)
@@ -275,6 +292,49 @@ class SecurityScopesTest(unittest.TestCase):
             reports.write_json(output / 'findings.json', report)
             reports.write_json(output / 'scan-status.json', {'exitCode': 0})
         return base
+
+    def test_full_maven_findings_are_visible_but_missing_or_invalid_diagnostics_fail_closed(self):
+        # Use the same synthetic candidate fixture, relocating it to the Maven report boundary.
+        original = self.seed_scans('maven')
+        base = scopes.directory('maven', 'runtime')
+        original.rename(base)
+        for scope in scopes.scan_scopes('maven'):
+            output = scopes.directory('maven', scope)
+            inventory = reports.read_json(output / 'inventory.json')
+            if scope != 'runtime':
+                for entry in inventory['inputs']:
+                    old = original / entry['retainedFile']
+                    entry['retainedFile'] = old.relative_to(original).as_posix()
+            reports.write_json(output / 'inventory.json', inventory)
+            findings = reports.read_json(output / 'findings.json')
+            findings['source']['target'] = str(output / 'bom.cdx.json')
+            reports.write_json(output / 'findings.json', findings)
+        output = base / 'build-full'
+        findings = reports.read_json(output / 'findings.json')
+        findings['matches'] = [{'vulnerability': {'id': 'CVE-diagnostic', 'severity': 'High'},
+                                'artifact': {'name': 'unused-server'}}]
+        reports.write_json(output / 'findings.json', findings)
+        reports.write_json(output / 'scan-status.json', {'exitCode': 2})
+        self.assertEqual(0, scopes.summarize('maven', now=fixtures.NOW))
+        summary = reports.read_json(base / 'scopes-summary.json')
+        self.assertTrue(summary['passed'])
+        self.assertEqual(1, summary['scopes']['build-full']['blockingMatches'])
+        self.assertFalse(summary['scopes']['build-full']['passed'])
+        # Scanner failures are not findings and must never be downgraded to diagnostic results.
+        reports.write_json(output / 'scan-status.json', {'exitCode': 1})
+        self.assertEqual(1, scopes.summarize('maven', now=fixtures.NOW))
+        (output / 'findings.json').unlink()
+        self.assertEqual(1, scopes.summarize('maven', now=fixtures.NOW))
+
+    def test_maven_scan_keeps_full_findings_diagnostic_but_native_errors_and_active_findings_block(self):
+        original = self.seed_scans('maven')
+        original.rename(scopes.directory('maven', 'runtime'))
+        for statuses, expected in (((0, 0, 0, 0, 2), 0), ((0, 0, 0, 0, 1), 1), ((0, 2, 0, 0, 2), 1)):
+            with self.subTest(statuses=statuses), patch.object(scopes.subprocess, 'run') as run:
+                run.side_effect = [subprocess.CompletedProcess([], status) for status in statuses]
+                self.assertEqual(expected, scopes.scan('maven', 'grype'))
+                self.assertEqual(5, run.call_count)
+                self.assertTrue((scopes.directory('maven', 'build-full') / 'scan-status.json').is_file())
 
     def test_high_build_finding_does_not_prevent_scanning_test_and_provided_scopes(self):
         base = self.seed_scans()

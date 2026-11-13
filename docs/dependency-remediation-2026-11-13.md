@@ -97,7 +97,7 @@ The latest public Jetty 10/11 releases also matched the same High advisories in 
 probes. Public maintained Jetty 12 releases require a different API integration and are not a
 compatible dependency-only replacement for this Site plugin.
 
-Affected matches remain visible and **the Maven gate remains blocked**. There is no risk
+At this stage, affected matches remained visible and **the Maven gate remained blocked**. There was no risk
 acceptance, suppression or threshold change. Resolving this boundary requires an upstream Site
 integration with maintained Jetty, a supported patched dependency source, or a separately reviewed
 change to the supported producer tooling/boundary. A claim that CI is fully green would be incorrect.
@@ -140,6 +140,33 @@ their new hosted cohort can be verified. Real-suite performance measurement rema
 GitHub Private Vulnerability Reporting was found disabled, enabled on 13 November 2026 and then
 confirmed with the repository API returning `{"enabled":true}`. This verifies the setting, not a
 report submission from another user's account. See [maintainer setup](security.md#maintainer-setup-for-private-reports).
+
+## Reviewed producer tooling scope
+
+The subsequent reviewed policy is `security/maven-tooling-scope.json`: eighteen supported plugin
+coordinates are blocking, and only Maven Site is inherited-only. Selection retains every component
+owned by a blocking realm, including libraries shared with Site. Native Maven lifecycle controls
+reject Site execution and unknown effective/direct plugin coordinates. This boundary supersedes
+the earlier all-realms blocking behavior; it does not fix or suppress Jetty's advisories.
+
+`build-full` retains the complete original tooling inventory and all findings. Its native scanner
+exit code and evidence are validated just like blocking reports. Findings alone are diagnostic;
+missing, malformed, stale or contradictory evidence still fails the aggregate. The four original
+runtime/build/test/provided scopes remain blocking, with the same High threshold and no VEX/package
+filters. The two required distribution job names and the fourteen required main checks are unchanged.
+
+The authored startup guard and its verified compile API JARs are included in build evidence. Native
+offline controls cover a passing build, Site phase/prefix/coordinate/default-goal/environment forms,
+active profiles and unknown build/managed/report plugins. Their report is bound to the exact guard
+JAR and probe-source checksum. See the [scope policy and local commands](dependency-security.md#explicit-maven-tooling-boundary).
+
+Local validation passed 97 Python script tests, the workflow structural tests, full Maven
+verification (302 unit tests, 17 Invoker cases and two examples), and fourteen offline native
+guard controls. The final guard also passed the repeated 302-unit-test run and signed-bundle
+verification for nine artifacts/signatures with upload disabled. Native inventories and Grype
+scans passed the four blocking Maven scopes; `build-full` retained the same two High and two
+Medium Jetty matches with an aggregate passing gate. These are local results; the new hosted
+pipeline cohort still requires a maintainer commit and push.
 
 References: [CycloneDX core validation advisory](https://github.com/advisories/GHSA-6fhj-vr9j-g45r),
 [Bouncy Castle advisory](https://github.com/advisories/GHSA-9pwp-9qqc-pr26),
