@@ -60,17 +60,32 @@ mount destinations/access modes before starting each container, then removes onl
 The warm phase creates fresh tool homes, not copies of the developer's Gradle/Maven settings.
 Only those homes become the isolated phase's seed. Projects and test outputs remain separate.
 The seed is a tar checkpoint containing regular files/directories under `.gradle` and `.m2`;
-imports reject links, traversal, other roots and excessive expanded size. Completed Gradle warmup
-can reuse its verified public implementation JAR checkpoint after a later harness failure. Measured
-executions still run in fresh projects. Earlier failed warmup evidence can be preserved in `attempts/`.
+imports reject links, traversal, other roots and excessive expanded size. A later retry can restore
+already resolved public dependencies, but must still execute both reference and sharded warmup for
+every framework. A cached plugin JAR alone does not establish that Spock's Groovy compiler or
+TestNG's lazy runtime is available offline. Measured executions still run in fresh projects.
+Earlier failed warmup evidence can be preserved in `attempts/`.
 Resolved Gradle implementation, Maven adapter and core JAR hashes must match the registry downloads.
 
 ## Scenarios and attribution
 
-The authored fixture has four JUnit class families, each with two parameter rows. Gradle's native
-task observes eight executions. Maven runs Surefire and Failsafe, observing sixteen in total.
+The audit requires four separate consumers:
+
+| Tool / framework | Native runner | Reference observations | Fixture |
+| --- | --- | --- | --- |
+| Gradle / Jupiter | JUnit Platform, `junit-jupiter` engine | 8 | Four Java classes, two parameter rows each. |
+| Gradle / Spock | JUnit Platform, `spock` engine | 8 | Four Groovy specifications, two unrolled iterations with equal input values each. |
+| Gradle / TestNG | TestNG with a native `ITestListener` | 8 | Four Java classes, two data-provider invocations with equal input values each. |
+| Maven / Jupiter | Surefire and Failsafe | 16 | Four unit-test and four integration-test classes, two parameter rows each. |
+
 Each consumer runs an unapplied-plugin reference, two shards and four shards in fresh project
-directories. Native engine identity/outcome multisets must match the reference, including multiplicity.
+directories: **28 measured runs and eight baseline-versus-shards comparisons**. Online warmup
+executes a reference and one active shard for each consumer, separately from the measured runs.
+Native engine identity/outcome multisets must match the reference, including multiplicity.
+The verifier checks the requested listener and engine, rejects repeated identities, and requires
+distinct ownership across nodes. Equal Spock/TestNG input values must retain distinct native
+iteration/invocation identities. Native XML totals and successful outcomes must agree with the
+event stream; the current published-artifact fixtures expect no failures or skips.
 Maven binds disjoint `unit-durations.tsv` and `integration-durations.tsv` histories to the corresponding
 executions and explicitly configures native class patterns. A shared history can legitimately assign
 one suite's families to another node and leave an empty runner; that is a different fixture contract.
@@ -92,8 +107,9 @@ consumer requires investigation and fails the automated check, even if the OS bl
 
 The trace covers these Linux JVM processes and their descendants. It is not a Java call-stack
 attribution mechanism and does not establish universal absence of telemetry. This fixture exercises
-application/configuration and sharded Jupiter execution, including Maven's two runners; it does not
-exercise every refresh/report/error path, Spock/TestNG consumer, native library mechanism or environment.
+application/configuration and sharded Gradle Jupiter/Spock/TestNG execution, plus Maven Jupiter
+through both runners; it does not exercise every refresh/report/error path, Maven Spock/TestNG
+consumer, native library mechanism or environment.
 
 ## Reproduce and inspect
 
@@ -126,7 +142,15 @@ python3 -B testing/published-artifacts/check_evidence.py build/published-artifac
 
 The second command mutates private temporary copies: lost/duplicated invocations, swapped outcomes,
 blocked outbound calls, inconsistent XML, changed JAR bytes and altered signing/tag evidence must
-be rejected. Rejection removes an earlier green verification report. Original evidence is retained.
+be rejected. Five controls apply to each of the four consumers, plus four registry/signing controls:
+**24 required negative controls**. Missing or duplicated control names cannot satisfy the CI gate.
+Rejection removes an earlier green verification report. Original evidence is retained.
+
+Current execution evidence uses `executionSchemaVersion: 2` and explicitly names the framework.
+The verifier rejects missing framework cohorts, incomplete warmup, legacy Jupiter-only evidence
+and success flags that disagree with raw files. Historical 14-run/four-comparison/nine-control
+records below remain evidence of their original scope. Recheck their original archives with the
+tooling retained inside those archives; they cannot satisfy the expanded current gate.
 
 The helper tests run first and require neither Docker nor network:
 
@@ -139,7 +163,7 @@ Evidence stays under ignored `build/published-artifact-audit/`:
 - `registry-verification.json`, downloaded artifacts/sidecars/signatures and `source-tag.json`;
 - `signatures/signatures.json` and individual GnuPG status logs;
 - each phase's `container-policy.json` and `container.log`;
-- `isolated/<tool>/<cohort>/`: original engine TSV, native XML, build log and raw syscall trace;
+- `isolated/<tool>/<framework>/<cohort>/`: original engine TSV, native XML, build log and raw syscall trace;
 - the positive-control log/trace, isolated summary and final `audit-summary.json`.
 - `verified-evidence.json` from independent re-reading and `negative-controls.json` from mutations.
 - `audit-request.json`, the selected version/tag and reviewed publisher identity;
@@ -165,8 +189,8 @@ gh workflow run published-artifact-audit.yml --repo sjacek/shardpilot --ref main
 
 The workflow checks out the triggering tooling SHA with complete tag history, downloads public
 registry artifacts afresh and creates fresh tool homes. It runs signature verification, online
-dependency warmup, fourteen measured offline consumers, independent evidence verification and all
-nine evidence mutation controls. There is no restored dependency/image cache, publisher environment,
+dependency warmup, 28 measured offline runs across four consumers, independent evidence verification
+and all 24 evidence mutation controls. There is no restored dependency/image cache, publisher environment,
 inherited release secret or credentialed upload. Build-tool downloads and the reviewed Docker base
 are pinned; each phase records its actual image and tool versions. On Linux, only disposable phase
 output/seed directories are made writable to UID 10001; registry inputs stay mounted read-only.
@@ -203,6 +227,30 @@ that run's CI verdict green. A successful exit without the complete evidence and
 fails packaging verification. Forced runner termination can prevent final steps, so `always()` is
 best-effort retention rather than a guarantee after runner loss. Existing immutable release tags
 do not acquire new workflows; this gate applies to future tags containing these changes.
+
+## Local Gradle framework extension: 13 November 2026
+
+The expanded harness passed against public **0.5.0** bytes in local Linux Docker containers.
+This was a working-tree validation based on main commit
+`bbb0dd0d04fcebde0ece85aa20bdea6395cd9ae5`, not a GitHub Actions run. The published source remains
+`dacbfbdb07e61f37ffa524fb286a97483c6c93e9`; no release artifact or tag was changed.
+
+| Check | Observed result |
+| --- | --- |
+| Framework execution | Gradle Jupiter, Spock and TestNG plus Maven Jupiter/Surefire/Failsafe: all 28 measured runs passed offline. |
+| Equivalence | All eight two/four-shard comparisons matched native identities, occurrence counts and successful outcomes; native XML totals agreed. |
+| Network | Zero non-loopback IP or DNS attempts in measured consumers; the separate blocked tracer control was recorded. |
+| Evidence rejection | All 24 mutations were rejected; stale green verification/control reports were removed on failure. |
+| Registry identity | Fifteen registry files and ten OpenPGP signatures passed; the signed tag and reviewed publisher identity matched. |
+| Fast guards | 48 audit tests and 97 script tests passed on Linux; immutable dependency policy remained at 378 Gradle, 984 Maven and 44 Action records. |
+
+The [local evidence record](evidence/published-0.5.0-gradle-frameworks-local-2026-11-13.json)
+binds the result to tooling file hashes, container image, registry hashes, original event/trace
+hashes and the report archive checksum. The archive remains under
+`build/published-artifact-audit-gradle-frameworks-report.zip`; it is not a hosted CI artifact.
+After pushing these changes, run the existing full audit workflow to establish hosted evidence
+for the expanded scope. This validation is not a performance benchmark; that remains deferred
+until dev is ready.
 
 ## Published 0.5.0 baseline: 13 November 2026
 

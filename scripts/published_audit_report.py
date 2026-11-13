@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 import zipfile
 
-from run_published_artifact_audit import ROOT, summarize
+from run_published_artifact_audit import ROOT, runner_module, summarize
 from published_artifacts import release_version
 
 
@@ -23,6 +23,9 @@ TOOLING = [
     'scripts/published_audit_report.py', 'testing/published-artifacts/audit_runner.py',
     'testing/published-artifacts/check_evidence.py', 'testing/published-artifacts/NetworkProbe.java',
     'testing/published-artifacts/Dockerfile', 'testing/published-artifacts/test_audit.py',
+    'testing/published-artifacts/test_evidence.py',
+    'testing/execution-equivalence/junit/src/example/equivalence/JunitExecutionListener.java',
+    'testing/execution-equivalence/testng/src/example/equivalence/TestNgExecutionListener.java',
     'security/published-artifact-audit.json', '.github/workflows/published-artifact-audit.yml'
 ]
 
@@ -83,12 +86,26 @@ def finalize(output, archive, outcome):
             verification = summarize(output)
             native = json.loads((output / 'audit-summary.json').read_text(encoding='utf-8'))
             controls = json.loads((output / 'negative-controls.json').read_text(encoding='utf-8'))
+            contract = runner_module()
+            expected_cases = {(item['tool'], item['framework'], cohort)
+                              for item in contract.SCENARIOS for cohort, _, _, _ in contract.cohorts()}
+            actual_cases = [(item.get('tool'), item.get('framework'), item.get('cohort')) for item in verification['cases']]
+            expected_comparisons = {(item['tool'], item['framework'], count) for item in contract.SCENARIOS for count in (2, 4)}
+            actual_comparisons = [(item.get('tool'), item.get('framework'), item.get('shards'))
+                                  for item in verification['comparisons'] if item.get('passed')]
             if not (native['passed'] and verification['passed'] and controls['passed']) \
                     or native['version'] != report.get('version') or verification['version'] != report.get('version') \
                     or native['sourceCommit'] != verification['sourceCommit'] \
-                    or len(controls['rejectedMutations']) != 9 or len(set(controls['rejectedMutations'])) != 9:
+                    or any(model.get('executionSchemaVersion') != contract.EXECUTION_SCHEMA_VERSION for model in (native, verification, controls)) \
+                    or len(actual_cases) != len(expected_cases) or set(actual_cases) != expected_cases \
+                    or any(item.get('outboundAttempts') != 0 for item in verification['cases']) \
+                    or len(actual_comparisons) != len(expected_comparisons) or set(actual_comparisons) != expected_comparisons \
+                    or len(verification['comparisons']) != len(expected_comparisons) \
+                    or controls['rejectedMutations'] != contract.negative_control_names():
                 raise ValueError('Required audit phases or negative evidence controls are incomplete')
-            report.update({'passed': True, 'sourceCommit': verification['sourceCommit'],
+            report.update({'passed': True, 'executionSchemaVersion': contract.EXECUTION_SCHEMA_VERSION,
+                           'scenarios': [item['tool'] + '/' + item['framework'] for item in contract.SCENARIOS],
+                           'sourceCommit': verification['sourceCommit'],
                            'registryArtifacts': verification['registryArtifacts'],
                            'openPgpSignatures': verification['openPgpSignatures'],
                            'measuredRuns': len(verification['cases']), 'comparisons': len(verification['comparisons']),
@@ -106,6 +123,7 @@ def finalize(output, archive, outcome):
                '- Retained archive contains raw syscall traces, native XML/events, signatures and phase logs.\n' +
                '- Tool downloads, dependency homes and publication credentials are excluded.\n')
     if report['passed']:
+        summary += '- Framework scenarios: ' + ', '.join('`' + name + '`' for name in report['scenarios']) + '.\n'
         summary += ('- Measured runs: ' + str(report['measuredRuns']) + '; execution comparisons: ' +
                     str(report['comparisons']) + '; outbound/DNS attempts: ' + str(report['outboundAttempts']) + '.\n')
     (output / 'ci-summary.md').write_text(summary, encoding='utf-8')

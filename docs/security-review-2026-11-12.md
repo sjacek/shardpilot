@@ -27,6 +27,13 @@ Those stages retain what was known at the time; they are not the current release
 post-publication audit supports the reviewed policy update from 0.4.0 to 0.5.0, with the same
 publisher fingerprint. The 0.4.0 evidence, original policy snapshots and immutable tags are preserved.
 
+The expanded [published-framework harness](published-artifact-audit.md#local-gradle-framework-extension-13-november-2026)
+also passed locally against public 0.5.0 with Gradle Spock and TestNG: 28 offline runs, eight
+equivalence comparisons, 24 rejected evidence mutations and zero measured outbound attempts.
+Its working-tree tooling hashes and raw-evidence hashes are retained separately from the hosted
+Jupiter-only baseline above. A hosted run of the expanded scope remains the next confirmation;
+real-suite benchmarking stays deferred until dev is ready.
+
 ## Reference snapshot
 
 The user identified the reviewed version as the public GitHub state visible on 12 November 2026.

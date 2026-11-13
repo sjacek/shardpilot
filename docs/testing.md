@@ -46,6 +46,27 @@ establish the candidate's hosted compatibility matrix, fresh SCA reports or regi
 
 ## Local verification
 
+### Published Gradle framework audit
+
+The [published-artifact audit](published-artifact-audit.md#scenarios-and-attribution) resolves the
+public Gradle plugin separately for Jupiter, Spock and TestNG. Together with Maven Jupiter through
+Surefire/Failsafe, it requires 28 isolated executions, eight native identity/outcome comparisons
+and 24 evidence mutation controls. Spock unrolled rows and TestNG data providers deliberately repeat
+input values to check that distinct native invocations remain distinct after sharding.
+
+Run the fast harness guards without Docker or network:
+
+```shell
+python3 -B -m unittest discover -s testing/published-artifacts -p 'test_*.py' -v
+```
+
+The synthetic evidence tests cover malformed or wrong-engine identities, missing framework/warmup
+cohorts, stale success reports and every mutation control. They do not replace the native runs.
+Use the full Docker audit command from the linked guide for published registry-byte verification,
+offline framework execution and syscall traces. The expanded evidence schema is version 2;
+historical Jupiter-only reports retain their original scope. Performance benchmarking remains
+deferred until the dev environment is ready.
+
 ```shell
 ./gradlew check assemble
 python3 -B scripts/maven_verification.py run -- -B -ntp verify
