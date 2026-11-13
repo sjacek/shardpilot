@@ -58,7 +58,7 @@ jobs:
             build/gradle-dependencies.tar
             build/maven-dependencies.tar
           # noinspection UndefinedParamsPresent
-          key: ci-dependencies-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.gradle', '**/pom.xml', 'gradle.properties', '**/gradle-wrapper.properties', '.mvn/wrapper/maven-wrapper.properties', '.mvn/checksums.sha256', 'gradle/verification-metadata.xml', 'security/dependency-verification.json', 'security/maven-tooling-scope.json', 'build-logic/maven-tooling-guard/**', 'scripts/maven_tooling.py', 'shardpilot-gradle-plugin/src/test/**/*.java', 'scripts/ci_dependency_cache.py', 'scripts/maven_verification.py', 'scripts/maven_security_inventory.py', '.github/workflows/compatibility.yml') }}
+          key: ci-dependencies-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.gradle', '**/pom.xml', 'gradle.properties', '**/gradle-wrapper.properties', '.mvn/wrapper/maven-wrapper.properties', '.mvn/checksums.sha256', 'gradle/verification-metadata.xml', 'gradle/ide-source-availability.json', 'scripts/ide_dependency*', 'security/dependency-verification.json', 'security/maven-tooling-scope.json', 'build-logic/maven-tooling-guard/**', 'scripts/maven_tooling.py', 'shardpilot-gradle-plugin/src/test/**/*.java', 'scripts/ci_dependency_cache.py', 'scripts/maven_verification.py', 'scripts/maven_security_inventory.py', '.github/workflows/compatibility.yml') }}
           # noinspection UndefinedParamsPresent
           restore-keys: ci-dependencies-v2-${{ runner.os }}-${{ runner.arch }}-
       - name: Unpack downloaded dependencies
@@ -68,6 +68,10 @@ jobs:
         with:
           # One download-only snapshot owns these paths; do not layer a second Gradle cache over it.
           cache-disabled: true
+      - name: Verify IDE source and Gradle SDK checksums
+        run: python3 -B scripts/ide_dependency_verification.py check --verify-downloads
+      - name: Test IDE dependency update safeguards
+        run: python3 -B -m unittest discover -s scripts -p 'test_ide_dependency_verification.py' -v
       - name: Warm Gradle and TestKit dependencies without running tests
         if: steps.dependencies.outputs.cache-hit != 'true'
         run: >-

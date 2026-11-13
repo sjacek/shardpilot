@@ -126,27 +126,28 @@ class FixtureContractTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             fixtures(root, '1.2.3')
-            self.assertIn("version '1.2.3' apply false", (root / 'gradle/build.gradle').read_text())
+            for framework in ('junit', 'spock', 'testng'):
+                self.assertIn("version '1.2.3' apply false", (root / 'gradle' / framework / 'build.gradle').read_text())
             ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
-            pom = ET.parse(root / 'maven/pom.xml').getroot()
+            pom = ET.parse(root / 'maven/junit/pom.xml').getroot()
             versions = [plugin.findtext('m:version', namespaces=ns) for plugin in pom.findall('.//m:plugin', ns)
                         if plugin.findtext('m:artifactId', namespaces=ns) == 'shardpilot-maven-plugin']
             self.assertEqual(['1.2.3'], versions)
-            self.assertIn('@ValueSource(ints = {1, 2})', (root / 'gradle/src/test/java/example/equivalence/AlphaTest.java').read_text())
+            self.assertIn('@ValueSource(ints = {1, 2})', (root / 'gradle/junit/src/test/java/example/equivalence/AlphaTest.java').read_text())
 
     def test_native_maven_runners_have_disjoint_histories_bound_to_their_executions(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             fixtures(root)
             ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
-            pom = ET.parse(root / 'maven/pom.xml').getroot()
+            pom = ET.parse(root / 'maven/junit/pom.xml').getroot()
             executions = pom.findall('.//m:profile/m:build/m:plugins/m:plugin/m:executions/m:execution', ns)
             self.assertEqual(2, len(executions))
             histories = {}
             for execution in executions:
                 runner = execution.findtext('m:configuration/m:runner', namespaces=ns)
                 file = execution.findtext('m:configuration/m:durationsFile', namespaces=ns).replace('${project.basedir}/', '')
-                histories[runner] = {line.split('\t')[0] for line in (root / 'maven' / file).read_text().splitlines()}
+                histories[runner] = {line.split('\t')[0] for line in (root / 'maven/junit' / file).read_text().splitlines()}
             self.assertEqual(4, len(histories['SUREFIRE']))
             self.assertEqual(4, len(histories['FAILSAFE']))
             self.assertTrue(all(name.endswith('Test') for name in histories['SUREFIRE']))
@@ -303,17 +304,27 @@ class SandboxContractTest(unittest.TestCase):
 
 
 class CiEvidenceTest(unittest.TestCase):
+    @staticmethod
+    def verdicts():
+        native = {'passed': True, 'version': '0.5.0', 'sourceCommit': 'a' * 40,
+                  'executionSchemaVersion': audit_runner.EXECUTION_SCHEMA_VERSION}
+        verified = {**native, 'registryArtifacts': 15, 'openPgpSignatures': 10,
+                    'cases': [{'tool': item['tool'], 'framework': item['framework'], 'cohort': name, 'outboundAttempts': 0}
+                              for item in audit_runner.SCENARIOS for name, _, _, _ in audit_runner.cohorts()],
+                    'comparisons': [{'tool': item['tool'], 'framework': item['framework'], 'shards': count, 'passed': True}
+                                    for item in audit_runner.SCENARIOS for count in (2, 4)]}
+        return native, verified
+
     def test_packaging_failure_cannot_leave_a_green_ci_report_after_a_valid_audit(self):
         with tempfile.TemporaryDirectory() as temporary, patch.dict('os.environ', {}, clear=True):
             root = Path(temporary)
             output = root / 'evidence'
             output.mkdir()
-            native = {'passed': True, 'version': '0.4.0', 'sourceCommit': 'a' * 40}
-            verified = {**native, 'registryArtifacts': 15, 'openPgpSignatures': 10,
-                        'cases': [{'outboundAttempts': 0}] * 14, 'comparisons': [True] * 4}
-            (output / 'audit-request.json').write_text(json.dumps({'version': '0.4.0'}))
+            native, verified = self.verdicts()
+            (output / 'audit-request.json').write_text(json.dumps({'version': native['version']}))
             (output / 'audit-summary.json').write_text(json.dumps(native))
-            (output / 'negative-controls.json').write_text(json.dumps({'passed': True, 'rejectedMutations': list(map(str, range(9)))}))
+            (output / 'negative-controls.json').write_text(json.dumps({'passed': True,
+                'executionSchemaVersion': audit_runner.EXECUTION_SCHEMA_VERSION, 'rejectedMutations': audit_runner.negative_control_names()}))
             with patch.object(reporting, 'summarize', return_value=verified), \
                     patch.object(reporting, 'package', side_effect=ValueError('Unsafe evidence')), \
                     self.assertRaisesRegex(ValueError, 'Unsafe evidence'):
@@ -328,14 +339,14 @@ class CiEvidenceTest(unittest.TestCase):
             root = Path(temporary)
             output = root / 'evidence'
             output.mkdir()
-            native = {'passed': True, 'version': '0.4.0', 'sourceCommit': 'a' * 40}
-            verified = {**native, 'registryArtifacts': 15, 'openPgpSignatures': 10,
-                        'cases': [{'outboundAttempts': 0}] * 14, 'comparisons': [True] * 4}
-            (output / 'audit-request.json').write_text(json.dumps({'version': '0.4.0'}))
+            native, verified = self.verdicts()
+            (output / 'audit-request.json').write_text(json.dumps({'version': native['version']}))
             (output / 'audit-summary.json').write_text(json.dumps(native))
-            for count, expected in ((9, True), (8, False), (9, False)):
-                controls = list(map(str, range(count))) if expected or count == 8 else ['duplicated'] * 9
-                (output / 'negative-controls.json').write_text(json.dumps({'passed': True, 'rejectedMutations': controls}))
+            required = audit_runner.negative_control_names()
+            for controls, expected in ((required, True), (required[:-1], False), (['duplicated'] * len(required), False)):
+                (output / 'negative-controls.json').write_text(json.dumps({'passed': True,
+                    'executionSchemaVersion': audit_runner.EXECUTION_SCHEMA_VERSION,
+                    'rejectedMutations': controls}))
                 with self.subTest(controls=controls), patch.object(reporting, 'summarize', return_value=verified):
                     result = reporting.finalize(output, root / 'report.zip', 'success')
                 self.assertEqual(expected, result['passed'])
@@ -355,6 +366,31 @@ class CiEvidenceTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'symlinks'):
                 reporting.package(output, root / 'report.zip')
             self.assertFalse((root / 'report.zip').exists())
+
+    def test_ci_cannot_accept_legacy_or_incomplete_framework_comparisons(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.dict('os.environ', {}, clear=True):
+            root = Path(temporary)
+            output = root / 'evidence'
+            output.mkdir()
+            for mutation in ('legacy', 'missing-runs', 'duplicate-framework', 'failed-comparison', 'extra-comparison'):
+                native, verified = self.verdicts()
+                if mutation == 'legacy':
+                    native['executionSchemaVersion'] = 1
+                elif mutation == 'missing-runs':
+                    verified['cases'] = verified['cases'][:14]
+                elif mutation == 'duplicate-framework':
+                    verified['cases'][7]['framework'] = 'junit'
+                elif mutation == 'failed-comparison':
+                    verified['comparisons'][-1]['passed'] = False
+                else:
+                    verified['comparisons'].append({'passed': False})
+                (output / 'audit-request.json').write_text(json.dumps({'version': native['version']}))
+                (output / 'audit-summary.json').write_text(json.dumps(native))
+                (output / 'negative-controls.json').write_text(json.dumps({'passed': True,
+                    'executionSchemaVersion': audit_runner.EXECUTION_SCHEMA_VERSION, 'rejectedMutations': audit_runner.negative_control_names()}))
+                with self.subTest(mutation=mutation), patch.object(reporting, 'summarize', return_value=verified):
+                    result = reporting.finalize(output, root / 'report.zip', 'success')
+                    self.assertFalse(result['passed'])
 
     def test_failure_keeps_partial_traces_and_cannot_reuse_an_earlier_green_ci_verdict(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -1,5 +1,7 @@
 """Credential-free published-consumer fixtures, OpenPGP checks and Linux syscall evidence."""
 import argparse
+import base64
+import binascii
 from collections import Counter
 import hashlib
 import ipaddress
@@ -20,6 +22,49 @@ if VERSION is None:
     VERSION = json.loads(policy_path.read_text(encoding='utf-8'))['defaultPublishedVersion']
 if not re.fullmatch(r'(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)', VERSION):
     raise ValueError('An immutable stable release version is required')
+
+# Required consumers are authored here, independently of retained success flags or counts.
+EXECUTION_SCHEMA_VERSION = 2
+SCENARIOS = (
+    {'tool': 'gradle', 'framework': 'junit', 'nativeTests': 8, 'listener': 'junit-platform', 'engine': 'junit-jupiter'},
+    {'tool': 'gradle', 'framework': 'spock', 'nativeTests': 8, 'listener': 'junit-platform', 'engine': 'spock'},
+    {'tool': 'gradle', 'framework': 'testng', 'nativeTests': 8, 'listener': 'testng', 'engine': None},
+    {'tool': 'maven', 'framework': 'junit', 'nativeTests': 16, 'listener': 'junit-platform', 'engine': 'junit-jupiter'},
+)
+COHORT_MUTATIONS = ('lost invocation', 'changed outcome', 'cross-node duplicate with unchanged totals',
+                    'blocked outbound attempt', 'native XML disagrees')
+REGISTRY_MUTATIONS = ('changed registry JAR', 'missing signature', 'different signing identity', 'signed tag payload differs')
+
+
+def negative_control_names():
+    return [scenario['tool'] + '/' + scenario['framework'] + ': ' + name
+            for scenario in SCENARIOS for name in COHORT_MUTATIONS] + list(REGISTRY_MUTATIONS)
+
+
+def cohorts(warm=False):
+    return [('baseline', False, 1, 1), ('2-1', True, 2, 1)] if warm else [
+        ('baseline', False, 1, 1), *[(f'{count}-{index}', True, count, index)
+                                   for count in (2, 4) for index in range(1, count + 1)]]
+
+
+def native_events(path, scenario, expected):
+    """Require the requested native engine as well as counts and successful outcomes."""
+    events = Counter(tuple(line.split('\t')) for line in path.read_text().splitlines())
+    if not events or sum(events.values()) != expected:
+        raise ValueError('Unexpected native observation count: ' + str(path))
+    if any(count != 1 for count in events.values()):
+        raise ValueError('Repeated native execution identity: ' + str(path))
+    for row in events:
+        if len(row) != 5 or row[:3] != ('v1', scenario['listener'], 'TEST') or row[4] != 'PASSED':
+            raise ValueError('Unexpected native observation stream: ' + str(path))
+        try:
+            identity = base64.b64decode(row[3] + '=' * (-len(row[3]) % 4), altchars=b'-_', validate=True).decode('utf-8')
+        except (binascii.Error, UnicodeError) as failure:
+            raise ValueError('Invalid native execution identity: ' + str(path)) from failure
+        prefix = '[engine:' + scenario['engine'] + ']' if scenario['engine'] else 'example.equivalence.'
+        if not identity.startswith(prefix):
+            raise ValueError('Native evidence belongs to another engine: ' + str(path))
+    return events
 
 
 def write(path, text):
@@ -42,18 +87,53 @@ def fixtures(destination, version=VERSION):
     if not re.fullmatch(r'(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)', version):
         raise ValueError('An immutable stable release version is required')
     repository = Path(__file__).resolve().parents[2]
-    for tool in ('gradle', 'maven'):
-        root = destination / tool
-        write(root / 'durations.tsv', ''.join(f'example.equivalence.{name}{suffix}\t10\n' for name in ('Alpha', 'Beta', 'Gamma', 'Delta') for suffix in (('Test',) if tool == 'gradle' else ('Test', 'IT'))))
+    for scenario in SCENARIOS:
+        tool, framework = scenario['tool'], scenario['framework']
+        root = destination / tool / framework
+        suffixes = ('Spec',) if framework == 'spock' else (('Test',) if tool == 'gradle' else ('Test', 'IT'))
+        write(root / 'durations.tsv', ''.join(f'example.equivalence.{name}{suffix}\t10\n'
+                                            for name in ('Alpha', 'Beta', 'Gamma', 'Delta') for suffix in suffixes))
         if tool == 'maven':
             for suite, suffix in (('unit', 'Test'), ('integration', 'IT')):
                 write(root / (suite + '-durations.tsv'), ''.join(f'example.equivalence.{name}{suffix}\t10\n' for name in ('Alpha', 'Beta', 'Gamma', 'Delta')))
         source = root / 'src/test/java/example/equivalence'
         source.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(repository / 'testing/execution-equivalence/junit/src/example/equivalence/JunitExecutionListener.java', source / 'JunitExecutionListener.java')
-        write(root / 'src/test/resources/META-INF/services/org.junit.platform.launcher.TestExecutionListener', 'example.equivalence.JunitExecutionListener\n')
+        listener = 'TestNgExecutionListener' if framework == 'testng' else 'JunitExecutionListener'
+        listener_framework = 'testng' if framework == 'testng' else 'junit'
+        shutil.copyfile(repository / f'testing/execution-equivalence/{listener_framework}/src/example/equivalence/{listener}.java', source / (listener + '.java'))
+        if framework != 'testng':
+            write(root / 'src/test/resources/META-INF/services/org.junit.platform.launcher.TestExecutionListener', 'example.equivalence.JunitExecutionListener\n')
         for name in ('Alpha', 'Beta', 'Gamma', 'Delta'):
-            for suffix in (('Test',) if tool == 'gradle' else ('Test', 'IT')):
+            if framework == 'spock':
+                write(root / f'src/test/groovy/example/equivalence/{name}Spec.groovy', f'''package example.equivalence
+import spock.lang.Specification
+import spock.lang.Unroll
+class {name}Spec extends Specification {{
+    @Unroll('row #iterationIndex')
+    def 'repeated data rows retain separate native identities'() {{
+        expect:
+        value == 1
+        where:
+        value << [1, 1]
+    }}
+}}
+''')
+                continue
+            if framework == 'testng':
+                write(source / (name + 'Test.java'), f'''package example.equivalence;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+public class {name}Test {{
+    @DataProvider(name = "rows")
+    public Object[][] rows() {{ return new Object[][] {{{{1}}, {{1}}}}; }}
+
+    @Test(dataProvider = "rows")
+    public void repeatedRows(int value) {{ assertEquals(value, 1); }}
+}}
+''')
+                continue
+            for suffix in suffixes:
                 write(source / (name + suffix + '.java'), f'''package example.equivalence;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -64,32 +144,43 @@ class {name}{suffix} {{
     void rows(int value) {{ assertTrue(value > 0); }}
 }}
 ''')
-    write(destination / 'gradle/settings.gradle', "rootProject.name='published-artifact-audit'\n")
-    write(destination / 'gradle/gradle.properties', 'org.gradle.workers.max=1\norg.gradle.jvmargs=-Xmx384m -Dfile.encoding=UTF-8\n')
-    write(destination / 'gradle/build.gradle', '''plugins {
-    id 'java'
+    for framework in ('junit', 'spock', 'testng'):
+        root = destination / 'gradle' / framework
+        write(root / 'settings.gradle', "rootProject.name='published-artifact-audit-" + framework + "'\n")
+        write(root / 'gradle.properties', 'org.gradle.workers.max=1\norg.gradle.jvmargs=-Xmx384m -Dfile.encoding=UTF-8\n')
+        dependencies = {
+            'junit': "testImplementation platform('org.junit:junit-bom:6.1.3')\n    testImplementation 'org.junit.jupiter:junit-jupiter'\n    testImplementation 'org.junit.platform:junit-platform-launcher'",
+            'spock': "testImplementation 'org.spockframework:spock-core:2.5-groovy-5.0'\n    testImplementation 'org.apache.groovy:groovy:5.1.3'\n    testImplementation 'org.junit.platform:junit-platform-launcher:6.1.3'",
+            'testng': "testImplementation 'org.testng:testng:7.12.0'",
+        }[framework]
+        engine = {'junit': "useJUnitPlatform { includeEngines 'junit-jupiter' }",
+                  'spock': "useJUnitPlatform { includeEngines 'spock' }",
+                  'testng': "useTestNG { listeners << 'example.equivalence.TestNgExecutionListener' }"}[framework]
+        write(root / 'build.gradle', '''plugins {
+    id '@LANGUAGE_PLUGIN@'
     id 'io.github.sjacek.shardpilot' version '@SHARDPILOT_VERSION@' apply false
 }
 def active = providers.gradleProperty('auditPlugin').getOrElse('false').toBoolean()
 if (active) apply plugin: 'io.github.sjacek.shardpilot'
 repositories { mavenCentral() }
 dependencies {
-    testImplementation platform('org.junit:junit-bom:6.1.3')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.junit.platform:junit-platform-launcher'
+    @DEPENDENCIES@
 }
+java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 tasks.withType(JavaCompile).configureEach { options.release = 17 }
 test {
-    useJUnitPlatform()
+    @ENGINE@
     maxHeapSize = '192m'
+    maxParallelForks = 1
     systemProperty 'execution.evidence', providers.gradleProperty('auditEvidence').get()
     if (active) shardPilot {
         enabled = true
         durationsFile = layout.projectDirectory.file('durations.tsv')
     }
 }
-'''.replace('@SHARDPILOT_VERSION@', version))
-    write(destination / 'maven/pom.xml', '''<project xmlns="http://maven.apache.org/POM/4.0.0">
+'''.replace('@SHARDPILOT_VERSION@', version).replace('@LANGUAGE_PLUGIN@', 'groovy' if framework == 'spock' else 'java')
+              .replace('@DEPENDENCIES@', dependencies).replace('@ENGINE@', engine))
+    write(destination / 'maven/junit/pom.xml', '''<project xmlns="http://maven.apache.org/POM/4.0.0">
 <modelVersion>4.0.0</modelVersion><groupId>example.shardpilot</groupId><artifactId>published-audit</artifactId><version>1</version>
 <properties><maven.compiler.release>17</maven.compiler.release><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding><shardpilot.count>1</shardpilot.count><shardpilot.index>1</shardpilot.index></properties>
 <dependencies>
@@ -218,8 +309,9 @@ def runs(warm):
     home = Path('/work/home')
     home.mkdir(parents=True, exist_ok=True)
     toolchain()
+    seed_restored = Path('/seed/homes.tar').is_file()
     restore_seed(home)
-    if not warm and not Path('/seed/homes.tar').is_file():
+    if not warm and not seed_restored:
         raise ValueError('Missing prepared dependency seed')
     control = None
     if not warm:
@@ -230,32 +322,26 @@ def runs(warm):
         if not any(item['address'] == '198.51.100.1' for item in control) or 'connection blocked' not in probe.read_text():
             raise ValueError('Network tracer positive control failed')
     cases = []
-    reused = []
-    for tool in ('gradle', 'maven'):
-        if warm and tool == 'gradle':
-            cached = list((home / '.gradle').rglob('shardpilot-' + VERSION + '.jar'))
-            registry = json.loads(Path('/registry/registry-verification.json').read_text())
-            expected = next(row['sha256'] for row in registry['artifacts'] if row['file'].endswith('/shardpilot-' + VERSION + '.jar'))
-            if cached and all(hashlib.sha256(path.read_bytes()).hexdigest() == expected for path in cached):
-                reused.append(tool)
-                print('gradle warmup: reusing verified public-byte checkpoint', flush=True)
-                continue
-        cohorts = [('baseline', False, 1, 1), ('2-1', True, 2, 1)] if warm else [('baseline', False, 1, 1)] + [(f'{count}-{index}', True, count, index) for count in (2, 4) for index in range(1, count + 1)]
-        for name, active, count, index in cohorts:
-            directory = Path('/work/projects') / tool / name
-            shutil.copytree(Path('/fixtures') / tool, directory)
-            evidence = Path('/evidence') / tool / name / 'events.tsv'
+    for scenario in SCENARIOS:
+        tool, framework = scenario['tool'], scenario['framework']
+        # A cached plugin JAR does not establish that a framework's lazy runtime is warm.
+        # Execute both paths for every framework, even when restoring a dependency checkpoint.
+        for name, active, count, index in cohorts(warm):
+            directory = Path('/work/projects') / tool / framework / name
+            shutil.copytree(Path('/fixtures') / tool / framework, directory)
+            evidence = Path('/evidence') / tool / framework / name / 'events.tsv'
             evidence.parent.mkdir(parents=True, exist_ok=True)
             evidence.unlink(missing_ok=True)
             execute(command(tool, evidence, active, count, index, not warm), directory, evidence.with_name('build.log'), trace=not warm)
             if not evidence.is_file():
                 raise ValueError('Native execution listener did not run')
+            native_events(evidence, scenario, scenario['nativeTests'] // count)
             attempts = [] if warm else network_attempts(evidence.with_name('build.strace').read_text())
-            cases.append({'tool': tool, 'cohort': name, 'outboundAttempts': attempts})
+            cases.append({'tool': tool, 'framework': framework, 'cohort': name, 'outboundAttempts': attempts})
             shutil.copytree(directory / ('build/test-results/test' if tool == 'gradle' else 'target/surefire-reports'), evidence.parent / 'unit-xml', dirs_exist_ok=True)
             if tool == 'maven':
                 shutil.copytree(directory / 'target/failsafe-reports', evidence.parent / 'integration-xml', dirs_exist_ok=True)
-            print(tool + ' ' + name + ': passed', flush=True)
+            print(tool + '/' + framework + ' ' + name + ': passed', flush=True)
         if warm:
             # A later fixture/reporting failure must not discard already resolved public bytes.
             checkpoint_seed(home)
@@ -263,21 +349,20 @@ def runs(warm):
     if warm:
         checkpoint_seed(home)
     else:
-        for tool, expected in (('gradle', 8), ('maven', 16)):
-            base = Path('/evidence') / tool
-            rows = lambda path: Counter(path.read_text().splitlines())
-            baseline = rows(base / 'baseline/events.tsv')
-            if sum(baseline.values()) != expected:
-                raise ValueError('Unexpected native baseline size')
+        for scenario in SCENARIOS:
+            base = Path('/evidence') / scenario['tool'] / scenario['framework']
+            baseline = native_events(base / 'baseline/events.tsv', scenario, scenario['nativeTests'])
             for count in (2, 4):
                 union = Counter()
                 for index in range(1, count + 1):
-                    union.update(rows(base / f'{count}-{index}/events.tsv'))
+                    union.update(native_events(base / f'{count}-{index}/events.tsv', scenario, scenario['nativeTests'] // count))
                 if union != baseline:
                     raise ValueError('Isolated native executions differ from baseline')
         if any(case['outboundAttempts'] for case in cases):
             raise ValueError('An isolated consumer attempted external networking; inspect raw traces')
-    write(Path('/evidence/summary.json'), json.dumps({'version': VERSION, 'phase': 'warm' if warm else 'isolated', 'reusedWarmups': reused, 'resolvedArtifacts': resolved, 'cases': cases, 'positiveControl': None if warm else control, 'passed': True}, indent=2) + '\n')
+    write(Path('/evidence/summary.json'), json.dumps({'executionSchemaVersion': EXECUTION_SCHEMA_VERSION,
+          'version': VERSION, 'phase': 'warm' if warm else 'isolated', 'restoredDependencySeed': seed_restored,
+          'resolvedArtifacts': resolved, 'cases': cases, 'positiveControl': None if warm else control, 'passed': True}, indent=2) + '\n')
 
 
 def tag_binding(payload, commit, version=VERSION):

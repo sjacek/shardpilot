@@ -7,13 +7,15 @@ from pathlib import Path
 import shutil
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
-from run_published_artifact_audit import summarize
+from run_published_artifact_audit import runner_module, summarize
 
 
 def check(source):
+    (source / 'negative-controls.json').unlink(missing_ok=True)
     with redirect_stdout(io.StringIO()):
         result = summarize(source)
     rejected = []
@@ -52,16 +54,25 @@ def check(source):
             finally:
                 path.write_bytes(original)
 
-        event = 'isolated/gradle/2-1/events.tsv'
-        reject('lost invocation', event, lambda data: b'\n'.join(data.splitlines()[1:]) + b'\n')
-        reject('changed outcome', event, lambda data: data.replace(b'PASSED', b'SKIPPED', 1))
-        first = (target / event).read_bytes().splitlines()[0]
-        reject('cross-node duplicate with unchanged totals', 'isolated/gradle/2-2/events.tsv',
-               lambda data: b'\n'.join([first, *data.splitlines()[1:]]) + b'\n')
-        reject('blocked outbound attempt', 'isolated/gradle/2-1/build.strace',
-               lambda data: data + b'\n999 connect(5, {sa_family=AF_INET, sin_port=htons(443), sin_addr=inet_addr("198.51.100.2")}, 16) = -1 ENETUNREACH\n')
-        xml = next((target / 'isolated/gradle/2-1/unit-xml').glob('TEST-*.xml')).relative_to(target)
-        reject('native XML disagrees', xml, lambda data: data.replace(b'tests="2"', b'tests="0"', 1))
+        def changed_xml(data):
+            suite = ET.fromstring(data)
+            suite.set('tests', str(int(suite.get('tests')) + 1))
+            return ET.tostring(suite)
+
+        runner = runner_module()
+        for scenario in runner.SCENARIOS:
+            name = scenario['tool'] + '/' + scenario['framework']
+            base = 'isolated/' + name
+            event = base + '/2-1/events.tsv'
+            reject(name + ': lost invocation', event, lambda data: b'\n'.join(data.splitlines()[1:]) + b'\n')
+            reject(name + ': changed outcome', event, lambda data: data.replace(b'PASSED', b'SKIPPED', 1))
+            first = (target / event).read_bytes().splitlines()[0]
+            reject(name + ': cross-node duplicate with unchanged totals', base + '/2-2/events.tsv',
+                   lambda data: b'\n'.join([first, *data.splitlines()[1:]]) + b'\n')
+            reject(name + ': blocked outbound attempt', base + '/2-1/build.strace',
+                   lambda data: data + b'\n999 connect(5, {sa_family=AF_INET, sin_port=htons(443), sin_addr=inet_addr("198.51.100.2")}, 16) = -1 ENETUNREACH\n')
+            xml = next((target / base / '2-1/unit-xml').glob('TEST-*.xml')).relative_to(target)
+            reject(name + ': native XML disagrees', xml, changed_xml)
         reject('changed registry JAR', 'central/shardpilot-core-' + registry['version'] + '.jar', lambda data: data + b'changed')
         reject('missing signature', 'signatures/signatures.json',
                lambda data: json.dumps({**json.loads(data), 'verifiedSignatures': json.loads(data)['verifiedSignatures'][:-1]}).encode())
@@ -77,7 +88,9 @@ def check(source):
         reject('signed tag payload differs', 'source-tag.json', different_tag)
         with redirect_stdout(io.StringIO()):
             summarize(target)
-    report = {'validCohortPassed': result['passed'], 'rejectedMutations': rejected, 'passed': len(rejected) == 9}
+    report = {'executionSchemaVersion': runner.EXECUTION_SCHEMA_VERSION,
+              'validCohortPassed': result['passed'], 'rejectedMutations': rejected,
+              'passed': rejected == runner.negative_control_names()}
     (source / 'negative-controls.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(report, indent=2))
 

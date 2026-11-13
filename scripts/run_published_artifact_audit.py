@@ -100,12 +100,42 @@ def container(phase, output, image, version, fingerprint):
         run(['docker', 'rm', '--force', identifier], stdout=subprocess.DEVNULL)
 
 
-def summarize(output):
-    """Re-read original evidence independently of the in-container success flag."""
-    (output / 'verified-evidence.json').unlink(missing_ok=True)
+def runner_module():
+    """Load the same authored scenario contract without making phase metadata authoritative."""
     spec = importlib.util.spec_from_file_location('published_audit_runner', RUNNER / 'audit_runner.py')
     runner = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runner)
+    return runner
+
+
+def validate_phase(summary, directory, runner, version, warm):
+    phase = 'warm' if warm else 'isolated'
+    expected = {(item['tool'], item['framework'], cohort)
+                for item in runner.SCENARIOS for cohort, _, _, _ in runner.cohorts(warm)}
+    cases = summary.get('cases', [])
+    actual = [(item.get('tool'), item.get('framework'), item.get('cohort')) for item in cases]
+    if summary.get('executionSchemaVersion') != runner.EXECUTION_SCHEMA_VERSION \
+            or summary.get('phase') != phase or summary.get('version') != version \
+            or not summary.get('passed') or len(actual) != len(expected) or set(actual) != expected \
+            or any(item.get('outboundAttempts') != [] for item in cases):
+        raise ValueError('Incomplete framework cohort or unsupported execution evidence schema: ' + phase)
+    if {tool.name for tool in directory.iterdir() if tool.is_dir()} != {item['tool'] for item in runner.SCENARIOS}:
+        raise ValueError('Unexpected tool evidence directories: ' + phase)
+    directories = {(tool.name, framework.name) for tool in directory.iterdir() if tool.is_dir()
+                   for framework in tool.iterdir() if framework.is_dir()}
+    if directories != {(item['tool'], item['framework']) for item in runner.SCENARIOS}:
+        raise ValueError('Unexpected framework evidence directories: ' + phase)
+    expected_cohorts = {cohort for cohort, _, _, _ in runner.cohorts(warm)}
+    for item in runner.SCENARIOS:
+        root = directory / item['tool'] / item['framework']
+        if {path.name for path in root.iterdir() if path.is_dir()} != expected_cohorts:
+            raise ValueError('Incomplete native framework execution directories: ' + str(root))
+
+
+def summarize(output):
+    """Re-read original evidence independently of the in-container success flag."""
+    (output / 'verified-evidence.json').unlink(missing_ok=True)
+    runner = runner_module()
     registry = json.loads((output / 'registry-verification.json').read_text())
     version = published_artifacts.release_version(registry['version'])
     if len(registry['artifacts']) != 15 or len({row['file'] for row in registry['artifacts']}) != 15:
@@ -125,20 +155,23 @@ def summarize(output):
         raise ValueError('Measured phases do not share the expected image and isolation')
     warm = json.loads((output / 'warm/summary.json').read_text())
     isolated = json.loads((output / 'isolated/summary.json').read_text())
-    if not (signature['passed'] and warm['passed'] and isolated['passed']):
+    validate_phase(warm, output / 'warm', runner, version, True)
+    validate_phase(isolated, output / 'isolated', runner, version, False)
+    if not signature['passed']:
         raise ValueError('A required phase did not pass')
     positive = runner.network_attempts((output / 'isolated/positive-control.strace').read_text())
     if not any(row['address'] == '198.51.100.1' for row in positive):
         raise ValueError('Missing retained tracer positive control')
     rows = []
     comparisons = []
-    for tool, expected in (('gradle', 8), ('maven', 16)):
+    for scenario in runner.SCENARIOS:
+        tool, framework, expected = scenario['tool'], scenario['framework'], scenario['nativeTests']
+        for cohort, _, count, _ in runner.cohorts(True):
+            runner.native_events(output / 'warm' / tool / framework / cohort / 'events.tsv', scenario, expected // count)
         snapshots = {}
-        for cohort, count in [('baseline', 1)] + [(f'{count}-{node}', count) for count in (2, 4) for node in range(1, count + 1)]:
-            directory = output / 'isolated' / tool / cohort
-            events = Counter(tuple(line.split('\t')) for line in (directory / 'events.tsv').read_text().splitlines())
-            if not events or any(len(row) != 5 or row[0] != 'v1' or row[2] != 'TEST' or row[4] != 'PASSED' for row in events) or sum(events.values()) != expected // count:
-                raise ValueError('Unexpected native observation stream: ' + tool + '/' + cohort)
+        for cohort, _, count, _ in runner.cohorts():
+            directory = output / 'isolated' / tool / framework / cohort
+            events = runner.native_events(directory / 'events.tsv', scenario, expected // count)
             totals = Counter()
             for path in directory.rglob('TEST-*.xml'):
                 xml = ET.parse(path).getroot()
@@ -149,7 +182,7 @@ def summarize(output):
             attempts = runner.network_attempts(trace.read_text())
             if attempts:
                 raise ValueError('Retained network trace contains an outbound attempt')
-            rows.append({'tool': tool, 'cohort': cohort, 'nativeTests': totals['tests'], 'outboundAttempts': len(attempts),
+            rows.append({'tool': tool, 'framework': framework, 'cohort': cohort, 'nativeTests': totals['tests'], 'outboundAttempts': len(attempts),
                          'eventSha256': hashlib.sha256((directory / 'events.tsv').read_bytes()).hexdigest(),
                          'traceSha256': hashlib.sha256(trace.read_bytes()).hexdigest()})
             snapshots[cohort] = events
@@ -165,8 +198,9 @@ def summarize(output):
                 union.update(snapshot)
             if union != snapshots['baseline']:
                 raise ValueError('Retained native identity/outcome multiset differs from the reference')
-            comparisons.append({'tool': tool, 'shards': count, 'nativeTests': expected, 'passed': True})
-    report = {'schemaVersion': 1, 'version': registry['version'], 'sourceCommit': registry['sourceCommit'],
+            comparisons.append({'tool': tool, 'framework': framework, 'shards': count, 'nativeTests': expected, 'passed': True})
+    report = {'schemaVersion': 1, 'executionSchemaVersion': runner.EXECUTION_SCHEMA_VERSION,
+              'version': registry['version'], 'sourceCommit': registry['sourceCommit'],
               'verifiedAt': datetime.now(timezone.utc).isoformat(), 'registryArtifacts': len(registry['artifacts']),
               'openPgpSignatures': len(signature['verifiedSignatures']), 'primaryFingerprint': signature['verifiedSignatures'][0]['primaryFingerprint'],
               'imageId': policies[-1]['imageId'], 'cases': rows, 'comparisons': comparisons,
@@ -187,6 +221,7 @@ def audit(output, image, skip_build, reuse_downloads, phases, version=None):
     tag_name = 'v' + version
     (output / 'audit-request.json').write_text(json.dumps({
         'version': version, 'sourceTag': tag_name, 'startedAt': started,
+        'executionSchemaVersion': runner_module().EXECUTION_SCHEMA_VERSION,
         'publisherPrimaryFingerprint': policy['publisherPrimaryFingerprint'],
         'defaultPublishedVersion': policy['defaultPublishedVersion'],
         'scope': 'Already published registry bytes; not unpublished release candidates.'
@@ -229,7 +264,8 @@ def audit(output, image, skip_build, reuse_downloads, phases, version=None):
     if phases == ['signatures', 'warm', 'isolated']:
         signature = json.loads((output / 'signatures/signatures.json').read_text())
         isolated = json.loads((output / 'isolated/summary.json').read_text())
-        result = {'schemaVersion': 1, 'version': version, 'sourceCommit': registry['sourceCommit'],
+        result = {'schemaVersion': 1, 'executionSchemaVersion': runner_module().EXECUTION_SCHEMA_VERSION,
+                  'version': version, 'sourceCommit': registry['sourceCommit'],
                   'startedAt': started, 'completedAt': datetime.now(timezone.utc).isoformat(),
                   'registryArtifacts': len(registry['artifacts']), 'openPgp': signature, 'isolation': isolated,
                   'limits': ['GitHub public keys/tag and registry TLS are the observed identity anchors, not an out-of-band identity check.',
