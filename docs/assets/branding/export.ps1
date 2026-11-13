@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $assetRoot = $PSScriptRoot
-$repositoryRoot = [System.IO.Path]::GetFullPath((Join-Path $assetRoot '../..'))
+$repositoryRoot = [System.IO.Path]::GetFullPath((Join-Path $assetRoot '../../..'))
 $renderRoot = Join-Path $repositoryRoot 'build/branding'
 [void][System.IO.Directory]::CreateDirectory($renderRoot)
 

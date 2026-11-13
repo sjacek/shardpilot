@@ -1,6 +1,6 @@
 # Documentation guide icons
 
-Each guide in the [documentation index](../../../docs/README.md) has a distinct
+Each guide in the [documentation index](../../../README.md) has a distinct
 glyph on the same isometric panel used by the ShardPilot icon. The palette is
 forest `#063D26`, lime `#A0EF3B`, side green `#388E24` and mint `#CDFFD8`.
 The SVGs retain transparent surroundings and scale without external resources.
@@ -14,8 +14,8 @@ The framework examples use thematic test-fixture glyphs rather than vendor marks
 Regenerate the SVGs, mapping and self-contained preview from the repository root:
 
 ```powershell
-node assets/branding/guide-icons/generate.mjs
-.\assets\branding\export.ps1
+node docs/assets/branding/guide-icons/generate.mjs
+.\docs\assets\branding\export.ps1
 ```
 
 Edit the glyph definitions in [generate.mjs](generate.mjs). The generated

@@ -1,5 +1,8 @@
 # ShardPilot brand assets
 
+Keep these assets under `docs/assets/branding`: GitHub Pages publishes `docs/`,
+so images outside that source directory are not included in the documentation site.
+
 The artwork follows the Grinnotech Platform family: a forest-green background,
 lime-topped isometric modules and a pale mint field. Three equal stacks represent
 parallel shards. The shared fan-out symbol represents one suite distributed to
@@ -67,7 +70,7 @@ for small UI elements. Keep both assets square and preserve the full composition
 From the repository root on Windows, with Chrome or Edge installed:
 
 ```powershell
-.\assets\branding\export.ps1
+.\docs\assets\branding\export.ps1
 ```
 
 The script uses an isolated, hidden browser to render the local SVG and native
@@ -75,4 +78,4 @@ System.Drawing for proportional exports and the preview. It preserves the
 generated avatar master. The complete `build/branding/shardpilot-branding.zip`
 contains the master, SVG, PNG sizes, preview, provenance and export script.
 The guide icon preview is also rendered when present. Regenerate its SVGs with
-`node assets/branding/guide-icons/generate.mjs` after changing their glyphs.
+`node docs/assets/branding/guide-icons/generate.mjs` after changing their glyphs.

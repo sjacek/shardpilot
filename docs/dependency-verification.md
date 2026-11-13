@@ -82,6 +82,35 @@ new sums from a failed build, or retain a corrupted verifier JAR. A mismatch nee
    module metadata needed while resolving versions that are later evicted from the final graph.
    Verify the completed baseline in enforcement mode using another fresh cache, including the
    supported TestKit warmup versions. Do not add a broad trust rule to silence a missing entry.
+   Before completing a dependency, plugin or Wrapper update, also prepare and verify the IDE inputs:
+
+   ```shell
+   python3 -B scripts/ide_dependency_verification.py update
+   python3 -B scripts/ide_dependency_verification.py check --verify-downloads
+   ```
+
+   The updater independently downloads missing sources from Maven Central or the Gradle Plugin
+   Portal, validates a published checksum sidecar and records SHA-256 in the native metadata.
+   It preserves existing checksums and never derives trust from the developer's resolver cache.
+   Review the XML diff and `build/ide-dependency-verification/review.json` together with the version
+   change. A sidecar confirms repository consistency; it does not prove publisher identity.
+   The command requires the binary/plugin baseline to have been reviewed first, because the
+   Wrapper still configures the build with native strict verification enabled.
+
+   Every binary coordinate in the baseline, including classifier-only dependencies, must have
+   a source checksum. The gate also discovers Groovy modules from the running Wrapper and requires
+   their source and module checksums, so a Wrapper update cannot leave the IDE using stale SDK pins.
+   `gradle/ide-source-availability.json` permits only exact source coordinates confirmed absent
+   with HTTP 404 in both official repositories, bound to the reviewed binary SHA-256 values.
+   Authentication, rate-limit and server errors fail the command. The online check rejects an
+   absence record if sources have since appeared; it never creates a native trust exception.
+
+   Compatibility CI runs the online check on every preparation, including exact cache hits,
+   before matrix jobs can run. It checks downloaded bytes against reviewed SHA-256 values and
+   cannot update either policy. Run `check` without `--verify-downloads` for the local coverage
+   check (the Wrapper still needs its ordinary build dependencies). Regression controls cover
+   dependency/SDK version changes, altered bytes, stale absence records and CI write attempts.
+
 3. For Maven, explicitly collect checksums outside CI using the same lifecycle/profiles as the
    intended build, then review the diff. This mode may execute the dependencies being collected:
 

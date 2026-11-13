@@ -1,0 +1,12 @@
+title: ShardPilot
+description: Duration-balanced test sharding for Gradle and Maven
+url: https://sjacek.github.io
+baseurl: /shardpilot
+theme: jekyll-theme-primer
+
+# Pages publishes docs/; every page shares the responsive documentation shell.
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default

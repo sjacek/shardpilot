@@ -1,13 +1,6 @@
 # ShardPilot
 
-<table role="presentation">
-<tr>
-<td>
-
-[![ShardPilot avatar: three parallel green shard towers and a mint fan-out arrow.](assets/branding/shardpilot-avatar-256.png)](assets/branding/README.md)
-
-</td>
-<td>
+[![ShardPilot avatar: three parallel green shard towers and a mint fan-out arrow.](docs/assets/branding/shardpilot-avatar-256.png)](docs/assets/branding/README.md)
 
 ShardPilot helps shorten CI feedback for large JVM unit and integration test suites by splitting
 test classes into deterministic shards that run in parallel CI jobs. It provides a Gradle `Test`
@@ -20,10 +13,6 @@ test-runner replacement or telemetry. YAML manifests use SnakeYAML Engine in the
 Optional [explicit selection](docs/test-selection.md) runs a consumer-owned YAML class subset with
 one or multiple shards, validates it against full eligibility and keeps separate selection reports.
 The consumer decides when a short suite is sufficient; native test results remain an independent gate.
-
-</td>
-</tr>
-</table>
 
 Plugin ID: `io.github.sjacek.shardpilot` · License: [MIT](LICENSE).
 
