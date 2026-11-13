@@ -62,7 +62,7 @@ def check(source):
                lambda data: data + b'\n999 connect(5, {sa_family=AF_INET, sin_port=htons(443), sin_addr=inet_addr("198.51.100.2")}, 16) = -1 ENETUNREACH\n')
         xml = next((target / 'isolated/gradle/2-1/unit-xml').glob('TEST-*.xml')).relative_to(target)
         reject('native XML disagrees', xml, lambda data: data.replace(b'tests="2"', b'tests="0"', 1))
-        reject('changed registry JAR', 'central/shardpilot-core-0.4.0.jar', lambda data: data + b'changed')
+        reject('changed registry JAR', 'central/shardpilot-core-' + registry['version'] + '.jar', lambda data: data + b'changed')
         reject('missing signature', 'signatures/signatures.json',
                lambda data: json.dumps({**json.loads(data), 'verifiedSignatures': json.loads(data)['verifiedSignatures'][:-1]}).encode())
         def different_key(data):

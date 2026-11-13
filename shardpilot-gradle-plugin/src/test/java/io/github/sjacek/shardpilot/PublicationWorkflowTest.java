@@ -75,7 +75,7 @@ class PublicationWorkflowTest {
 
         for (String publisher : List.of("publish", "publish-maven")) {
             Map<?, ?> publication = mapping(jobs.get(publisher));
-            assertEquals(List.of("validate-tag", "compatibility"), publication.get("needs"));
+            assertEquals(List.of("validate-tag", "compatibility", "published-artifact-audit"), publication.get("needs"));
             String trigger = publisher.equals("publish") ? "push" : "workflow_dispatch";
             assertEquals("github.event_name == '" + trigger + "'", publication.get("if"),
                     "select one destination while retaining default prerequisite success gating");
@@ -84,6 +84,79 @@ class PublicationWorkflowTest {
         for (Object job : jobs.values()) {
             assertNull(mapping(job).get("continue-on-error"), "every release stage must be mandatory");
         }
+    }
+
+    /** The published baseline gate is separate from candidate testing and never receives publisher secrets. */
+    @Test
+    void fullPublishedAuditIsMandatoryBeforeBothPublishersAndSupportsManualRuns() throws IOException {
+        var publication = mapping(workflow("publish").get("jobs"));
+        var gate = mapping(publication.get("published-artifact-audit"));
+        assertEquals("validate-tag", gate.get("needs"));
+        assertEquals("./.github/workflows/published-artifact-audit.yml", gate.get("uses"));
+        assertNull(gate.get("if"));
+        assertNull(gate.get("secrets"));
+        assertNull(gate.get("with"), "release gates use the reviewed published baseline, never the unpublished candidate tag");
+        for (String publisher : List.of("publish", "publish-maven")) {
+            assertTrue(sequence(mapping(publication.get(publisher)).get("needs")).contains("published-artifact-audit"));
+        }
+        var audit = workflow("published-artifact-audit");
+        assertEquals(Set.of("workflow_dispatch", "workflow_call"), mapping(audit.get("on")).keySet());
+        assertEquals(Map.of("contents", "read"), audit.get("permissions"));
+        for (Object event : mapping(audit.get("on")).values()) {
+            var version = mapping(mapping(mapping(event).get("inputs")).get("version"));
+            assertEquals("string", version.get("type"));
+            assertEquals("", version.get("default"));
+            assertEquals(false, version.get("required"));
+            assertNull(mapping(event).get("secrets"));
+        }
+        var job = mapping(mapping(audit.get("jobs")).get("audit"));
+        assertEquals("ubuntu-latest", job.get("runs-on"));
+        assertNull(job.get("environment"));
+        assertNull(job.get("continue-on-error"));
+        var checkout = mapping(stepUsing(job, "actions/checkout@").get("with"));
+        assertEquals("${{ github.sha }}", checkout.get("ref"));
+        assertEquals(false, checkout.get("persist-credentials"));
+        assertEquals(0, checkout.get("fetch-depth"));
+        var execution = stepNamed(job, "Audit published artifacts and exercise evidence rejection");
+        assertEquals("audit", execution.get("id"));
+        assertNull(execution.get("if"));
+        assertNull(execution.get("continue-on-error"));
+        assertEquals(Map.of("AUDIT_VERSION", "${{ inputs.version }}"), execution.get("env"));
+        String commands = execution.get("run").toString();
+        assertTrue(commands.contains("set -euo pipefail"), "tee must not hide a failed audit");
+        assertTrue(commands.contains("scripts/run_published_artifact_audit.py --version \"$AUDIT_VERSION\""));
+        assertTrue(commands.contains("testing/published-artifacts/check_evidence.py"));
+        assertFalse(commands.contains("${{"), "untrusted input enters through a quoted environment variable");
+        assertFalse(commands.contains("--reuse-downloads"));
+        assertFalse(commands.contains("--skip-build"));
+        assertFalse(audit.toString().contains("secrets."));
+        assertFalse(audit.toString().contains("actions/cache"));
+    }
+
+    @Test
+    void publishedAuditRetainsFailureDiagnosticsWithoutUploadingDependencyHomes() throws IOException {
+        var audit = mapping(mapping(workflow("published-artifact-audit").get("jobs")).get("audit"));
+        var summary = stepNamed(audit, "Summarize and package audit evidence");
+        var upload = stepNamed(audit, "Retain audit reports and raw network traces");
+        assertEquals("always()", summary.get("if"));
+        assertEquals("always()", upload.get("if"));
+        assertTrue(mapping(summary.get("env")).get("AUDIT_OUTCOME").toString().contains("steps.audit.outcome"));
+        assertEquals("python3 -B scripts/published_audit_report.py --outcome \"$AUDIT_OUTCOME\"", summary.get("run"));
+        var artifact = mapping(upload.get("with"));
+        assertEquals(30, artifact.get("retention-days"));
+        assertEquals("error", artifact.get("if-no-files-found"));
+        String paths = artifact.get("path").toString();
+        assertTrue(paths.contains("build/published-artifact-audit-report.zip"));
+        assertTrue(paths.contains("build/published-artifact-audit/ci-report.json"));
+        assertFalse(paths.contains("**"));
+        assertFalse(paths.contains("seed"));
+        assertFalse(paths.contains("tool-image"));
+        var policy = mapping(new Load(LoadSettings.builder().build()).loadFromString(
+                Files.readString(Path.of("security/published-artifact-audit.json"))));
+        assertEquals(1, policy.get("schemaVersion"));
+        assertTrue(policy.get("defaultPublishedVersion").toString().matches("[0-9]+\\.[0-9]+\\.[0-9]+"));
+        assertTrue(policy.get("defaultSourceCommit").toString().matches("[a-f0-9]{40}"));
+        assertTrue(policy.get("publisherPrimaryFingerprint").toString().matches("[A-F0-9]{40}"));
     }
 
     @Test

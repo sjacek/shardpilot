@@ -12,7 +12,9 @@ import subprocess
 import tarfile
 import zipfile
 
-VERSION = '0.4.0'
+VERSION = os.environ.get('SHARDPILOT_AUDIT_VERSION', '0.4.0')
+if not re.fullmatch(r'(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)', VERSION):
+    raise ValueError('An immutable stable release version is required')
 
 
 def write(path, text):
@@ -20,7 +22,20 @@ def write(path, text):
     path.write_text(text, encoding='utf-8')
 
 
-def fixtures(destination):
+def tool_versions():
+    versions = {}
+    for name, command in [('java', ['java', '-version']), ('python', ['python3', '--version']),
+                          ('strace', ['strace', '--version']), ('gpg', ['gpg', '--version'])]:
+        result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                text=True, timeout=30)
+        lines = [line for line in result.stdout.splitlines() if line and not line.startswith('Picked up JAVA_TOOL_OPTIONS:')]
+        versions[name] = lines[0]
+    write(Path('/evidence/tool-versions.json'), json.dumps(versions, indent=2) + '\n')
+
+
+def fixtures(destination, version=VERSION):
+    if not re.fullmatch(r'(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)', version):
+        raise ValueError('An immutable stable release version is required')
     repository = Path(__file__).resolve().parents[2]
     for tool in ('gradle', 'maven'):
         root = destination / tool
@@ -48,7 +63,7 @@ class {name}{suffix} {{
     write(destination / 'gradle/gradle.properties', 'org.gradle.workers.max=1\norg.gradle.jvmargs=-Xmx384m -Dfile.encoding=UTF-8\n')
     write(destination / 'gradle/build.gradle', '''plugins {
     id 'java'
-    id 'io.github.sjacek.shardpilot' version '0.4.0' apply false
+    id 'io.github.sjacek.shardpilot' version '@SHARDPILOT_VERSION@' apply false
 }
 def active = providers.gradleProperty('auditPlugin').getOrElse('false').toBoolean()
 if (active) apply plugin: 'io.github.sjacek.shardpilot'
@@ -68,7 +83,7 @@ test {
         durationsFile = layout.projectDirectory.file('durations.tsv')
     }
 }
-''')
+'''.replace('@SHARDPILOT_VERSION@', version))
     write(destination / 'maven/pom.xml', '''<project xmlns="http://maven.apache.org/POM/4.0.0">
 <modelVersion>4.0.0</modelVersion><groupId>example.shardpilot</groupId><artifactId>published-audit</artifactId><version>1</version>
 <properties><maven.compiler.release>17</maven.compiler.release><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding><shardpilot.count>1</shardpilot.count><shardpilot.index>1</shardpilot.index></properties>
@@ -82,7 +97,7 @@ test {
 <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>3.6.1</version><configuration><includes><include>**/*IT.java</include></includes><argLine>-Xmx192m</argLine><systemPropertyVariables><execution.evidence>${auditEvidence}</execution.evidence></systemPropertyVariables></configuration><executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions></plugin>
 </plugins></build>
 <profiles><profile><id>sharded</id><build><plugins>
-<plugin><groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>0.4.0</version><configuration><durationsFile>${project.basedir}/durations.tsv</durationsFile></configuration><executions>
+<plugin><groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>@SHARDPILOT_VERSION@</version><configuration><durationsFile>${project.basedir}/durations.tsv</durationsFile></configuration><executions>
 <execution><id>unit</id><phase>process-test-classes</phase><goals><goal>select</goal></goals><configuration><runner>SUREFIRE</runner><durationsFile>${project.basedir}/unit-durations.tsv</durationsFile></configuration></execution>
 <execution><id>integration</id><phase>pre-integration-test</phase><goals><goal>select</goal></goals><configuration><runner>FAILSAFE</runner><durationsFile>${project.basedir}/integration-durations.tsv</durationsFile></configuration></execution>
 </executions></plugin>
@@ -90,7 +105,7 @@ test {
 <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><configuration><excludesFile>${project.build.directory}/shardpilot/integration/excludes.txt</excludesFile></configuration></plugin>
 </plugins></build></profile></profiles>
 </project>
-''')
+'''.replace('@SHARDPILOT_VERSION@', version))
 
 
 def network_attempts(trace):
@@ -133,7 +148,7 @@ def cached_artifacts():
     found = []
     for record in report['artifacts']:
         name = record['file'].replace('\\', '/').split('/')[-1]
-        if name not in ('shardpilot-0.4.0.jar', 'shardpilot-core-0.4.0.jar', 'shardpilot-maven-plugin-0.4.0.jar'):
+        if name not in tuple(artifact + '-' + VERSION + '.jar' for artifact in ('shardpilot', 'shardpilot-core', 'shardpilot-maven-plugin')):
             continue
         files = list(Path('/work/home').rglob(name))
         if not files or any(hashlib.sha256(path.read_bytes()).hexdigest() != record['sha256'] for path in files):
@@ -213,9 +228,9 @@ def runs(warm):
     reused = []
     for tool in ('gradle', 'maven'):
         if warm and tool == 'gradle':
-            cached = list((home / '.gradle').rglob('shardpilot-0.4.0.jar'))
+            cached = list((home / '.gradle').rglob('shardpilot-' + VERSION + '.jar'))
             registry = json.loads(Path('/registry/registry-verification.json').read_text())
-            expected = next(row['sha256'] for row in registry['artifacts'] if row['file'].endswith('/shardpilot-0.4.0.jar'))
+            expected = next(row['sha256'] for row in registry['artifacts'] if row['file'].endswith('/shardpilot-' + VERSION + '.jar'))
             if cached and all(hashlib.sha256(path.read_bytes()).hexdigest() == expected for path in cached):
                 reused.append(tool)
                 print('gradle warmup: reusing verified public-byte checkpoint', flush=True)
@@ -260,8 +275,8 @@ def runs(warm):
     write(Path('/evidence/summary.json'), json.dumps({'version': VERSION, 'phase': 'warm' if warm else 'isolated', 'reusedWarmups': reused, 'resolvedArtifacts': resolved, 'cases': cases, 'positiveControl': None if warm else control, 'passed': True}, indent=2) + '\n')
 
 
-def tag_binding(payload, commit):
-    if not payload.startswith(f'object {commit}\ntype commit\ntag v{VERSION}\n'):
+def tag_binding(payload, commit, version=VERSION):
+    if not payload.startswith(f'object {commit}\ntype commit\ntag v{version}\n'):
         raise ValueError('Signed tag payload does not bind the expected release commit')
 
 
@@ -299,6 +314,8 @@ def signatures():
             raise ValueError('Missing valid OpenPGP signature')
         results.append({'file': name, 'signingFingerprint': matches[0][0], 'primaryFingerprint': matches[0][1].split()[-1]})
     signer_cohort(results)
+    if results[0]['primaryFingerprint'] != os.environ['SHARDPILOT_AUDIT_FINGERPRINT']:
+        raise ValueError('Release signing identity differs from the reviewed publisher key')
     write(Path('/evidence/signatures.json'), json.dumps({'publicKeySource': 'https://github.com/sjacek.gpg', 'verifiedSignatures': results, 'passed': True}, indent=2) + '\n')
 
 
@@ -306,10 +323,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('phase', choices=('fixtures', 'warm', 'isolated', 'signatures'))
     parser.add_argument('--destination', type=Path)
+    parser.add_argument('--version', default=VERSION)
     args = parser.parse_args()
     if args.phase == 'fixtures':
-        fixtures(args.destination)
-    elif args.phase == 'signatures':
-        signatures()
+        fixtures(args.destination, args.version)
     else:
-        runs(args.phase == 'warm')
+        tool_versions()
+        if args.phase == 'signatures':
+            signatures()
+        else:
+            runs(args.phase == 'warm')

@@ -3,7 +3,7 @@
 [Security boundaries](security.md) | [Review follow-up](security-review-2026-11-12.md) |
 [Dependency integrity](dependency-verification.md)
 
-This maintainer check assesses public **0.4.0** distribution bytes, separately from the development
+This maintainer check defaults to public **0.4.0** distribution bytes, separately from the development
 checkout and locally built release candidates. It is bounded execution evidence, not an independent
 security certification, a reproducible-binary-build proof or a guarantee about every consumer.
 
@@ -27,6 +27,8 @@ metadata and its three JARs. Downloads retain original/final HTTPS URLs, sizes a
   is checked locally along with the artifact signatures. Public keys come from
   [the publisher's GitHub public-key endpoint](https://github.com/sjacek.gpg). Record the actual
   signing/primary fingerprints; this is not independent, out-of-band identity authentication.
+  The tag/artifact signer must also match the reviewed fingerprint in
+  [`security/published-artifact-audit.json`](../security/published-artifact-audit.json).
 
 Registry sidecars and module metadata share a distribution trust boundary with their artifacts.
 They detect mismatches but do not, by themselves, establish publisher identity or build provenance.
@@ -95,11 +97,13 @@ exercise every refresh/report/error path, Spock/TestNG consumer, native library 
 
 ## Reproduce and inspect
 
-Requirements: Python 3.12+, Git with the `v0.4.0` tag and a running Linux Docker engine. No publication
+Requirements: Python 3.12+, Git with the audited release tag and a running Linux Docker engine. No publication
 credentials, repository writes, workflow dispatch, commit or push are required.
 
 ```shell
 python3 -B scripts/run_published_artifact_audit.py
+# Explicitly select an already published stable release:
+python3 -B scripts/run_published_artifact_audit.py --version 0.4.0
 ```
 
 On Windows use an installed Python executable. A different output directory can preserve an earlier
@@ -133,9 +137,64 @@ Evidence stays under ignored `build/published-artifact-audit/`:
 - `isolated/<tool>/<cohort>/`: original engine TSV, native XML, build log and raw syscall trace;
 - the positive-control log/trace, isolated summary and final `audit-summary.json`.
 - `verified-evidence.json` from independent re-reading and `negative-controls.json` from mutations.
+- `audit-request.json`, the selected version/tag and reviewed publisher identity;
+- each phase's `tool-versions.json` with its observed JVM, Python, GnuPG and tracer versions.
 
 Retain the complete evidence cohort with its version, source commit and environment. Zero observed
 attempts applies only to the measured scenarios and is separate from dependency vulnerability analysis.
+
+## Full audit in GitHub Actions
+
+The separate [Published artifact audit workflow](../.github/workflows/published-artifact-audit.yml)
+supports `workflow_dispatch` and `workflow_call`; it does not run on every ordinary branch push.
+The fast audit guard tests remain in the normal compatibility workflow.
+
+From **Actions → Published artifact audit → Run workflow**, select the tooling revision and optionally
+enter an already published stable version. An empty version uses the reviewed policy baseline.
+The workflow must first be present on the default branch for manual dispatch to be available.
+The equivalent manual command is:
+
+```shell
+gh workflow run published-artifact-audit.yml --repo sjacek/shardpilot --ref main -f version=0.4.0
+```
+
+The workflow checks out the triggering tooling SHA with complete tag history, downloads public
+registry artifacts afresh and creates fresh tool homes. It runs signature verification, online
+dependency warmup, fourteen measured offline consumers, independent evidence verification and all
+nine evidence mutation controls. There is no restored dependency/image cache, publisher environment,
+inherited release secret or credentialed upload. Build-tool downloads and the reviewed Docker base
+are pinned; each phase records its actual image and tool versions. On Linux, only disposable phase
+output/seed directories are made writable to UID 10001; registry inputs stay mounted read-only.
+
+Both publishers in [publish.yml](../.github/workflows/publish.yml) now require this reusable audit
+as well as tag validation and the entire compatibility workflow. Audit and compatibility can run
+in parallel after tag validation. Failed, cancelled or skipped prerequisites block publication.
+No new required branch-check context is necessary: the audit is a release-job dependency.
+
+**Pre-publication scope:** a new candidate cannot be downloaded from both registries before it has
+been published. The pre-release gate therefore audits the last complete **published baseline**, not
+the candidate. The policy currently binds `0.4.0` to commit
+`58daef5436a01295ce46feea56aa307c41bbd0a0` and the reviewed publisher fingerprint. Candidate behavior
+is checked by the compatibility matrix and signed-bundle verification. After both registries expose
+a new release, run the audit explicitly for that version before updating the baseline policy in a
+reviewed change. Do not advance the baseline to an unpublished candidate or move an existing tag.
+Update the baseline regression in `testing/published-artifacts/test_audit.py` together with the policy.
+Different artifact layouts/API or Java-target changes require reviewing the fixture/checks as well.
+
+The packaging and upload steps use `always()`. They retain one versioned run artifact for **30 days**:
+
+- `published-artifact-audit-report.zip` and its SHA-256;
+- the current `ci-report.json` verdict and human-readable `ci-summary.md`;
+- registry bytes, checksums/signatures, source-tag identity, original XML/event streams,
+  raw `strace` logs, positive-control evidence, container policies and preparation/failure logs;
+- a snapshot of the audit tooling and reviewed policy used by the run.
+
+Dependency seeds, downloaded build-tool archives, developer homes and unrelated files are excluded.
+A failed audit still produces failure/partial diagnostics; a stale phase success flag cannot turn
+that run's CI verdict green. A successful exit without the complete evidence and mutation controls
+fails packaging verification. Forced runner termination can prevent final steps, so `always()` is
+best-effort retention rather than a guarantee after runner loss. Existing immutable release tags
+do not acquire new workflows; this gate applies to future tags containing these changes.
 
 ## Local result: 12 November 2026
 

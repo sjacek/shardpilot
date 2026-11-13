@@ -1,4 +1,4 @@
-"""Run the 0.4.0 registry audit in disposable, credential-free Linux containers.
+"""Audit a stable public release in disposable, credential-free Linux containers.
 
 Requires Docker and a local source tag. Registry downloads/build preparation use the network;
 OpenPGP verification and measured consumer executions use Docker's network-none namespace.
@@ -53,11 +53,15 @@ def tool_context(output):
     return context
 
 
-def container(phase, output, image):
+def container(phase, output, image, version, fingerprint):
     evidence = output / phase
     evidence.mkdir(parents=True, exist_ok=True)
     seed = output / 'seed'
     seed.mkdir(parents=True, exist_ok=True)
+    # Linux bind mounts keep host ownership. Only these disposable output directories
+    # are shared with UID 10001; registry inputs remain mounted read-only.
+    for directory in (evidence, seed):
+        directory.chmod(0o777)
     mounts = [(RUNNER, '/runner', True), (output / 'fixtures', '/fixtures', True),
               (output, '/registry', True), (seed, '/seed', phase != 'warm'), (evidence, '/evidence', False)]
     arguments = ['docker', 'create', '--read-only', '--user', '10001:10001', '--cap-drop', 'ALL',
@@ -65,7 +69,9 @@ def container(phase, output, image):
                  '--cpus', '2', '--memory', '3g', '--pids-limit', '512',
                  '--tmpfs', '/work:rw,exec,mode=1777,size=3g', '--tmpfs', '/tmp:rw,exec,mode=1777,size=256m',
                  '--env', 'PYTHONDONTWRITEBYTECODE=1', '--env', 'JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2',
-                 '--label', 'io.github.sjacek.shardpilot.audit=published-0.4.0']
+                 '--env', 'SHARDPILOT_AUDIT_VERSION=' + version,
+                 '--env', 'SHARDPILOT_AUDIT_FINGERPRINT=' + fingerprint,
+                 '--label', 'io.github.sjacek.shardpilot.audit=published-' + version]
     for source, target, readonly in mounts:
         arguments += ['--mount', 'type=bind,source=' + str(source) + ',target=' + target + (',readonly' if readonly else '')]
     arguments += [image, 'python3', '-B', '/runner/audit_runner.py', phase]
@@ -101,12 +107,15 @@ def summarize(output):
     runner = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runner)
     registry = json.loads((output / 'registry-verification.json').read_text())
-    if registry['version'] != '0.4.0' or len(registry['artifacts']) != 15 or len({row['file'] for row in registry['artifacts']}) != 15:
+    version = published_artifacts.release_version(registry['version'])
+    if len(registry['artifacts']) != 15 or len({row['file'] for row in registry['artifacts']}) != 15:
         raise ValueError('Incomplete published artifact cohort')
     signature = json.loads((output / 'signatures/signatures.json').read_text())
     source = json.loads((output / 'source-tag.json').read_text())
-    runner.tag_binding(source['verification']['payload'], registry['sourceCommit'])
+    runner.tag_binding(source['verification']['payload'], registry['sourceCommit'], version)
     runner.signer_cohort(signature['verifiedSignatures'])
+    if signature['verifiedSignatures'][0]['primaryFingerprint'] != published_artifacts.audit_policy()['publisherPrimaryFingerprint']:
+        raise ValueError('Release signing identity differs from the reviewed publisher key')
     for row in registry['artifacts']:
         artifact = output / row['file'].replace('\\', '/')
         if hashlib.sha256(artifact.read_bytes()).hexdigest() != row['sha256']:
@@ -167,34 +176,47 @@ def summarize(output):
     return report
 
 
-def audit(output, image, skip_build, reuse_downloads, phases):
+def audit(output, image, skip_build, reuse_downloads, phases, version=None):
     output.mkdir(parents=True, exist_ok=True)
     final = output / 'audit-summary.json'
     final.unlink(missing_ok=True)
     (output / 'verified-evidence.json').unlink(missing_ok=True)
     started = datetime.now(timezone.utc).isoformat()
+    policy = published_artifacts.audit_policy()
+    version = published_artifacts.release_version(version or policy['defaultPublishedVersion'])
+    tag_name = 'v' + version
+    (output / 'audit-request.json').write_text(json.dumps({
+        'version': version, 'sourceTag': tag_name, 'startedAt': started,
+        'publisherPrimaryFingerprint': policy['publisherPrimaryFingerprint'],
+        'defaultPublishedVersion': policy['defaultPublishedVersion'],
+        'scope': 'Already published registry bytes; not unpublished release candidates.'
+    }, indent=2) + '\n', encoding='utf-8')
     run([sys.executable, '-B', '-m', 'unittest', 'discover', '-s', str(RUNNER), '-p', 'test_*.py', '-v'])
     if not reuse_downloads:
-        published_artifacts.fetch(output, '0.4.0')
+        published_artifacts.fetch(output, version)
     registry = json.loads((output / 'registry-verification.json').read_text())
+    if registry['version'] != version:
+        raise ValueError('Requested release differs from retained downloads')
     for entry in registry['artifacts']:
         path = output / entry['file'].replace('\\', '/')
         if hashlib.sha256(path.read_bytes()).hexdigest() != entry['sha256']:
             raise ValueError('Downloaded artifact changed before the isolated run')
-    reference = published_artifacts.git('rev-parse', 'v0.4.0^{}').decode().strip()
+    reference = published_artifacts.git('rev-parse', tag_name + '^{}').decode().strip()
     if reference != registry['sourceCommit']:
         raise ValueError('Local release tag changed')
+    if version == policy['defaultPublishedVersion'] and reference != policy['defaultSourceCommit']:
+        raise ValueError('Default published release differs from the reviewed source commit')
     if not reuse_downloads or not (output / 'source-tag.json').is_file():
         ref_path = output / 'public-tag-ref.json'
-        published_artifacts.download('https://api.github.com/repos/sjacek/shardpilot/git/ref/tags/v0.4.0', ref_path)
+        published_artifacts.download('https://api.github.com/repos/sjacek/shardpilot/git/ref/tags/' + tag_name, ref_path)
         ref = json.loads(ref_path.read_text())
         if ref['object']['type'] != 'tag':
             raise ValueError('Expected an annotated release tag')
         published_artifacts.download(ref['object']['url'], output / 'source-tag.json')
     tag = json.loads((output / 'source-tag.json').read_text())
-    if tag['object']['sha'] != registry['sourceCommit'] or tag['tag'] != 'v0.4.0':
+    if tag['object']['sha'] != registry['sourceCommit'] or tag['tag'] != tag_name:
         raise ValueError('Registry source snapshot differs from public tag')
-    run([sys.executable, '-B', str(RUNNER / 'audit_runner.py'), 'fixtures', '--destination', str(output / 'fixtures')])
+    run([sys.executable, '-B', str(RUNNER / 'audit_runner.py'), 'fixtures', '--destination', str(output / 'fixtures'), '--version', version])
     if not skip_build:
         context = tool_context(output)
         with (output / 'image-build.log').open('w', encoding='utf-8') as log:
@@ -202,12 +224,12 @@ def audit(output, image, skip_build, reuse_downloads, phases):
     image_id = subprocess.check_output(['docker', 'image', 'inspect', image, '--format', '{{.Id}}'], text=True).strip()
     for phase in phases:
         print('Starting audit phase: ' + phase, flush=True)
-        container(phase, output, image_id)
+        container(phase, output, image_id, version, policy['publisherPrimaryFingerprint'])
         print('Completed audit phase: ' + phase, flush=True)
     if phases == ['signatures', 'warm', 'isolated']:
         signature = json.loads((output / 'signatures/signatures.json').read_text())
         isolated = json.loads((output / 'isolated/summary.json').read_text())
-        result = {'schemaVersion': 1, 'version': '0.4.0', 'sourceCommit': registry['sourceCommit'],
+        result = {'schemaVersion': 1, 'version': version, 'sourceCommit': registry['sourceCommit'],
                   'startedAt': started, 'completedAt': datetime.now(timezone.utc).isoformat(),
                   'registryArtifacts': len(registry['artifacts']), 'openPgp': signature, 'isolation': isolated,
                   'limits': ['GitHub public keys/tag and registry TLS are the observed identity anchors, not an out-of-band identity check.',
@@ -223,6 +245,7 @@ def audit(output, image, skip_build, reuse_downloads, phases):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT / 'build/published-artifact-audit')
+    parser.add_argument('--version', help='Already published stable version; defaults to the reviewed policy baseline')
     parser.add_argument('--image', default='shardpilot-artifact-audit:20261112')
     parser.add_argument('--skip-build', action='store_true')
     parser.add_argument('--reuse-downloads', action='store_true')
@@ -232,4 +255,4 @@ if __name__ == '__main__':
     if args.summarize_only:
         summarize(args.output.resolve())
     else:
-        audit(args.output.resolve(), args.image, args.skip_build, args.reuse_downloads, args.phase or ['signatures', 'warm', 'isolated'])
+        audit(args.output.resolve(), args.image, args.skip_build, args.reuse_downloads, args.phase or ['signatures', 'warm', 'isolated'], args.version)

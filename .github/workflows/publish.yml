@@ -63,9 +63,16 @@ jobs:
     # A local reusable workflow runs at the same commit as this caller, without release secrets.
     uses: ./.github/workflows/compatibility.yml
 
+  published-artifact-audit:
+    name: Audit the published baseline before release
+    needs: validate-tag
+    # Audit the last complete public release. The candidate has not been uploaded yet.
+    # No release environment, credentials or secrets: inherit reach this workflow.
+    uses: ./.github/workflows/published-artifact-audit.yml
+
   publish:
     name: Publish to Gradle Plugin Portal
-    needs: [validate-tag, compatibility]
+    needs: [validate-tag, compatibility, published-artifact-audit]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -102,7 +109,7 @@ jobs:
 
   publish-maven:
     name: Publish to Maven Central
-    needs: [validate-tag, compatibility]
+    needs: [validate-tag, compatibility, published-artifact-audit]
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 45

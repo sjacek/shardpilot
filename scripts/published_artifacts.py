@@ -21,6 +21,21 @@ PORTAL = 'https://plugins.gradle.org/m2/'
 NS = {'m': 'http://maven.apache.org/POM/4.0.0'}
 
 
+def release_version(version):
+    if not isinstance(version, str) or not re.fullmatch(r'(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)', version):
+        raise ValueError('An immutable stable release version is required')
+    return version
+
+
+def audit_policy():
+    policy = json.loads((ROOT / 'security/published-artifact-audit.json').read_text(encoding='utf-8'))
+    if policy.get('schemaVersion') != 1 or not re.fullmatch(r'[a-f0-9]{40}', policy.get('defaultSourceCommit', '')) \
+            or not re.fullmatch(r'[A-F0-9]{40}', policy.get('publisherPrimaryFingerprint', '')):
+        raise ValueError('Invalid published-artifact audit policy')
+    release_version(policy.get('defaultPublishedVersion'))
+    return policy
+
+
 def digest(data, algorithm='sha256'):
     return hashlib.new(algorithm, data).hexdigest()
 
@@ -92,8 +107,7 @@ def verify_sources(path, commit, modules):
 
 
 def fetch(output, version):
-    if not re.fullmatch(r'\d+\.\d+\.\d+', version):
-        raise ValueError('An immutable release version is required')
+    release_version(version)
     output.mkdir(parents=True, exist_ok=True)
     report_path = output / 'registry-verification.json'
     report_path.unlink(missing_ok=True)
@@ -116,7 +130,7 @@ def fetch(output, version):
         record = {'registry': registry, 'file': target.relative_to(output).as_posix(), **download(url, target)}
         record['checksums'] = {}
         for algorithm in ('sha256', 'sha512'):
-            checksum = download(url + '.' + algorithm, target.with_name(name + '.' + algorithm), optional=True)
+            checksum = download(url + '.' + algorithm, target.with_name(name + '.' + algorithm), optional=registry == 'portal')
             if checksum:
                 record['checksums'][algorithm] = checked_checksum(target.read_bytes(), target.with_name(name + '.' + algorithm).read_bytes(), algorithm)
         signature = download(url + '.asc', target.with_name(name + '.asc'), optional=registry == 'portal')

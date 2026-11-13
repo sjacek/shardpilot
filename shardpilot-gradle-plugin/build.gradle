@@ -119,8 +119,12 @@ test {
     workingDir = rootProject.projectDir
     inputs.file(rootProject.file('gradle/release-verification.gradle')).withPropertyName('releaseTagVerificationScript')
     inputs.files(rootProject.file('.github/workflows/compatibility.yml'), rootProject.file('.github/workflows/publish.yml'),
-            rootProject.file('.github/workflows/security.yml'))
+            rootProject.file('.github/workflows/security.yml'), rootProject.file('.github/workflows/published-artifact-audit.yml'))
             .withPropertyName('releaseWorkflowConfiguration')
+    inputs.files(rootProject.file('security/published-artifact-audit.json'),
+            rootProject.fileTree('testing/published-artifacts'), rootProject.file('scripts/published_artifacts.py'),
+            rootProject.file('scripts/run_published_artifact_audit.py'), rootProject.file('scripts/published_audit_report.py'))
+            .withPropertyName('publishedArtifactAudit')
     inputs.files(rootProject.file('security/scan-policy.json'), rootProject.file('security/grype.yaml'),
             rootProject.file('scripts/security_reports.py')).withPropertyName('runtimeSecurityPolicy')
     inputs.files(rootProject.file('build.gradle'), rootProject.file('gradle/wrapper/gradle-wrapper.properties'),

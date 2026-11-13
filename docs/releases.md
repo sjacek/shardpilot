@@ -21,8 +21,9 @@ Review the [publication descriptions](publication-descriptions.md) for the compl
 and Gradle Plugin Portal text and its source metadata before creating a release tag.
 
 The [publication workflow](../.github/workflows/publish.yml) submits the Gradle plugin automatically
-after a matching stable version tag and a successful compatibility matrix. A manual run from that
-same tag publishes Maven Central later, with its own complete compatibility gate. The maintainer controls
+after a matching stable version tag, a successful compatibility matrix and the
+[full published-baseline audit](published-artifact-audit.md#full-audit-in-github-actions). A manual run from that
+same tag publishes Maven Central later, with both gates repeated. The maintainer controls
 commits, tag creation, publisher credentials and release-environment protection rules.
 
 ## Keep required checks aligned with the matrix
@@ -123,7 +124,7 @@ namespace was already verified for Asyncwright; ShardPilot uses the same namespa
 
 Do not store values in repository files, workflow YAML, command-line arguments or logs. The
 environment secrets are used only by the final publishing step; they are not passed to tag
-validation or the reusable compatibility workflow. Missing/empty credentials fail before upload.
+validation, the reusable compatibility workflow or the published-artifact audit. Missing/empty credentials fail before upload.
 
 Restrict both environments to version tags such as `v*`, not arbitrary branches. Protect creation
 and updates of release tags with a repository ruleset so only trusted maintainers can release
@@ -149,12 +150,14 @@ It does not create tags, change the changelog or create a GitHub Release.
    accepts only `vMAJOR.MINOR.PATCH` with no leading zeroes, suffixes or build metadata, and checks
    equality with the evaluated `project.version`. Snapshots and prerelease tags are not released
    by this workflow.
-3. Commit and push the intended release revision, including both workflow files and
+3. Commit and push the intended release revision, including the publication, compatibility and audit workflows and
    `gradle/release-verification.gradle`. The maintainer then creates and pushes the immutable
    tag `v0.4.0` on that revision. Future versions use the same `v` prefix and must match the build.
 4. Follow **Actions → Publish ShardPilot**, run **Gradle Plugin Portal / v0.4.0**. The job chain is tag validation → reusable
    compatibility workflow (eight Gradle cells, three Maven/JDK jobs and signed-bundle verification)
-   → Gradle publication. Gradle performs Portal validation (`--validate-only`)
+   plus the separate published-baseline audit → Gradle publication. The audit checks the last complete
+   published version from `security/published-artifact-audit.json`, not the unpublished candidate.
+   Gradle performs Portal validation (`--validate-only`)
    before upload; the Maven publisher is skipped in this tag-push run. Any failed,
    cancelled or skipped prerequisite prevents publication. No separate tag-triggered matrix is
    launched by the compatibility workflow.
@@ -185,7 +188,7 @@ on the default branch and included in the release tag. See the
 There is no separate version/tag input that could disagree with the selected checkout.
 
 Follow **Maven Central / v0.4.0**. This run checks out the tag's exact commit SHA, revalidates the
-version and reruns all 12 compatibility checks. It then signs the parent/core/adapter cohort,
+version and reruns all 12 compatibility checks plus the published-baseline audit. It then signs the parent/core/adapter cohort,
 uploads it and waits for Central publication. The Gradle publisher is skipped. Verify ordinary
 Maven resolution in a fresh consumer without local candidate artifacts afterwards.
 
