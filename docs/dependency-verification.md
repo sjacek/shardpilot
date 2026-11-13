@@ -1,6 +1,6 @@
 # Build dependency integrity
 
-[Documentation index](README.md) | [Runtime SBOMs](dependency-security.md) | [Release gates](releases.md)
+[Documentation index](README.md) | [Dependency SBOMs](dependency-security.md) | [Release gates](releases.md)
 
 The producer build verifies reviewed SHA-256 identities independently of vulnerability scanning.
 A clean CVE scan does not establish that downloaded bytes match the reviewed dependency, and a
@@ -55,6 +55,13 @@ it does not bootstrap the additional early verifier. CI uses `prepare` with `GIT
 existing Wrapper commands and the credential-isolated publisher inherit the verified JVM options.
 Use a checkout path without whitespace on POSIX: Maven's native `MAVEN_OPTS` launcher does not
 reparse embedded shell quotes. Windows startup options quote paths for the native batch launcher.
+
+The launcher also builds and loads the producer-only [Maven tooling guard](dependency-security.md#explicit-maven-tooling-boundary).
+Its API inputs use existing reviewed Maven checksums; its authored sources and scope policy are
+retained as inventory evidence. Site execution and unclassified effective plugins are rejected
+before goal execution, including native Invoker children that inherit the verified JVM options.
+`python3 -B scripts/verify_maven_tooling.py` runs offline positive/negative controls and records
+the exact guard JAR checksum. Diagnostic full-inventory findings never waive these execution controls.
 
 Do not set the extension's relaxed/dry-run modes, disable Gradle verification, automatically accept
 new sums from a failed build, or retain a corrupted verifier JAR. A mismatch needs investigation.

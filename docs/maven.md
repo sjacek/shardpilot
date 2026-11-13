@@ -6,7 +6,7 @@ runner and requires selection-specific exclusions and report paths, including fo
 
 [Documentation index](README.md) · [Runnable POMs](../examples/maven/README.md)
 
-`io.github.sjacek:shardpilot-maven-plugin:0.4.0` provides class sharding, YAML manifests and
+`io.github.sjacek:shardpilot-maven-plugin:0.5.0` provides class sharding, YAML manifests and
 JSON/HTML coverage reports for native Maven Surefire and Failsafe executions. It uses the same
 Java 17 core and assignment algorithm as the Gradle adapter. No coordinator or replacement test
 runner is introduced. Maven owns test discovery, JVMs, dependencies and normal result handling.
@@ -48,7 +48,7 @@ Add the adapter and wire Surefire's `excludesFile` to its generated output:
 <plugin>
   <groupId>io.github.sjacek</groupId>
   <artifactId>shardpilot-maven-plugin</artifactId>
-  <version>0.4.0</version>
+  <version>0.5.0</version>
   <executions>
     <execution>
       <id>select-unit</id>
@@ -184,7 +184,7 @@ Manifest schema, filenames, selection hashes and HTML statuses are shared with G
 [manifest/report contract](shard-verification.md#manifest-format). Maven changes only the output
 namespace from `build/` to `target/`. The Gradle task names/DSL remain adapter-specific.
 
-## Refresh durations (0.4.0)
+## Refresh durations (since 0.4.0)
 
 After collecting reports from every shard and the common suite plan:
 
@@ -248,7 +248,7 @@ separate CI decisions. Keep every native test job and coverage validation requir
 | Symptom | Check |
 | --- | --- |
 | Plugin/core cannot be resolved | Install the root Maven reactor locally for development, or configure a repository containing the parent, core and adapter. Gradle Portal publication/composite substitution does not install Maven artifacts. |
-| No plugin found for prefix `shardpilot` | Declare the adapter/version in the consumer's build plugins. A fully qualified invocation such as `io.github.sjacek:shardpilot-maven-plugin:0.4.0:verify` bypasses prefix lookup but still requires resolvable artifacts. |
+| No plugin found for prefix `shardpilot` | Declare the adapter/version in the consumer's build plugins. A fully qualified invocation such as `io.github.sjacek:shardpilot-maven-plugin:0.5.0:verify` bypasses prefix lookup but still requires resolvable artifacts. |
 | Missing compiled test directory | Run `test-compile` before explicit preparation/selection. Standalone verification never compiles missing evidence. |
 | Runner `excludesFile` wiring error | Match the configured native output path to `shardpilot.excludesFile`, including suite/directory overrides. |
 | All classes disappeared on a later node | Ensure a generated file was not configured as a maintained input; the adapter intentionally ignores its own previous output. |

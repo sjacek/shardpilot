@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example.shardpilot</groupId><artifactId>jupiter-selection</artifactId><version>1.0-SNAPSHOT</version>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>17</maven.compiler.release>
+    <shardpilot.index>1</shardpilot.index>
+    <shardpilot.version>0.5.0</shardpilot.version>
+  </properties>
+  <dependencies>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>6.1.3</version><scope>test</scope></dependency>
+  </dependencies>
+  <build><plugins>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.16.0</version></plugin>
+    <plugin>
+      <groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>${shardpilot.version}</version>
+      <configuration>
+        <durationsFile>${project.basedir}/durations.tsv</durationsFile>
+        <selectionManifestFile>${project.basedir}/selection.yaml</selectionManifestFile>
+        <selectionSuite>smoke</selectionSuite>
+      </configuration>
+      <executions><execution><id>select-smoke</id><goals><goal>select</goal></goals></execution></executions>
+    </plugin>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>3.6.1</version>
+      <configuration>
+        <!-- Native execution must consume the same selected-suite exclusions and namespace. -->
+        <excludesFile>${project.build.directory}/shardpilot/unit/selections/smoke/excludes.txt</excludesFile>
+        <reportsDirectory>${project.build.directory}/shardpilot/unit/selections/smoke/test-results/${shardpilot.index}</reportsDirectory>
+      </configuration>
+    </plugin>
+  </plugins></build>
+</project>

@@ -5,6 +5,7 @@
 | Example | Exercises |
 | --- | --- |
 | [JUnit Jupiter](junit-jupiter/pom.xml) | Surefire and Failsafe, nested tests, custom `Spec` suffix, consumer exclusions, separate suite manifests/reports. |
+| [Explicit selection](test-selection/README.md) | A two-class smoke suite, separate native reports and verified two-node execution; prepared for 0.5.0. |
 | [Multi-module reactor](reactor/pom.xml) | Independent per-module plans and native test execution with `-T2`. POM-only aggregator modules are skipped. |
 
 From the repository root, install the Maven modules into your local repository first:

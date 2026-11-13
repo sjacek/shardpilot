@@ -60,11 +60,11 @@ def restore(cache=CACHE, archive=ARCHIVE, prefixes=DOWNLOADS):
         source.extractall(cache, members=members, filter='data')
 
 
-def maven(*arguments):
+def maven(*arguments, with_candidates=False):
     """Invoke the checked-in Wrapper with argument boundaries intact, including paths with spaces."""
     wrapper = [str(ROOT / 'mvnw.cmd')] if os.name == 'nt' else ['bash', str(ROOT / 'mvnw')]
     environment = None
-    if '-f' in arguments and os.environ.get('SHARDPILOT_MAVEN_VERIFICATION'):
+    if (with_candidates or '-f' in arguments) and os.environ.get('SHARDPILOT_MAVEN_VERIFICATION'):
         version = ET.parse(ROOT / 'pom.xml').findtext('m:version', namespaces=NS)
         environment = maven_verification.consumer_environment(CACHE / 'maven', version)
     subprocess.run([*wrapper, '-B', '-ntp', '-Dmaven.repo.local=' + str(CACHE / 'maven'),
@@ -76,7 +76,12 @@ def warm_maven():
     version = ET.parse(ROOT / 'pom.xml').findtext('m:version', namespaces=NS)
     # Fixture plugin resolution needs this checkout's candidate, which pack() explicitly excludes.
     maven('install', '-DskipTests', '-DskipITs')
-    maven(DEPENDENCY_PLUGIN + ':go-offline', '-Psecurity-sbom')
+    # go-offline can resolve the just-installed reactor core through the local repository.
+    # Bind only this invocation's five candidate files, as for verified Invoker consumers;
+    # never add their versioned hashes to the external baseline or disable local verification.
+    maven(DEPENDENCY_PLUGIN + ':go-offline', '-Psecurity-sbom', with_candidates=True)
+    # Inventory release plugin realms by direct resolution, never by executing release phases.
+    maven('-Psecurity-sbom,central-release', '-Dcentral.skipUpload=true', DEPENDENCY_PLUGIN + ':resolve-plugins')
     fixtures = ROOT / 'build/cache-warmup/maven'
     providers = set()
     for source in (ROOT / 'shardpilot-maven-plugin/src/it', ROOT / 'examples/maven'):

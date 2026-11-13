@@ -50,7 +50,7 @@ def identity(component):
     return result
 
 
-def validate_bom(bom):
+def validate_bom(bom, tooling=False):
     """Check distribution invariants in addition to the native generator's CycloneDX validation."""
     if bom.get('bomFormat') != 'CycloneDX' or bom.get('specVersion') != '1.6':
         raise ValueError('Expected a CycloneDX 1.6 document')
@@ -60,11 +60,19 @@ def validate_bom(bom):
     for component in components:
         identity(component)
         reference = component.get('bom-ref')
-        if not reference or reference in refs or not component.get('purl', '').startswith('pkg:maven/'):
+        purl = component.get('purl', '')
+        sdk = tooling and purl.startswith('pkg:generic/gradle/') and any(
+            item == {'name': 'shardpilot:identity-kind', 'value': 'gradle-distribution-file'}
+            for item in component.get('properties', []))
+        guard = tooling and identity(component)[:2] == ('shardpilot', 'maven-tooling-guard') \
+            and re.fullmatch(r'[a-f0-9]{64}', component['version']) \
+            and purl == 'pkg:generic/shardpilot/maven-tooling-guard@' + component['version'] \
+            and {'name': 'shardpilot:identity-kind', 'value': 'authored-maven-startup-guard'} in component.get('properties', [])
+        if not reference or reference in refs or not (purl.startswith('pkg:maven/') or sdk or guard):
             raise ValueError('Missing or duplicate component reference/PURL')
-        if component.get('scope') == 'excluded' or any(
+        if component.get('scope') == 'excluded' or (not tooling and any(
                 item.get('name') == 'cdx:maven:package:test' and item.get('value') == 'true'
-                for item in component.get('properties', [])):
+                for item in component.get('properties', []))):
             raise ValueError('A non-runtime component entered the runtime inventory')
         refs[reference] = component
     graph = {}
@@ -186,13 +194,17 @@ def prepare(distribution, commit):
     })
 
 
-def summarize(distribution, now=None):
+def summarize(distribution, now=None, scope='runtime'):
     """Scanner/DB errors fail closed; severity failures still retain machine and human reports."""
     output = ROOT / 'build/security' / distribution
+    if scope != 'runtime':
+        output = output / scope
     for name in ('summary.json', 'summary.md'):
         (output / name).unlink(missing_ok=True)
     config = policy()
     inventory = read_json(output / 'inventory.json')
+    if inventory.get('scope', 'runtime') != scope or inventory.get('distribution') != distribution:
+        raise ValueError('Inventory describes another scope or distribution')
     if inventory['sbomSha256'] != sha256(output / 'bom.cdx.json'):
         raise ValueError('The scanned SBOM was modified after inventory verification')
     scanner = read_json(output / 'scanner.json')
@@ -246,17 +258,20 @@ def summarize(distribution, now=None):
     blocked = sum(counts[level] for level in SEVERITIES[SEVERITIES.index(config['severityCutoff']):])
     if bool(blocked) != (scan_status['exitCode'] == 2):
         raise ValueError('Scanner exit status and reported severity result disagree')
-    summary = {'schemaVersion': 1, 'distribution': distribution, 'sourceCommit': inventory['sourceCommit'],
+    diagnostic = distribution == 'maven' and scope == 'build-full'
+    summary = {'schemaVersion': 1, 'distribution': distribution, 'scope': scope, 'sourceCommit': inventory['sourceCommit'],
+               'gateRole': 'diagnostic-findings-required-evidence' if diagnostic else 'blocking',
                'sbomSha256': inventory['sbomSha256'], 'scanner': scanner, 'database': database,
                'policy': config, 'scanExitCode': scan_status['exitCode'],
                'severityCounts': dict(counts), 'blockingMatches': blocked,
                'findings': findings, 'passed': blocked == 0}
     write_json(output / 'summary.json', summary)
-    markdown = (f'### ShardPilot {distribution}: runtime dependency scan\n\n'
+    markdown = (f'### ShardPilot {distribution}: {scope} dependency scan\n\n'
                 f'Grype `{config["scannerVersion"]}`, database built `{database["built"]}`. '
-                f'Blocking threshold: **{config["severityCutoff"]}**, including unfixed findings.\n\n'
-                f'Blocking matches: **{blocked}**. Severity counts: `{json.dumps(dict(counts))}`.\n\n'
-                'This checks candidate runtime dependencies, not test/build tooling or an independent security audit.\n')
+                f'Review threshold: **{config["severityCutoff"]}**, including unfixed findings.\n\n'
+                f'{"Diagnostic full inventory; valid scan evidence remains required. " if diagnostic else "Blocking scope. "}'
+                f'Matches at threshold: **{blocked}**. Severity counts: `{json.dumps(dict(counts))}`.\n\n'
+                'Scope boundaries and limitations are recorded in inventory.json. This is dependency analysis, not an independent audit.\n')
     (output / 'summary.md').write_text(markdown, encoding='utf-8')
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a', encoding='utf-8') as target:

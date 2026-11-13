@@ -164,7 +164,7 @@ to CI tooling; ShardPilot does not merge XML or generate a combined test-executi
 
 ## History maintenance
 
-A cold start is valid: omit `durationsFile` and assignment uses deterministic hashing. In 0.4.0,
+A cold start is valid: omit `durationsFile` and assignment uses deterministic hashing. Since 0.4.0,
 opt-in [history refresh](history-refresh.md) reads collected XML and creates a candidate TSV/JSON.
 Use one complete project/suite/revision cohort, retain shard paths, review coverage and recorded
 loads, then adopt the candidate for a future run. Keep maintained history immutable during a run.

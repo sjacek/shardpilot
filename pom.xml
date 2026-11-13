@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.sjacek</groupId>
   <artifactId>shardpilot-parent</artifactId>
-  <version>0.4.0</version>
+  <version>0.5.0</version>
   <packaging>pom</packaging>
   <name>ShardPilot build parent</name>
   <description>ShardPilot helps shorten CI feedback by splitting JVM test classes into deterministic,
@@ -15,7 +15,8 @@
     dependency and build configuration for shardpilot-core and shardpilot-maven-plugin. Consumers
     configure the appropriate build-tool adapter; class-selection verification complements normal
     test result checks. Opt-in history refresh creates candidate TSV and JSON from existing JUnit XML
-    without rerunning tests or modifying maintained history.</description>
+    without rerunning tests or modifying maintained history. Optional YAML selection manifests choose a test
+    subset before planning, with separate suite evidence for one or multiple shards.</description>
   <url>https://github.com/sjacek/shardpilot</url>
   <licenses><license><name>MIT License</name><url>https://opensource.org/license/mit</url></license></licenses>
   <developers>
@@ -39,16 +40,95 @@
     <junit.version>6.1.3</junit.version>
     <surefire.version>3.6.1</surefire.version>
     <skipITs>false</skipITs>
+    <!-- Producer-plugin realms do not inherit project dependencyManagement. Keep their
+         security updates explicit and scoped; these are not ShardPilot runtime libraries. -->
+    <tooling.jackson.version>2.22.4</tooling.jackson.version>
+    <tooling.guava.version>33.7.2-jre</tooling.guava.version>
+    <tooling.plexus3.version>3.6.2</tooling.plexus3.version>
+    <tooling.plexus4.version>4.0.3</tooling.plexus4.version>
+    <tooling.archiver.version>4.15.0</tooling.archiver.version>
+    <tooling.beanutils.version>1.11.0</tooling.beanutils.version>
+    <tooling.jsoup.version>1.23.2</tooling.jsoup.version>
+    <tooling.bouncycastle.version>1.87</tooling.bouncycastle.version>
   </properties>
   <dependencyManagement><dependencies>
     <dependency><groupId>org.junit</groupId><artifactId>junit-bom</artifactId><version>${junit.version}</version><type>pom</type><scope>import</scope></dependency>
+    <!-- Maven's provided API graph includes Guava. Keep the API baseline while selecting
+         patched transitive bytes for producer compilation/tests; no runtime dependency is added. -->
+    <dependency><groupId>com.google.guava</groupId><artifactId>guava</artifactId><version>${tooling.guava.version}</version></dependency>
   </dependencies></dependencyManagement>
   <build><pluginManagement><plugins>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.16.0</version></plugin>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>${surefire.version}</version></plugin>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>${surefire.version}</version></plugin>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.5.1</version></plugin>
-    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-help-plugin</artifactId><version>3.5.2</version></plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-help-plugin</artifactId><version>3.5.2</version>
+      <dependencies><dependency><groupId>org.jsoup</groupId><artifactId>jsoup</artifactId><version>${tooling.jsoup.version}</version></dependency></dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-clean-plugin</artifactId><version>3.5.0</version>
+      <dependencies><dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-utils</artifactId><version>${tooling.plexus4.version}</version></dependency></dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-resources-plugin</artifactId><version>3.5.0</version>
+      <dependencies><dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-utils</artifactId><version>${tooling.plexus3.version}</version></dependency></dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-source-plugin</artifactId><version>3.4.0</version>
+      <dependencies>
+        <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-utils</artifactId><version>${tooling.plexus4.version}</version></dependency>
+        <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-archiver</artifactId><version>${tooling.archiver.version}</version></dependency>
+      </dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.12.0</version>
+      <dependencies>
+        <dependency><groupId>commons-beanutils</groupId><artifactId>commons-beanutils</artifactId><version>${tooling.beanutils.version}</version></dependency>
+        <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-utils</artifactId><version>${tooling.plexus4.version}</version></dependency>
+        <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-archiver</artifactId><version>${tooling.archiver.version}</version></dependency>
+      </dependencies>
+    </plugin>
+    <!-- Maven injects site lifecycle bindings even though CI does not invoke that lifecycle.
+         Retain the current pin and full scan: deleting this entry restores an older default,
+         rather than removing the Site/Jetty realm. The sanitized tooling model explains it. -->
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-site-plugin</artifactId><version>3.22.0</version>
+      <dependencies>
+        <dependency><groupId>commons-beanutils</groupId><artifactId>commons-beanutils</artifactId><version>${tooling.beanutils.version}</version></dependency>
+        <dependency><groupId>org.jsoup</groupId><artifactId>jsoup</artifactId><version>${tooling.jsoup.version}</version></dependency>
+      </dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId><version>3.11.0</version>
+      <dependencies><dependency><groupId>commons-beanutils</groupId><artifactId>commons-beanutils</artifactId><version>${tooling.beanutils.version}</version></dependency></dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-invoker-plugin</artifactId><version>3.10.1</version>
+      <dependencies>
+        <dependency><groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId><version>3.18.0</version></dependency>
+        <dependency><groupId>org.iq80.snappy</groupId><artifactId>snappy</artifactId><version>0.5</version></dependency>
+      </dependencies>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-gpg-plugin</artifactId><version>3.2.8</version>
+      <dependencies>
+        <dependency><groupId>org.bouncycastle</groupId><artifactId>bcprov-jdk18on</artifactId><version>${tooling.bouncycastle.version}</version></dependency>
+        <dependency><groupId>org.bouncycastle</groupId><artifactId>bcpg-jdk18on</artifactId><version>${tooling.bouncycastle.version}</version></dependency>
+        <dependency><groupId>org.bouncycastle</groupId><artifactId>bcutil-jdk18on</artifactId><version>${tooling.bouncycastle.version}</version></dependency>
+        <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-utils</artifactId><version>${tooling.plexus3.version}</version></dependency>
+      </dependencies>
+    </plugin>
+    <plugin><groupId>org.cyclonedx</groupId><artifactId>cyclonedx-maven-plugin</artifactId><version>2.9.3</version>
+      <dependencies>
+        <dependency><groupId>org.cyclonedx</groupId><artifactId>cyclonedx-core-java</artifactId><version>11.0.1</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-core</artifactId><version>${tooling.jackson.version}</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId><version>${tooling.jackson.version}</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.dataformat</groupId><artifactId>jackson-dataformat-xml</artifactId><version>${tooling.jackson.version}</version></dependency>
+      </dependencies>
+    </plugin>
+    <plugin><groupId>org.sonatype.central</groupId><artifactId>central-publishing-maven-plugin</artifactId><version>0.12.0</version>
+      <dependencies>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-core</artifactId><version>${tooling.jackson.version}</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId><version>${tooling.jackson.version}</version></dependency>
+        <dependency><groupId>com.google.guava</groupId><artifactId>guava</artifactId><version>${tooling.guava.version}</version></dependency>
+        <dependency><groupId>org.apache.httpcomponents.client5</groupId><artifactId>httpclient5</artifactId><version>5.6.5</version></dependency>
+        <dependency><groupId>org.apache.httpcomponents.core5</groupId><artifactId>httpcore5</artifactId><version>5.4.4</version></dependency>
+        <dependency><groupId>org.apache.httpcomponents.core5</groupId><artifactId>httpcore5-h2</artifactId><version>5.4.4</version></dependency>
+        <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-utils</artifactId><version>${tooling.plexus3.version}</version></dependency>
+      </dependencies>
+    </plugin>
   </plugins></pluginManagement></build>
   <profiles>
     <profile>
@@ -71,8 +151,8 @@
     </profile>
     <profile>
       <id>security-sbom</id>
-      <!-- Inventory the actual consumer runtime, independently of provided Maven APIs and tests.
-           CI keeps these reports separately; this profile never attaches or publishes a new artifact. -->
+      <!-- Separate inventories retain the consumer runtime boundary while also scanning producer
+           tests and host-provided APIs. None of these reports becomes a publication attachment. -->
       <build><plugins><plugin>
         <groupId>org.cyclonedx</groupId><artifactId>cyclonedx-maven-plugin</artifactId><version>2.9.3</version>
         <configuration>
@@ -83,7 +163,41 @@
           <outputDirectory>${project.build.directory}/reports/security/maven</outputDirectory>
           <outputName>bom.raw</outputName><skipAttach>true</skipAttach>
         </configuration>
-        <executions><execution><id>runtime-sbom</id><phase>package</phase><goals><goal>makeBom</goal></goals></execution></executions>
+        <executions>
+          <execution><id>runtime-sbom</id><phase>package</phase><goals><goal>makeBom</goal></goals></execution>
+          <execution><id>test-sbom</id><phase>package</phase><goals><goal>makeBom</goal></goals>
+            <configuration>
+              <!-- Maven's effective test classpath includes compile/runtime/provided transitives. -->
+              <includeCompileScope>true</includeCompileScope><includeRuntimeScope>true</includeRuntimeScope>
+              <includeProvidedScope>true</includeProvidedScope><includeTestScope>true</includeTestScope>
+              <outputDirectory>${project.build.directory}/reports/security/maven/test</outputDirectory>
+            </configuration>
+          </execution>
+          <execution><id>provided-sbom</id><phase>package</phase><goals><goal>makeBom</goal></goals>
+            <configuration>
+              <!-- Keep transitive compile edges; finalization selects provided roots from dependency:tree. -->
+              <includeCompileScope>true</includeCompileScope><includeRuntimeScope>true</includeRuntimeScope>
+              <includeProvidedScope>true</includeProvidedScope>
+              <outputDirectory>${project.build.directory}/reports/security/maven/provided</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- resolve-plugins inventories effective build/report plugin realms, including transitives.
+           It is invoked directly: activating central-release for resolution runs no release goals. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId><version>3.11.0</version>
+        <configuration>
+          <excludeReactor>false</excludeReactor><excludeTransitive>false</excludeTransitive>
+          <outputAbsoluteArtifactFilename>true</outputAbsoluteArtifactFilename>
+          <outputFile>${project.build.directory}/reports/security/maven/build/plugins.raw.txt</outputFile>
+        </configuration>
+        <executions><execution><id>security-scope-tree</id><phase>package</phase><goals><goal>tree</goal></goals>
+          <configuration>
+            <outputType>json</outputType>
+            <outputFile>${project.build.directory}/reports/security/maven/project-dependencies.raw.json</outputFile>
+          </configuration>
+        </execution></executions>
       </plugin></plugins></build>
     </profile>
     <profile>

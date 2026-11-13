@@ -19,6 +19,7 @@ public final class TestKitCacheWarmup {
                 testImplementation 'org.junit.platform:junit-platform-launcher:6.1.3'
                 testImplementation 'org.testng:testng:7.12.0'
                 testImplementation 'org.spockframework:spock-core:2.5-groovy-5.0'
+                testImplementation platform('com.fasterxml.jackson:jackson-bom:2.22.4')
                 testImplementation 'org.apache.groovy:groovy:5.1.3'
                 testRuntimeOnly 'org.apache.groovy:groovy-all:5.1.3'
                 testRuntimeOnly 'org.apache.groovy:groovy-astbuilder:5.1.3'

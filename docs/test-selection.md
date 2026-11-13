@@ -6,7 +6,9 @@ An optional consumer-owned YAML manifest selects a class subset **before** shard
 It applies with one node as well as multiple nodes. ShardPilot does not inspect source diffs,
 choose smoke tests, infer impacted classes or decide whether a short suite is sufficient.
 Keep those decisions and the independent native test-result gate in the consumer/CI.
-This feature is implemented in this checkout; no new version or publication is implied.
+This feature is prepared for **0.5.0, not yet published**. Try the Docker-free
+[Gradle](../examples/gradle/junit-jupiter/test-selection/README.md) and
+[Maven](../examples/maven/test-selection/README.md) consumers against this checkout.
 
 ![Selection validation and native execution](diagrams/test-selection.svg)
 

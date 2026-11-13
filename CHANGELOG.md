@@ -8,6 +8,10 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 ## Unreleased
 
+No changes recorded after the 0.5.0 release preparation.
+
+## [0.5.0](docs/releases/0.5.0.md) — not yet published
+
 ### Added
 
 - Run a chosen subset of test classes in Gradle or Maven, with one shard or several. Provide a
@@ -21,12 +25,22 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 - Added [instructions for reporting vulnerabilities privately](SECURITY.md) and a
   [guide to plugin permissions and trust boundaries](docs/security.md).
-- Separate [runtime dependency inventories and vulnerability reports](docs/dependency-security.md)
-  are available for Gradle and Maven release candidates. High or critical findings block release
-  checks, including findings without an available fix.
+- Separate [dependency inventories and vulnerability reports](docs/dependency-security.md)
+  cover Gradle and Maven release candidates, including runtime, supported build tooling, test and
+  provided dependencies. High or critical findings in blocking scopes prevent release checks
+  from passing, including findings without an available fix. Maven's full-tooling diagnostic
+  retains inherited Site/Jetty findings; producer CI guards prohibit Site and unclassified plugins in ShardPilot builds.
 - Release builds reject downloaded dependencies with missing or unexpected SHA-256 checksums,
   including files restored from cache. See the [dependency integrity guide](docs/dependency-verification.md)
   for the scope of these checks and instructions for building from source.
+
+### Upgrade
+
+- Set the Gradle plugin or Maven adapter version to `0.5.0` after publication. Selection is
+  opt-in; existing configurations keep their full eligible suite when no manifest is supplied.
+- Use one immutable manifest and the same version, history and shard count on every node.
+  Keep all native test outcomes required alongside selection verification. See the
+  [0.5.0 guide and runnable examples](docs/releases/0.5.0.md).
 
 ## [0.4.0](docs/releases/0.4.0.md)
 

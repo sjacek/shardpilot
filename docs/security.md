@@ -82,8 +82,9 @@ analysis of the artifacts consumers actually resolve. The Gradle distribution bu
 classes; Maven resolves the core separately and has its own runtime dependency graph. Assess
 those graphs separately from provided build-tool APIs, test libraries and producer tooling.
 
-The [runtime SBOM and vulnerability workflow](dependency-security.md) now inventories those two
-distribution graphs separately and gates compatibility/publication on its policy. It binds local
+The [SBOM and vulnerability workflow](dependency-security.md) inventories those two distribution
+graphs separately, adds distinct build/test/provided reports, and requires every scope to pass
+before compatibility/publication. It binds local
 candidate JAR hashes and records scanner/database identities. The separate
 [build dependency integrity gate](dependency-verification.md) pins Actions commits and verifies
 Gradle/TestKit and Maven dependency bytes, including restored caches. Verification of actual
@@ -102,3 +103,8 @@ Adding `SECURITY.md` does not change this setting. The 12 November follow-up did
 repository settings or establish that private reporting was enabled. Until the channel is
 available, the security policy allows a public request for a private contact with no vulnerability
 details, consistent with [GitHub's reporter guidance](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/report-privately).
+
+On **13 November 2026**, the repository's private-reporting setting was found disabled, enabled,
+then checked through `GET /repos/sjacek/shardpilot/private-vulnerability-reporting`, which returned
+`{"enabled":true}`. This confirms the repository setting; it does not claim a submitted report
+or a form test from another user's account. Keep the reporting link in `SECURITY.md` available.

@@ -25,6 +25,7 @@ class MavenVerificationTest(unittest.TestCase):
         patch.object(maven, 'ROOT', self.root).start()
         patch.object(maven, 'BASELINE', self.baseline).start()
         patch.object(maven, 'CONSUMERS', self.root / 'build/consumer-checksums.sha256').start()
+        patch.object(maven.maven_tooling, 'guard', return_value=self.root / 'producer-guard.jar').start()
         self.payload = b'fake verifier bytes; never executed'
         policy = self.root / 'security/dependency-verification.json'
         policy.parent.mkdir(parents=True)
@@ -37,6 +38,7 @@ class MavenVerificationTest(unittest.TestCase):
         with patch.object(maven.urllib.request, 'urlopen', return_value=io.BytesIO(self.payload)) as download:
             environment = maven.environment(original={})
             self.assertIn('-Dmaven.ext.class.path=', environment['MAVEN_OPTS'])
+            self.assertIn(os.pathsep + str(self.root / 'producer-guard.jar'), environment['MAVEN_OPTS'])
             self.assertIn('.mode=enforce', environment['MAVEN_OPTS'])
             self.assertIn('.algorithm=SHA-256', environment['MAVEN_OPTS'])
             self.assertIn('.snapshots=true', environment['MAVEN_OPTS'])

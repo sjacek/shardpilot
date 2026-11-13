@@ -126,7 +126,13 @@ test {
             rootProject.file('scripts/run_published_artifact_audit.py'), rootProject.file('scripts/published_audit_report.py'))
             .withPropertyName('publishedArtifactAudit')
     inputs.files(rootProject.file('security/scan-policy.json'), rootProject.file('security/grype.yaml'),
-            rootProject.file('scripts/security_reports.py')).withPropertyName('runtimeSecurityPolicy')
+            rootProject.file('security/gradle-sdk-artifacts.json'),
+            rootProject.file('scripts/security_reports.py'), rootProject.file('scripts/security_scopes.py'),
+            rootProject.file('scripts/maven_security_inventory.py'), rootProject.file('gradle/security-inventories.gradle'))
+            .withPropertyName('dependencySecurityPolicy')
+    inputs.files(rootProject.file('security/maven-tooling-scope.json'), rootProject.file('scripts/maven_tooling.py'),
+            rootProject.file('scripts/verify_maven_tooling.py'),
+            rootProject.fileTree('build-logic/maven-tooling-guard')).withPropertyName('mavenToolingScopeGuard')
     inputs.files(rootProject.file('build.gradle'), rootProject.file('gradle/wrapper/gradle-wrapper.properties'),
             rootProject.file('gradle/wrapper/gradle-wrapper.jar')).withPropertyName('gradleWrapperConfiguration')
     inputs.files(rootProject.file('pom.xml'), rootProject.file('shardpilot-core/pom.xml'),
@@ -150,6 +156,9 @@ test {
     inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/duration-history') {
         include 'build.gradle', 'settings.gradle', 'gradle.properties', 'durations.tsv', 'src/**'
     }).withPropertyName('historyRefreshConsumerExample')
+    inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/test-selection') {
+        include 'build.gradle', 'settings.gradle', 'selection.yaml', 'durations.tsv', 'src/**'
+    }).withPropertyName('selectionConsumerExample')
     inputs.files(rootProject.fileTree('testing/execution-equivalence')).withPropertyName('nativeExecutionFixtures')
     // Check the actual publication model, including the marker, rather than only a composite classpath.
     def metadataTasks = tasks.matching { it.name in ['generatePomFileForPluginMavenPublication',
