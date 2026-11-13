@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="dependency-remediation-title">
+  <title id="dependency-remediation-title">Dependency remediation</title>
+  <path fill="#A0EF3B" d="M8 14 14 8H56L50 14Z"/>
+  <path fill="#388E24" d="m50 14 6-6v42l-6 6Z"/>
+  <path fill="#063D26" d="M8 14H50V56H8Z"/>
+  <g fill="none" stroke="#CDFFD8" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M40 23a9 9 0 0 0-12 11L17 45l4 4 11-11a9 9 0 0 0 11-12l-6 6-5-5Z"/></g>
+</svg>

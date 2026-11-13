@@ -12,7 +12,12 @@ import subprocess
 import tarfile
 import zipfile
 
-VERSION = os.environ.get('SHARDPILOT_AUDIT_VERSION', '0.4.0')
+# Host-side fixtures use the reviewed policy; the sandbox receives an explicit version
+# from the launcher and does not need the repository or its policy mounted inside it.
+VERSION = os.environ.get('SHARDPILOT_AUDIT_VERSION')
+if VERSION is None:
+    policy_path = Path(__file__).resolve().parents[2] / 'security/published-artifact-audit.json'
+    VERSION = json.loads(policy_path.read_text(encoding='utf-8'))['defaultPublishedVersion']
 if not re.fullmatch(r'(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)', VERSION):
     raise ValueError('An immutable stable release version is required')
 

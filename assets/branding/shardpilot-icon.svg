@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title description">
+  <title id="title">ShardPilot</title>
+  <desc id="description">A mint arrow splits into three parallel directions on a forest-green control panel with a lime top.</desc>
+  <path fill="#A0EF3B" d="M128 208 192 144H896L832 208Z"/>
+  <path fill="#388E24" d="m832 208 64-64v704l-64 64Z"/>
+  <path fill="#063D26" d="M128 208h704v704H128Z"/>
+  <g fill="none" stroke="#CDFFD8" stroke-linejoin="miter" stroke-width="64">
+    <path d="M480 824V608M480 608V368M480 608 300 428M480 608 660 428"/>
+  </g>
+  <g fill="#CDFFD8">
+    <path d="m480 280 92 120H388Z"/>
+    <path d="m208 336 164 44-120 120Z"/>
+    <path d="m752 336-164 44 120 120Z"/>
+  </g>
+</svg>

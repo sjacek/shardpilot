@@ -30,7 +30,7 @@ Security maintenance focuses on the latest stable ShardPilot release. Reports ar
 all versions, but fixes normally target the latest release; backports to older release lines and
 development snapshots are not guaranteed. Check the [release history](CHANGELOG.md) and actual
 publication status before upgrading. As of this policy's initial preparation on 12 November 2026,
-the reference stable tag is `v0.4.0`.
+the reference stable tag is `v0.5.0`.
 
 This is a maintainer-run project. Investigation, fixes and backports are best-effort; no fixed
 acknowledgement or remediation deadline is promised. Maintainers and reporters should agree on

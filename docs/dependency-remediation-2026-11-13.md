@@ -217,5 +217,13 @@ artifacts, nine signatures and 54 bundle entries without uploading.
 The main ruleset keeps fourteen required contexts, including both security jobs. This boundary
 makes the supported tooling scope explicit; it does not remediate inherited Jetty or allow Site.
 Future plugin/lifecycle changes require classification and native guard review before use.
-Candidate 0.5.0 requires fresh CI after version/example edits. Published 0.4.0 audit evidence remains
-separate, and real-suite performance measurement remains deferred.
+At that stage, candidate 0.5.0 still required fresh CI after the version/example edits.
+
+## Published-release follow-up: 13 November 2026
+
+The later [main CI run 43435082883](https://github.com/sjacek/shardpilot/actions/runs/43435082883)
+passed all fifteen jobs for `dacbfbdb07e61f37ffa524fb286a97483c6c93e9`, the signed `v0.5.0` release.
+Both registries then published 0.5.0. Its [post-publication audit](published-artifact-audit.md#published-050-baseline-13-november-2026)
+passed registry/signature and isolated execution checks, supporting the default baseline update.
+This does not remediate the inherited Site/Jetty findings recorded above. Historical 0.4.0 evidence
+remains separate, and real-suite performance measurement remains deferred.

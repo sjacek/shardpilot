@@ -1,0 +1,127 @@
+[
+  {
+    "file": "configuration.svg",
+    "title": "Configuration",
+    "href": "configuration.md"
+  },
+  {
+    "file": "maven-adapter.svg",
+    "title": "Maven adapter",
+    "href": "maven.md"
+  },
+  {
+    "file": "configuration-map.svg",
+    "title": "Configuration map",
+    "href": "configuration.md#gradle-and-maven-configuration-map"
+  },
+  {
+    "file": "architecture.svg",
+    "title": "Architecture",
+    "href": "architecture.md"
+  },
+  {
+    "file": "history-refresh.svg",
+    "title": "History refresh",
+    "href": "history-refresh.md"
+  },
+  {
+    "file": "history-recovery.svg",
+    "title": "History recovery",
+    "href": "history-refresh.md#recover-a-missing-shard-download"
+  },
+  {
+    "file": "ci-integration.svg",
+    "title": "CI integration",
+    "href": "ci.md"
+  },
+  {
+    "file": "coverage.svg",
+    "title": "Manifests and coverage",
+    "href": "shard-verification.md"
+  },
+  {
+    "file": "test-selection.svg",
+    "title": "Test selection",
+    "href": "test-selection.md"
+  },
+  {
+    "file": "junit-containers.svg",
+    "title": "JUnit containers",
+    "href": "testcontainers-example.md"
+  },
+  {
+    "file": "spock-containers.svg",
+    "title": "Spock containers",
+    "href": "spock-testcontainers-example.md"
+  },
+  {
+    "file": "testng-containers.svg",
+    "title": "TestNG containers",
+    "href": "testng-testcontainers-example.md"
+  },
+  {
+    "file": "compatibility.svg",
+    "title": "Testing and compatibility",
+    "href": "testing.md"
+  },
+  {
+    "file": "execution-equivalence.svg",
+    "title": "Execution equivalence",
+    "href": "execution-equivalence.md"
+  },
+  {
+    "file": "security.svg",
+    "title": "Security boundaries",
+    "href": "security.md"
+  },
+  {
+    "file": "dependency-security.svg",
+    "title": "Dependency scanning",
+    "href": "dependency-security.md"
+  },
+  {
+    "file": "dependency-remediation.svg",
+    "title": "Dependency remediation",
+    "href": "dependency-remediation-2026-11-13.md"
+  },
+  {
+    "file": "dependency-integrity.svg",
+    "title": "Dependency integrity",
+    "href": "dependency-verification.md"
+  },
+  {
+    "file": "security-review.svg",
+    "title": "Security review",
+    "href": "security-review-2026-11-12.md"
+  },
+  {
+    "file": "artifact-audit.svg",
+    "title": "Published artifact audit",
+    "href": "published-artifact-audit.md"
+  },
+  {
+    "file": "troubleshooting.svg",
+    "title": "Troubleshooting",
+    "href": "troubleshooting.md"
+  },
+  {
+    "file": "releases.svg",
+    "title": "Releases and upgrades",
+    "href": "releases.md"
+  },
+  {
+    "file": "maven-central.svg",
+    "title": "Maven Central setup",
+    "href": "maven-central.md"
+  },
+  {
+    "file": "publication-descriptions.svg",
+    "title": "Publication descriptions",
+    "href": "publication-descriptions.md"
+  },
+  {
+    "file": "diagrams.svg",
+    "title": "PlantUML diagrams",
+    "href": "diagrams/README.md"
+  }
+]

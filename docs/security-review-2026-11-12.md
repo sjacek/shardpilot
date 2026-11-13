@@ -16,16 +16,16 @@ Those stages retain what was known at the time; they are not the current release
 | Area | Confirmed evidence | Boundary / next step |
 | --- | --- | --- |
 | Private reporting | GitHub repository API confirmed Private Vulnerability Reporting enabled on 13 November. | A signed-in external reporter's access/submission was not independently exercised. |
-| Published artifacts and isolation | Public **0.4.0**, signed tag/source cohort and fourteen offline consumers are covered by retained local evidence and successful [hosted audit 43342517533](https://github.com/sjacek/shardpilot/actions/runs/43342517533), tooling commit `8f618ae345791b22972b4d25124f2c106631b084`. | This verifies the published baseline, not unpublished 0.5.0. [Audit procedure and limits](published-artifact-audit.md). |
-| Source compatibility and signing | [Run 43418902994](https://github.com/sjacek/shardpilot/actions/runs/43418902994), source `ac2d28f745051886f2850094486f7bb8f008ba80`, passed all fifteen jobs: warmup, eight Gradle cells, three Maven cells, upload-disabled signing and two security jobs. | Source still declared 0.4.0. The 0.5.0 preparation changes need their own hosted cohort. |
+| Published artifacts and isolation | Public **0.5.0**, source `dacbfbdb07e61f37ffa524fb286a97483c6c93e9`: [hosted audit 43446236408](https://github.com/sjacek/shardpilot/actions/runs/43446236408) verified fifteen registry files, ten signatures and fourteen offline consumers. | The reviewed default now uses 0.5.0. Historical 0.4.0 evidence remains intact. [Audit record and limits](published-artifact-audit.md#published-050-baseline-13-november-2026). |
+| Source compatibility and signing | [Main run 43435082883](https://github.com/sjacek/shardpilot/actions/runs/43435082883), source `dacbfbdb07e61f37ffa524fb286a97483c6c93e9`, passed all fifteen jobs: warmup, eight Gradle cells, three Maven cells, upload-disabled signing and two security jobs. | This source is the signed `v0.5.0` release; registry execution evidence is recorded separately. |
 | Dependency security and integrity | Actions pinned to SHAs; reviewed byte baselines; four blocking scopes per distribution pass. Maven guard controls pass fourteen offline cases. | Maven full-tooling diagnostic retains **two High and two Medium** Site/Jetty findings. No suppression, fixed-CVE or zero-vulnerability claim. [Full follow-up](dependency-remediation-2026-11-13.md#hosted-confirmation-13-november-2026). |
 | Execution equivalence | Deterministic Gradle Jupiter/Spock/TestNG and Maven Surefire/Failsafe compare full execution with two/four shards, including identities, multiplicities, outcomes and skips. | Bounded fixtures, not all consumer suites or feature combinations. |
-| Required gates | Fourteen main checks retain the eleven matrix cells, signed bundle and two distribution scans; release jobs also require the full published-baseline audit. | Candidate publication remains a separate maintainer action after green release-commit CI. |
+| Required gates | Fourteen main checks retain the eleven matrix cells, signed bundle and two distribution scans; release jobs also require the full published-baseline audit. | 0.5.0 is published in both registries; future release tags keep these independent gates. |
 | Performance and external assurance | Real-suite benchmark explicitly deferred. | No measured speedup, independent audit or production-security certification is claimed. |
 
-The checkout prepares [0.5.0](releases/0.5.0.md), with **no publication yet**. After both registries
-expose the new release, rerun the full published-artifact audit for 0.5.0 before reviewing an update
-to the immutable published baseline. Preserve the 0.4.0 evidence and source identities.
+[0.5.0](releases/0.5.0.md) was published to both registries on 13 November. Its successful
+post-publication audit supports the reviewed policy update from 0.4.0 to 0.5.0, with the same
+publisher fingerprint. The 0.4.0 evidence, original policy snapshots and immutable tags are preserved.
 
 ## Reference snapshot
 

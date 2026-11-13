@@ -5,9 +5,9 @@
 Run checks from the ShardPilot repository, not a consuming application's build. The Wrapper pins
 the Gradle version; use a JDK supported by that Gradle runtime.
 
-## 0.5.0 release preparation
+## 0.5.0 release verification
 
-The checkout prepares **[0.5.0](releases/0.5.0.md), not yet published**. Gradle and the Maven
+**[0.5.0](releases/0.5.0.md)** is published in both registries. Gradle and the Maven
 reactor/example pins share this version. `verifyReleaseTag -PreleaseTag=v0.5.0` checks equality
 without creating a tag. Historical sections below retain the toolchains and results recorded
 for their original revisions.
@@ -22,8 +22,9 @@ fixtures and native full-versus-2/4-shard equivalence checks remain required.
 
 Use the [release checklist](releases/0.5.0.md#release-checks-and-maintainer-handoff) for full builds,
 Python guards and signing with upload disabled. The
-[published-artifact baseline](published-artifact-audit.md) stays at 0.4.0 during preparation;
-0.5.0 needs fresh hosted CI and a separate registry audit after both registries publish it.
+[published-artifact baseline](published-artifact-audit.md#published-050-baseline-13-november-2026)
+is now 0.5.0, following successful source CI and a separate post-publication registry audit.
+The dated candidate results below remain preparation evidence, separate from that hosted audit.
 
 ### Local candidate evidence: 13 November 2026
 

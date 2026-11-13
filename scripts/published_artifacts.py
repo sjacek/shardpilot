@@ -169,9 +169,14 @@ def fetch(output, version):
     return report
 
 
-if __name__ == '__main__':
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--version', default='0.4.0')
+    parser.add_argument('--version', help='Already published stable version; defaults to the reviewed policy baseline')
     parser.add_argument('--output', type=Path, default=ROOT / 'build/published-artifact-audit')
-    arguments = parser.parse_args()
-    fetch(arguments.output.resolve(), arguments.version)
+    arguments = parser.parse_args(argv)
+    version = arguments.version if arguments.version is not None else audit_policy()['defaultPublishedVersion']
+    fetch(arguments.output.resolve(), release_version(version))
+
+
+if __name__ == '__main__':
+    main()
