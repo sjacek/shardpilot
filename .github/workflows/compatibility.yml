@@ -184,7 +184,7 @@ jobs:
         with:
           cache-disabled: true
       - name: Download warmed dependencies
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         # action.yml at v7 defines name/path; retain validation elsewhere in this workflow.
         with:
           # noinspection UndefinedParamsPresent
@@ -277,7 +277,7 @@ jobs:
           distribution: temurin
           java-version: ${{ matrix.java }}
       - name: Download warmed dependencies
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         # action.yml at v7 defines name/path; retain validation elsewhere in this workflow.
         with:
           # noinspection UndefinedParamsPresent
