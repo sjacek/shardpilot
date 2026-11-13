@@ -102,9 +102,38 @@ acceptance, suppression or threshold change. Resolving this boundary requires an
 integration with maintained Jetty, a supported patched dependency source, or a separately reviewed
 change to the supported producer tooling/boundary. A claim that CI is fully green would be incorrect.
 
-The new local fixes are not yet a hosted matrix result. They must be committed/pushed by the
-maintainer before the new workflow cohort can be checked. Real-suite performance measurement
-remains deferred.
+### Hosted follow-up and independent test scheduling
+
+[Run 43404999831](https://github.com/sjacek/shardpilot/actions/runs/43404999831), commit `1763191`,
+confirmed successful download warmup, signed-bundle verification and all four Gradle scans.
+The complete Maven JSON reports confirmed the same two High and two Medium Jetty matches.
+That workflow still short-circuited all eleven matrix cells at their security prerequisite;
+it did not execute their native tests.
+
+The subsequent workflow change makes warmup the shared prerequisite of tests and scans. Native
+tests then run in parallel with security, while both distribution scan contexts remain separate
+requirements for merging and the reusable release workflow still blocks publication on any failure.
+The twelve existing matrix/signing contexts retain their names; two explicit security contexts
+bring the main ruleset to fourteen required checks. See [required contexts](releases.md#keep-required-checks-aligned-with-the-matrix).
+
+The native Maven 3.10.0 effective model identifies `default-site`/`site` and
+`default-deploy`/`site-deploy` bindings in all three reactor projects. CI runs the clean/default
+lifecycles and direct verification goals, not the site lifecycle. Removing the locally managed Site
+version would restore Maven's older default instead of removing this realm. The pin and full scan
+therefore remain. A sanitized `tooling-model.json` now retains effective build versus managed-only
+plugin identities and their bindings, with a `site-lifecycle-only` label where appropriate.
+Labels do not filter SBOM membership or change the security gate, and are not execution attestations.
+
+Local validation of that follow-up passed **17 workflow tests**, **90 Python script tests**,
+Actionlint and the dependency integrity policy. Native Maven inventory generation and report
+assembly passed for all three reactor projects; the sanitized model is retained and hash-bound
+through the build inventory. Rescanning confirmed that Site and Jetty remain present, with the
+same two High and two Medium matches and an intentionally failing security gate. The live main
+ruleset was reread after the approved update: fourteen checks are required, all twelve previous
+contexts are retained, and every other rule is unchanged.
+
+The parallel scheduling and explanatory-report changes still require a maintainer push before
+their new hosted cohort can be verified. Real-suite performance measurement remains deferred.
 
 ## Private reporting
 

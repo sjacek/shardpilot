@@ -1,5 +1,6 @@
 """Producer scopes retain real transitive membership and fail independently, without network."""
 import copy
+import json
 from pathlib import Path
 import subprocess
 import unittest
@@ -134,8 +135,10 @@ class SecurityScopesTest(unittest.TestCase):
 
     def test_maven_release_model_is_only_resolved_and_never_executes_release_phases(self):
         with patch.object(maven_security_inventory, 'maven') as maven, \
+                patch.object(maven_security_inventory, 'effective_tooling_model') as effective_model, \
                 patch.object(maven_security_inventory, 'fixture_inventories') as fixtures_inventory:
             maven_security_inventory.main()
+        effective_model.assert_called_once_with()
         fixtures_inventory.assert_called_once_with()
         self.assertEqual(('-Psecurity-sbom', '-DskipTests', '-DskipITs', 'install'), maven.call_args_list[0].args)
         self.assertEqual(('-Psecurity-sbom,central-release', '-Dcentral.skipUpload=true',
@@ -144,6 +147,59 @@ class SecurityScopesTest(unittest.TestCase):
         maven.side_effect = subprocess.CalledProcessError(1, 'native resolution')
         with patch.object(maven_security_inventory, 'maven', maven), self.assertRaises(subprocess.CalledProcessError):
             maven_security_inventory.resolve_plugins()
+
+    def test_effective_tooling_model_distinguishes_site_bindings_without_retaining_settings(self):
+        path = self.root / 'effective-pom.xml'
+        plugin = '''<plugin><artifactId>maven-site-plugin</artifactId><version>3.22.0</version>
+            <configuration><password>private-value</password></configuration></plugin>'''
+        bound = plugin.replace('</plugin>', '''<executions><execution><id>default-site</id><phase>site</phase>
+            <goals><goal>site</goal></goals></execution></executions></plugin>''')
+        project = '''<project xmlns="http://maven.apache.org/POM/4.0.0"><artifactId>example</artifactId>
+            <properties><credential>private-value</credential></properties><build><pluginManagement><plugins>'''
+        path.write_text('<projects>' + project + plugin + '</plugins></pluginManagement><plugins>'
+                        + bound + '</plugins></build></project></projects>', encoding='utf-8')
+        report = maven_security_inventory.tooling_model(path)
+        self.assertNotIn('private-value', json.dumps(report))
+        self.assertNotIn('password', json.dumps(report))
+        entry = report['projects'][0]['plugins'][0]
+        self.assertEqual('effective-build-plugin', entry['modelRole'])
+        self.assertEqual('site-lifecycle-only', entry['binding'])
+        self.assertEqual('org.apache.maven.plugins', entry['groupId'])
+        self.assertEqual([{'id': 'default-site', 'phase': 'site', 'goals': ['site']}], entry['executions'])
+        # An explicit execution outside the site lifecycle must invalidate the site-only label.
+        path.write_text(path.read_text(encoding='utf-8').replace('<phase>site</phase>', '<phase>verify</phase>'), encoding='utf-8')
+        self.assertEqual('other-or-unspecified', maven_security_inventory.tooling_model(path)['projects'][0]['plugins'][0]['binding'])
+        path.write_text(project + plugin + '</plugins></pluginManagement></build></project>', encoding='utf-8')
+        self.assertEqual('managed-only', maven_security_inventory.tooling_model(path)['projects'][0]['plugins'][0]['modelRole'])
+        for invalid in ('<projects/>', '<projects><project/></projects>',
+                        path.read_text(encoding='utf-8').replace('<version>3.22.0</version>', '')):
+            path.write_text(invalid, encoding='utf-8')
+            with self.assertRaises(ValueError):
+                maven_security_inventory.tooling_model(path)
+
+    def test_effective_tooling_generation_removes_complete_model_and_invalidates_old_reports_on_failure(self):
+        output = self.root / 'build/reports/security/maven/tooling-model.json'
+        models = []
+
+        def resolve(*arguments):
+            self.assertEqual(('-Psecurity-sbom,central-release', '-Dcentral.skipUpload=true',
+                              'org.apache.maven.plugins:maven-help-plugin:3.5.2:effective-pom'), arguments[:3])
+            path = Path(arguments[-1].removeprefix('-Doutput='))
+            models.append(path)
+            path.write_text('''<project xmlns="http://maven.apache.org/POM/4.0.0"><artifactId>example</artifactId>
+                <build><pluginManagement><plugins><plugin><artifactId>maven-site-plugin</artifactId>
+                <version>3.22.0</version></plugin></plugins></pluginManagement></build></project>''', encoding='utf-8')
+
+        with patch.object(maven_security_inventory, 'ROOT', self.root), \
+                patch.object(maven_security_inventory, 'maven', side_effect=resolve):
+            maven_security_inventory.effective_tooling_model()
+        self.assertTrue(output.is_file())
+        self.assertFalse(models[0].exists(), 'the complete model must not become an uploaded artifact')
+        with patch.object(maven_security_inventory, 'ROOT', self.root), \
+                patch.object(maven_security_inventory, 'maven', side_effect=subprocess.CalledProcessError(1, 'Maven')):
+            with self.assertRaises(subprocess.CalledProcessError):
+                maven_security_inventory.effective_tooling_model()
+        self.assertFalse(output.exists(), 'a failed native goal must not leave stale explanatory evidence')
 
     def test_native_maven_fixture_tree_keeps_launcher_and_hashes_only_selected_artifacts(self):
         repository = self.root / 'repository'

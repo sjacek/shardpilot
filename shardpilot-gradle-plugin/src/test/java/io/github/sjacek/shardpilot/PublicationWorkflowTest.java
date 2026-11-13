@@ -308,10 +308,14 @@ class PublicationWorkflowTest {
         var jobs = mapping(workflow.get("jobs"));
         var warmup = mapping(jobs.get("warm-cache"));
         var security = mapping(jobs.get("dependency-security"));
+        assertEquals("Check runtime dependencies", security.get("name"),
+                "the reusable security prefix is part of the two required ruleset contexts");
         assertEquals("warm-cache", security.get("needs"));
         assertEquals("./.github/workflows/security.yml", security.get("uses"));
         assertEquals(Map.of("warmed-dependencies", true), security.get("with"));
         assertNull(security.get("secrets"));
+        assertNull(security.get("if"), "security remains an unconditional required check after warmup");
+        assertNull(security.get("continue-on-error"), "parallel tests must not make scan failures optional");
         assertTestedCheckout(warmup);
         assertNull(warmup.get("if"), "cold PRs must also warm dependencies");
         assertNull(warmup.get("continue-on-error"));
@@ -341,10 +345,14 @@ class PublicationWorkflowTest {
         }
         for (String jobName : List.of("compatibility", "maven")) {
             var job = mapping(jobs.get(jobName));
-            assertEquals(List.of("warm-cache", "dependency-security"), job.get("needs"));
+            assertEquals("warm-cache", job.get("needs"),
+                    "native tests must run in parallel with security scans after the same download warmup");
             assertEquals("${{ !cancelled() }}", job.get("if"));
-            var guard = stepNamed(job, "Require successful dependency prerequisites");
-            assertEquals("needs.warm-cache.result != 'success' || needs.dependency-security.result != 'success'", guard.get("if"));
+            assertNull(job.get("continue-on-error"));
+            var guard = stepNamed(job, "Require successful dependency warmup");
+            assertEquals("needs.warm-cache.result != 'success'", guard.get("if"));
+            assertFalse(job.toString().contains("needs.dependency-security.result"),
+                    "a failed scan must retain its own failed status without short-circuiting native tests");
             assertTrue(guard.get("run").toString().contains("exit 1"));
             assertEquals(guard, sequence(job.get("steps")).get(0),
                     "a failed warmup must fail required contexts before any cache-dependent work");
@@ -376,6 +384,8 @@ class PublicationWorkflowTest {
         var callInputs = mapping(mapping(events.get("workflow_call")).get("inputs"));
         assertEquals(false, mapping(callInputs.get("warmed-dependencies")).get("default"));
         var job = mapping(mapping(security.get("jobs")).get("scan"));
+        assertEquals("Dependency security / ${{ matrix.distribution }}", job.get("name"),
+                "renaming either distribution check also requires updating the live main ruleset");
         assertEquals(List.of("gradle", "maven"), mapping(mapping(job.get("strategy")).get("matrix")).get("distribution"));
         assertEquals(false, mapping(job.get("strategy")).get("fail-fast"));
         assertTestedCheckout(job);

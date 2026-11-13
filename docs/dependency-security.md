@@ -49,9 +49,25 @@ These are additional boundary checks, not a general CycloneDX schema validator. 
 resolve-plugins output is a flat plugin-realm membership inventory: its edges do not pretend to
 recover the exact transitive parent inside each realm. Fixture graphs retain native tree edges.
 
+The Maven build evidence also retains `tooling-model.json`, referenced through the build
+inventory's `inputs`/`retainedFile` records. It distinguishes effective build plugins from
+managed-only declarations and records execution IDs, phases and goals from the effective POM.
+Site-only bindings are labelled `site-lifecycle-only`. These are model bindings, not proof of
+execution; a directly invoked plugin can be used without any bound execution. All resolved
+realms remain in the same SBOM and severity gate regardless of the label.
+
+Only explicit plugin identity and binding fields are retained. The complete effective POM can
+contain interpolated local settings, so it is generated in a temporary directory and removed
+after extraction, including on failure. Arbitrary properties and plugin configuration are never
+copied into the uploaded explanatory report.
+
 ## CI and release gating
 
 `.github/workflows/security.yml` runs separate `gradle` and `maven` jobs after dependency warmup.
+The Gradle/Maven test matrices also start after that warmup, in parallel with the scans. Their
+statuses describe native tests; both security job contexts are separately required for merging.
+The reusable workflow still fails when any matrix, signing check or security job fails, blocking
+both publication destinations. No `continue-on-error` or severity-policy exception is introduced.
 Gradle warmup also resolves `securityInventories`; Maven warmup resolves the release plugin model.
 Only downloaded dependencies are shared with the scan jobs. The cache key includes the Gradle/POM
 models, checksum baselines and inventory helper. Maven scan preparation installs the current

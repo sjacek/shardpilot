@@ -83,6 +83,9 @@
         <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-archiver</artifactId><version>${tooling.archiver.version}</version></dependency>
       </dependencies>
     </plugin>
+    <!-- Maven injects site lifecycle bindings even though CI does not invoke that lifecycle.
+         Retain the current pin and full scan: deleting this entry restores an older default,
+         rather than removing the Site/Jetty realm. The sanitized tooling model explains it. -->
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-site-plugin</artifactId><version>3.22.0</version>
       <dependencies>
         <dependency><groupId>commons-beanutils</groupId><artifactId>commons-beanutils</artifactId><version>${tooling.beanutils.version}</version></dependency>

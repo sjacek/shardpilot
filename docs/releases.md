@@ -29,7 +29,7 @@ commits, tag creation, publisher credentials and release-environment protection 
 ## Keep required checks aligned with the matrix
 
 The repository's active **main** ruleset applies to `main`. The release
-gate has 12 required contexts, emitted by GitHub Actions:
+gate has 14 required contexts, emitted by GitHub Actions:
 
 | Job contexts | Required JDKs | Count |
 | --- | --- | --- |
@@ -38,10 +38,13 @@ gate has 12 required contexts, emitted by GitHub Actions:
 | `Gradle 9.9.1 / JDK N` | 17, 21, 25 | 3 |
 | `Maven 3.10.0 / JDK N` | 17, 21, 25 | 3 |
 | `Signed Maven release bundle (no upload)` | Fixed release-verification runtime | 1 |
+| `Check runtime dependencies / Dependency security / gradle` | Four Gradle dependency scopes | 1 |
+| `Check runtime dependencies / Dependency security / maven` | Four Maven dependency scopes | 1 |
 
-Dependency warmup and both runtime security scans are prerequisites of the two matrices. Their
-existing required contexts fail explicitly when a prerequisite fails; these gates do not require
-renaming the 12 checks. The reusable compatibility workflow also blocks publication when either
+Dependency warmup is the common prerequisite of the matrices and security scans. Tests and scans
+then run independently, so native results remain available when a vulnerability blocks security.
+Failed warmup still explicitly fails the matrix contexts. The two security contexts must remain
+required independently of the existing 12 checks. The reusable compatibility workflow also blocks publication when either
 [SBOM/security job for any runtime/build/test/provided scope](dependency-security.md) fails.
 
 `N` above is replaced with the literal JDK number in each required name. These are job names,
@@ -59,7 +62,7 @@ jobs remain required as well. Coordinate the live rename with the workflow rollo
 
 1. Push the branch containing the updated matrix and wait for its new status names to appear.
 2. In **Settings → Rules → Rulesets → main**, replace only the three requirements for
-   the changed runtime with the corresponding new names, retaining all 12 contexts and their source.
+   the changed runtime with the corresponding new names, retaining all 14 contexts and their source.
 3. Re-read the live ruleset and compare all names with the branch's actual reports before merge.
    Older open PRs may need to pick up the new workflow; their old statuses cannot satisfy the
    renamed requirements. Keep the same revision/history cohort for release checks.

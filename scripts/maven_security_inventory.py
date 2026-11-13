@@ -1,8 +1,62 @@
 """Generate reactor SBOMs and resolve producer plugin realms without executing release goals."""
 import xml.etree.ElementTree as ET
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from ci_dependency_cache import DEPENDENCY_PLUGIN, ROOT, NS, maven
 from security_reports import sha256, write_json
+
+
+def tooling_model(path):
+    """Retain effective plugin bindings, never arbitrary POM properties or plugin configuration.
+
+    Binding presence is model evidence, not proof that a goal ran. Every resolved realm stays
+    in the build SBOM and severity gate, including managed-only and site-lifecycle tooling.
+    """
+    root = ET.parse(path).getroot()
+    projects = [root] if root.tag == '{' + NS['m'] + '}project' else list(root)
+    result = []
+    for project in projects:
+        artifact = project.findtext('m:artifactId', namespaces=NS)
+        if not artifact:
+            raise ValueError('Effective Maven model has no project identity')
+        selected = {}
+        for location, role in (('m:build/m:pluginManagement/m:plugins/m:plugin', 'managed-only'),
+                               ('m:build/m:plugins/m:plugin', 'effective-build-plugin')):
+            for plugin in project.findall(location, NS):
+                group = plugin.findtext('m:groupId', 'org.apache.maven.plugins', NS)
+                name = plugin.findtext('m:artifactId', namespaces=NS)
+                version = plugin.findtext('m:version', namespaces=NS)
+                if not name or not version:
+                    raise ValueError('Effective Maven plugin has no resolved identity')
+                executions = [{'id': entry.findtext('m:id', namespaces=NS),
+                               'phase': entry.findtext('m:phase', namespaces=NS),
+                               'goals': [goal.text for goal in entry.findall('m:goals/m:goal', NS)]}
+                              for entry in plugin.findall('m:executions/m:execution', NS)]
+                site_only = bool(executions) and all(entry['phase'] in ('pre-site', 'site', 'post-site', 'site-deploy')
+                                                     for entry in executions)
+                selected[(group, name)] = {'groupId': group, 'artifactId': name, 'version': version,
+                                           'modelRole': role, 'executions': executions,
+                                           'binding': 'site-lifecycle-only' if site_only else 'other-or-unspecified'}
+        if not selected:
+            raise ValueError('Effective Maven model has no producer tooling')
+        result.append({'artifactId': artifact, 'plugins': sorted(selected.values(),
+                       key=lambda entry: (entry['groupId'], entry['artifactId']))})
+    if not result:
+        raise ValueError('Empty effective Maven model')
+    return {'schemaVersion': 1, 'interpretation': 'effective-bindings-not-execution-proof', 'projects': result}
+
+
+def effective_tooling_model():
+    output = ROOT / 'build/reports/security/maven/tooling-model.json'
+    output.unlink(missing_ok=True)
+    # An effective POM may interpolate local settings. Retain only the explicit identity/binding
+    # whitelist above, and remove the complete temporary model even if Maven or parsing fails.
+    with TemporaryDirectory(prefix='shardpilot-effective-pom-') as temporary:
+        path = Path(temporary) / 'effective-pom.xml'
+        maven('-Psecurity-sbom,central-release', '-Dcentral.skipUpload=true',
+              'org.apache.maven.plugins:maven-help-plugin:3.5.2:effective-pom', '-Doutput=' + str(path))
+        write_json(output, tooling_model(path))
 
 
 def resolve_plugins():
@@ -78,6 +132,7 @@ def main():
     # metadata can be verified with the same consumer checksums as native Invoker tests.
     maven('-Psecurity-sbom', '-DskipTests', '-DskipITs', 'install')
     resolve_plugins()
+    effective_tooling_model()
     fixture_inventories()
 
 

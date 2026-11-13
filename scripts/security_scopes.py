@@ -314,6 +314,13 @@ def prepare(distribution, commit):
                 sources.append((document, {'scope': scope, 'project': fixture['pom'],
                                            'selection': 'native Invoker/example/provider dependency tree'}))
         if distribution == 'maven' and scope == 'build':
+            # Explain inherited/managed tooling without filtering any plugin realm from scanning.
+            model_path = reports.ROOT / 'build/reports/security/maven/tooling-model.json'
+            model = reports.read_json(model_path)
+            if model.get('schemaVersion') != 1 or model.get('interpretation') != 'effective-bindings-not-execution-proof' \
+                    or not model.get('projects'):
+                raise ValueError('Missing sanitized effective Maven tooling model')
+            inputs.append({'file': model_path.relative_to(reports.ROOT).as_posix(), 'sha256': reports.sha256(model_path)})
             # The checksum verifier is a JVM startup extension rather than a POM plugin realm.
             # Its compact JAR is independently hash-pinned before Maven starts.
             config_path = reports.ROOT / 'security/dependency-verification.json'
