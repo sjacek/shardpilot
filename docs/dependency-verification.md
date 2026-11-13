@@ -1,6 +1,6 @@
 # Build dependency integrity
 
-[Documentation index](README.md) | [Runtime SBOMs](dependency-security.md) | [Release gates](releases.md)
+[Documentation index](README.md) | [Dependency SBOMs](dependency-security.md) | [Release gates](releases.md)
 
 The producer build verifies reviewed SHA-256 identities independently of vulnerability scanning.
 A clean CVE scan does not establish that downloaded bytes match the reviewed dependency, and a

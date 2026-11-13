@@ -42,7 +42,7 @@ gate has 12 required contexts, emitted by GitHub Actions:
 Dependency warmup and both runtime security scans are prerequisites of the two matrices. Their
 existing required contexts fail explicitly when a prerequisite fails; these gates do not require
 renaming the 12 checks. The reusable compatibility workflow also blocks publication when either
-[runtime SBOM/security job](dependency-security.md) fails.
+[SBOM/security job for any runtime/build/test/provided scope](dependency-security.md) fails.
 
 `N` above is replaced with the literal JDK number in each required name. These are job names,
 without the workflow title or `(push)` / `(pull_request)` event suffix shown in parts of the UI.

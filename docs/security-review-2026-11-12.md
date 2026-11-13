@@ -178,3 +178,21 @@ This supplies bounded maintainer evidence for stage 4 and the registry-byte part
 or coverage of every registry version/consumer/feature. Real-suite performance measurements,
 broader producer/provided/test vulnerability inventories and operational private-reporting setup
 verification remain separate work.
+
+## Subsequent producer, test and provided SCA coverage
+
+The [dependency-security workflow](dependency-security.md) now retains separate runtime, build,
+test and provided CycloneDX/Grype reports for each adapter. Native buildscript/plugin resolution,
+effective Maven provided roots and their transitives, test/fixture classpaths and the selected
+Surefire provider supplement the runtime boundary checks. Every scope must validate against the
+same candidate/commit and scanner/database policy. Findings and process failures are collected
+independently before the distribution-wide gate fails; partial evidence cannot become a pass.
+
+Local scans on 13 November 2026 exposed high/critical producer dependencies previously outside
+the runtime inventories. Runtime remained free of reported matches, while the expanded gate
+blocked the current tooling/API dependency set. See the scope table and limitations in the
+dependency-security guide: these findings need triage/remediation, including build-only plugin
+realms, and are not proof of exploitation in the distributed ShardPilot runtime. Generic Gradle
+SDK file identities preserve exact bytes but do not guarantee advisory coverage of bundled code.
+The expanded hosted workflow still needs verification after the next push. Real-suite performance
+measurement remains deferred, and operational private-reporting setup remains a separate check.

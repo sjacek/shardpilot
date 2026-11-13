@@ -81,8 +81,9 @@ manifests remain compatible. Installation snippets target 0.4.0; use the
 The [12 November 2026 follow-up](docs/security-review-2026-11-12.md) pins the public commit and
 records successful reference-commit compatibility/publication workflows, separately from
 checks that remain open. Historical release notes retain their preparation/check procedures.
-Candidate [runtime SBOMs and vulnerability scans](docs/dependency-security.md) now distinguish the
-Gradle and Maven distributions and gate CI/publication on their recorded severity/database policy.
+Candidate [SBOMs and vulnerability scans](docs/dependency-security.md) distinguish Gradle and Maven,
+with separate runtime, build, test and provided reports. Every scope gates CI/publication under
+the recorded severity/database policy; overlapping results remain separately attributable.
 [Build dependency integrity](docs/dependency-verification.md) separately pins workflow Actions and
 checks reviewed dependency bytes before producer and isolated-consumer builds use them.
 

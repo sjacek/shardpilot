@@ -34,7 +34,7 @@ class PublicationWorkflowTest {
             assertMavenVerificationBefore(job, pair.getValue());
         }
         var scan = mapping(mapping(workflow("security").get("jobs")).get("scan"));
-        assertMavenVerificationBefore(scan, "Build Maven candidates and resolve runtime inventory");
+        assertMavenVerificationBefore(scan, "Build Maven candidates and resolve dependency inventories");
         assertEquals("matrix.distribution == 'maven'", stepNamed(scan, "Enable Maven dependency verification").get("if"));
         var publish = mapping(mapping(workflow("publish").get("jobs")).get("publish-maven"));
         assertMavenVerificationBefore(publish, "Publish the signed Maven release");
@@ -393,19 +393,22 @@ class PublicationWorkflowTest {
         assertTrue(database.contains("db update --config security/grype.yaml"));
         assertTrue(database.contains("db status -o json"));
         assertTrue(database.contains("version -o json"));
-        String scan = stepNamed(job, "Scan runtime dependencies").get("run").toString();
-        assertTrue(scan.contains("sbom:build/security/$DISTRIBUTION/bom.cdx.json"));
-        assertTrue(scan.contains("--only-fixed=false --show-suppressed"));
-        assertTrue(scan.contains("--fail-on \"$SEVERITY\""));
-        assertTrue(scan.contains("scan-status.json"));
-        assertTrue(scan.contains("exit \"$scan_exit\""));
+        String scan = stepNamed(job, "Scan every dependency scope").get("run").toString();
+        assertTrue(scan.contains("scripts/security_scopes.py scan --distribution \"$DISTRIBUTION\" --grype \"$GRYPE_BIN\""));
+        String scopeRunner = Files.readString(Path.of("scripts/security_scopes.py"));
+        assertTrue(scopeRunner.contains("SCOPES = ('runtime', 'build', 'test', 'provided')"));
+        assertTrue(scopeRunner.contains("'--only-fixed=false', '--show-suppressed'"));
+        assertTrue(scopeRunner.contains("'--fail-on', reports.policy()['severityCutoff']"));
+        assertTrue(scopeRunner.contains("scan-status.json"));
         var summary = stepNamed(job, "Summarize findings and verify scan evidence");
+        assertTrue(summary.get("run").toString().contains("scripts/security_scopes.py summarize"));
         assertTrue(summary.get("if").toString().contains("always()"));
         assertTrue(summary.get("if").toString().contains("steps.scan.outcome == 'failure'"));
         var retained = stepNamed(job, "Retain SBOM, findings and candidate provenance");
         assertEquals("always()", retained.get("if"));
         assertEquals("build/security/${{ matrix.distribution }}/", mapping(retained.get("with")).get("path"));
         assertEquals(30, mapping(retained.get("with")).get("retention-days"));
+        assertEquals("dependency-security-${{ matrix.distribution }}", mapping(retained.get("with")).get("name"));
         var policy = mapping(new Load(LoadSettings.builder().build())
                 .loadFromString(Files.readString(Path.of("security/scan-policy.json"))));
         assertEquals("0.121.3", policy.get("scannerVersion"));
@@ -415,7 +418,7 @@ class PublicationWorkflowTest {
     }
 
     @Test
-    void nativeSbomGeneratorsExcludeTestsProvidedApisAndPublicationAttachments() throws Exception {
+    void nativeSbomGeneratorsPreserveRuntimeBoundaryAndAddSeparateProducerScopes() throws Exception {
         var factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
         var document = factory.newDocumentBuilder().parse(Path.of("pom.xml").toFile());
@@ -429,12 +432,33 @@ class PublicationWorkflowTest {
             assertEquals("false", xpath.evaluate(plugin + "/configuration/" + excluded, document));
         }
         assertEquals("makeBom", xpath.evaluate(plugin + "/executions/execution/goals/goal", document));
+        String test = plugin + "/executions/execution[id='test-sbom']";
+        String provided = plugin + "/executions/execution[id='provided-sbom']";
+        for (String scope : List.of(test, provided)) {
+            assertEquals("makeBom", xpath.evaluate(scope + "/goals/goal", document));
+            assertEquals("true", xpath.evaluate(scope + "/configuration/includeCompileScope", document),
+                    "provided/test transitives can have compile scope in the native generator model");
+            assertEquals("true", xpath.evaluate(scope + "/configuration/includeProvidedScope", document));
+        }
+        assertEquals("true", xpath.evaluate(test + "/configuration/includeTestScope", document));
+        String dependency = "/project/profiles/profile[id='security-sbom']/build/plugins/plugin[artifactId='maven-dependency-plugin']";
+        assertEquals("3.11.0", xpath.evaluate(dependency + "/version", document));
+        assertEquals("false", xpath.evaluate(dependency + "/configuration/excludeTransitive", document));
+        assertEquals("tree", xpath.evaluate(dependency + "/executions/execution[id='security-scope-tree']/goals/goal", document));
+        assertEquals("json", xpath.evaluate(dependency + "/executions/execution/configuration/outputType", document));
         assertTrue(Files.readString(Path.of("build.gradle")).contains("id 'org.cyclonedx.bom' version '3.5.1'"));
         for (String module : List.of("shardpilot-core", "shardpilot-gradle-plugin")) {
             String build = Files.readString(Path.of(module, "build.gradle"));
             assertTrue(build.contains("includeConfigs = ['runtimeClasspath']"));
             assertTrue(build.contains("includeBuildEnvironment = false"));
         }
+        String producer = Files.readString(Path.of("gradle/security-inventories.gradle"));
+        assertTrue(producer.contains("includeBuildEnvironment = scope == 'build'"));
+        assertTrue(producer.contains("testRuntimeClasspath"));
+        assertTrue(producer.contains("execution.*FixtureRuntimeClasspath"));
+        assertTrue(producer.contains("verificationFixtures"));
+        assertTrue(producer.contains("extendsFrom compileOnly.get()"));
+        assertTrue(producer.contains("localArtifacts"), "Gradle SDK file dependencies must not disappear from provided/test scopes");
     }
 
     @Test

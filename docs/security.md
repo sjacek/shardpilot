@@ -82,8 +82,9 @@ analysis of the artifacts consumers actually resolve. The Gradle distribution bu
 classes; Maven resolves the core separately and has its own runtime dependency graph. Assess
 those graphs separately from provided build-tool APIs, test libraries and producer tooling.
 
-The [runtime SBOM and vulnerability workflow](dependency-security.md) now inventories those two
-distribution graphs separately and gates compatibility/publication on its policy. It binds local
+The [SBOM and vulnerability workflow](dependency-security.md) inventories those two distribution
+graphs separately, adds distinct build/test/provided reports, and requires every scope to pass
+before compatibility/publication. It binds local
 candidate JAR hashes and records scanner/database identities. The separate
 [build dependency integrity gate](dependency-verification.md) pins Actions commits and verifies
 Gradle/TestKit and Maven dependency bytes, including restored caches. Verification of actual

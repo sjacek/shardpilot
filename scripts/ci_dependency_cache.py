@@ -77,6 +77,8 @@ def warm_maven():
     # Fixture plugin resolution needs this checkout's candidate, which pack() explicitly excludes.
     maven('install', '-DskipTests', '-DskipITs')
     maven(DEPENDENCY_PLUGIN + ':go-offline', '-Psecurity-sbom')
+    # Inventory release plugin realms by direct resolution, never by executing release phases.
+    maven('-Psecurity-sbom,central-release', '-Dcentral.skipUpload=true', DEPENDENCY_PLUGIN + ':resolve-plugins')
     fixtures = ROOT / 'build/cache-warmup/maven'
     providers = set()
     for source in (ROOT / 'shardpilot-maven-plugin/src/it', ROOT / 'examples/maven'):

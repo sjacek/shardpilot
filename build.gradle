@@ -23,6 +23,7 @@ project.setDescription('ShardPilot helps shorten CI feedback for large JVM unit 
 
 apply from: 'gradle/release-verification.gradle'
 apply from: 'gradle/verification-fixtures.gradle'
+apply from: 'gradle/security-inventories.gradle'
 
 tasks.named('check') { dependsOn ':shardpilot-core:check', ':shardpilot-gradle-plugin:check' }
 tasks.named('assemble') { dependsOn ':shardpilot-core:assemble', ':shardpilot-gradle-plugin:assemble' }

@@ -71,8 +71,8 @@
     </profile>
     <profile>
       <id>security-sbom</id>
-      <!-- Inventory the actual consumer runtime, independently of provided Maven APIs and tests.
-           CI keeps these reports separately; this profile never attaches or publishes a new artifact. -->
+      <!-- Separate inventories retain the consumer runtime boundary while also scanning producer
+           tests and host-provided APIs. None of these reports becomes a publication attachment. -->
       <build><plugins><plugin>
         <groupId>org.cyclonedx</groupId><artifactId>cyclonedx-maven-plugin</artifactId><version>2.9.3</version>
         <configuration>
@@ -83,7 +83,41 @@
           <outputDirectory>${project.build.directory}/reports/security/maven</outputDirectory>
           <outputName>bom.raw</outputName><skipAttach>true</skipAttach>
         </configuration>
-        <executions><execution><id>runtime-sbom</id><phase>package</phase><goals><goal>makeBom</goal></goals></execution></executions>
+        <executions>
+          <execution><id>runtime-sbom</id><phase>package</phase><goals><goal>makeBom</goal></goals></execution>
+          <execution><id>test-sbom</id><phase>package</phase><goals><goal>makeBom</goal></goals>
+            <configuration>
+              <!-- Maven's effective test classpath includes compile/runtime/provided transitives. -->
+              <includeCompileScope>true</includeCompileScope><includeRuntimeScope>true</includeRuntimeScope>
+              <includeProvidedScope>true</includeProvidedScope><includeTestScope>true</includeTestScope>
+              <outputDirectory>${project.build.directory}/reports/security/maven/test</outputDirectory>
+            </configuration>
+          </execution>
+          <execution><id>provided-sbom</id><phase>package</phase><goals><goal>makeBom</goal></goals>
+            <configuration>
+              <!-- Keep transitive compile edges; finalization selects provided roots from dependency:tree. -->
+              <includeCompileScope>true</includeCompileScope><includeRuntimeScope>true</includeRuntimeScope>
+              <includeProvidedScope>true</includeProvidedScope>
+              <outputDirectory>${project.build.directory}/reports/security/maven/provided</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- resolve-plugins inventories effective build/report plugin realms, including transitives.
+           It is invoked directly: activating central-release for resolution runs no release goals. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId><version>3.11.0</version>
+        <configuration>
+          <excludeReactor>false</excludeReactor><excludeTransitive>false</excludeTransitive>
+          <outputAbsoluteArtifactFilename>true</outputAbsoluteArtifactFilename>
+          <outputFile>${project.build.directory}/reports/security/maven/build/plugins.raw.txt</outputFile>
+        </configuration>
+        <executions><execution><id>security-scope-tree</id><phase>package</phase><goals><goal>tree</goal></goals>
+          <configuration>
+            <outputType>json</outputType>
+            <outputFile>${project.build.directory}/reports/security/maven/project-dependencies.raw.json</outputFile>
+          </configuration>
+        </execution></executions>
       </plugin></plugins></build>
     </profile>
     <profile>
