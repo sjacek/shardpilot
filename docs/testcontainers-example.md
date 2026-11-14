@@ -1,12 +1,12 @@
 # PostgreSQL and RabbitMQ example
 
-[Documentation index](README.md) · [Runnable example](../examples/gradle/junit-jupiter/testcontainers/README.md)
+[Documentation index](README.md) · [Runnable example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/testcontainers/README.md)
 
 This guide covers JUnit Jupiter. For specification lifecycle and data-table iterations, use the
 [Spock counterpart](spock-testcontainers-example.md). For inherited class fixtures and data providers,
 use the [TestNG counterpart](testng-testcontainers-example.md).
 
-The [standalone JUnit Jupiter example build](../examples/gradle/junit-jupiter/testcontainers/build.gradle) runs four integration-test
+The [standalone JUnit Jupiter example build](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/testcontainers/build.gradle) runs four integration-test
 classes against real PostgreSQL and RabbitMQ containers. ShardPilot distributes the classes;
 the test fixtures own container startup, data isolation and cleanup. No application server,
 Spring context or external database/broker deployment is needed.
@@ -25,17 +25,17 @@ dependencies/images. Missing Docker fails the integration tests instead of skipp
 
 The example consumes the plugin using `includeBuild('../../../..')` in its own settings. It is not
 included as a subproject in the plugin build, and deliberately tests the checkout rather than the
-published Portal artifact. Normal consumer installation uses the [published plugin](../README.md#getting-started).
+published Portal artifact. Normal consumer installation uses the [published plugin](https://github.com/sjacek/shardpilot/blob/main/README.md#getting-started).
 The example creates its own `integrationTest` source set, task and `check` dependency. Those are
 consumer choices, not behavior added by ShardPilot.
 
 | File or class | Role |
 | --- | --- |
-| [build.gradle](../examples/gradle/junit-jupiter/testcontainers/build.gradle) | Dependencies, integration task, sharding opt-in, sequential workers and live-test cache policy. |
-| [IntegrationTestImages](../examples/gradle/junit-jupiter/testcontainers/src/integrationTest/java/example/shardpilot/IntegrationTestImages.java) | Central defaults and explicit image overrides. |
-| [TestInfrastructure](../examples/gradle/junit-jupiter/testcontainers/src/integrationTest/java/example/shardpilot/TestInfrastructure.java) | Lazy worker-local containers, parallel startup and generated databases. |
-| [AbstractInfrastructureIT](../examples/gradle/junit-jupiter/testcontainers/src/integrationTest/java/example/shardpilot/AbstractInfrastructureIT.java) | Database per class, client factories and bounded message polling. |
-| [Timing history](../examples/gradle/junit-jupiter/testcontainers/integration-test-durations.tsv) | Illustrative weights for a predictable two-shard demonstration. |
+| [build.gradle](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/testcontainers/build.gradle) | Dependencies, integration task, sharding opt-in, sequential workers and live-test cache policy. |
+| [IntegrationTestImages](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/testcontainers/src/integrationTest/java/example/shardpilot/IntegrationTestImages.java) | Central defaults and explicit image overrides. |
+| [TestInfrastructure](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/testcontainers/src/integrationTest/java/example/shardpilot/TestInfrastructure.java) | Lazy worker-local containers, parallel startup and generated databases. |
+| [AbstractInfrastructureIT](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/testcontainers/src/integrationTest/java/example/shardpilot/AbstractInfrastructureIT.java) | Database per class, client factories and bounded message polling. |
+| [Timing history](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/testcontainers/integration-test-durations.tsv) | Illustrative weights for a predictable two-shard demonstration. |
 
 Dependencies include JUnit Jupiter 6.1.3, Testcontainers 2.0.5, PostgreSQL JDBC 42.7.14 and RabbitMQ
 Java client 5.37.0. They belong to the example, not the published plugin's runtime. The tests exercise

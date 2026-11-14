@@ -13,6 +13,10 @@ shared `TestSelection` snapshot owns these rules, selection diagnostics and coho
 Gradle's `PrepareTestSelection` and Maven's existing prepare/select goals adapt the same core;
 coverage uses the selected baseline, with a distinct output namespace and identity sidecars.
 
+The development [core policy engine](selection-policy.md) adds immutable Java/YAML profiles,
+path rules, protected-family budgets and deterministic decisions before that existing manifest
+boundary. Git acquisition and Gradle/Maven profile parameter wiring are separate next steps.
+
 ## Source modules and artifact compatibility
 
 ![Shared core and build-tool adapters](diagrams/modules.svg)
@@ -21,7 +25,7 @@ coverage uses the selected baseline, with a distinct output namespace and identi
 
 | Source module | Responsibilities / distribution |
 | --- | --- |
-| `shardpilot-core` | Java 17 code with no Gradle/Maven APIs: TSV history, secure JUnit XML timing import, complete-family refresh, ownership, YAML encoding, shared preparation, validation snapshots and reports. |
+| `shardpilot-core` | Java 17 code with no Gradle/Maven APIs: TSV history, secure JUnit XML timing import, complete-family refresh, ownership, YAML encoding, shared preparation, validation snapshots and reports; development profile/rule/budget selection engine. |
 | `shardpilot-gradle-plugin` | Gradle `Test` integration, process options, lazy filters and managed artifact tasks. Publishes the existing `io.github.sjacek:shardpilot` implementation and unchanged plugin marker. Core classes are bundled into this JAR with their original Java package. |
 | `shardpilot-maven-plugin` | Native Maven goals and effective Surefire/Failsafe class-filter adapter. Resolves `shardpilot-core` as a normal plugin dependency; no Gradle libraries are needed. |
 

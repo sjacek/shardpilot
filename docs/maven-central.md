@@ -8,7 +8,7 @@ namespace registration is needed for ShardPilot. Namespace ownership, a publishi
 PGP signing key are separate prerequisites. Existing publisher keys can be reused if still valid
 and available; this guide also covers creating a key.
 
-The [publication workflow](../.github/workflows/publish.yml) publishes Gradle automatically on a
+The [publication workflow](https://github.com/sjacek/shardpilot/blob/main/.github/workflows/publish.yml) publishes Gradle automatically on a
 release-tag push. Its later manual run from that same tag publishes the parent POM, shared core
 and Maven adapter together. Each destination uses its own job, credentials and complete release gate.
 

@@ -110,8 +110,10 @@ and failed-test preservation. Aggregation must never manufacture missing CI down
 selection coverage and normal execution outcomes as independent required gates.
 
 Explicit selection additionally requires one-node and multi-node native execution tests, full/selected
-artifact isolation, bounded family expansion and manifest-content cache invalidation. Keep impact/risk
-mapping outside the core. Check native filter conflicts even when Gradle would skip an empty candidate
+artifact isolation, bounded family expansion and manifest-content cache invalidation. Keep application
+class names and domain mappings in declarative configuration; shared profile/rule/budget evaluation
+belongs in the core. Its [versioned policy contract](docs/selection-policy.md) must preserve protected
+tests, deterministic decisions and visible full/failure fallbacks. Check native filter conflicts even when Gradle would skip an empty candidate
 tree as `NO-SOURCE`; see [the selection contract](docs/test-selection.md).
 
 For report changes, keep JSON's machine-readable contract and HTML's human-readable status

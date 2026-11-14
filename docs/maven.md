@@ -4,7 +4,7 @@ Optional [explicit test selection](test-selection.md#maven-surefire-and-failsafe
 `selectionManifestFile` and `selectionSuite` to the existing goals. It preserves the native test
 runner and requires selection-specific exclusions and report paths, including for a single node.
 
-[Documentation index](README.md) · [Runnable POMs](../examples/maven/README.md)
+[Documentation index](README.md) · [Runnable POMs](https://github.com/sjacek/shardpilot/blob/main/examples/maven/README.md)
 
 `io.github.sjacek:shardpilot-maven-plugin:0.5.0` provides class sharding, YAML manifests and
 JSON/HTML coverage reports for native Maven Surefire and Failsafe executions. It uses the same
@@ -70,7 +70,7 @@ Add the adapter and wire Surefire's `excludesFile` to its generated output:
 Failsafe, add a separate adapter execution with `<runner>FAILSAFE</runner>` bound to
 `pre-integration-test`, and configure Failsafe's generated path as
 `${project.build.directory}/shardpilot/integration/excludes.txt`. Retain Failsafe's normal
-`integration-test` and `verify` goals. The [complete Jupiter POM](../examples/maven/junit-jupiter/pom.xml)
+`integration-test` and `verify` goals. The [complete Jupiter POM](https://github.com/sjacek/shardpilot/blob/main/examples/maven/junit-jupiter/pom.xml)
 shows both runners, independent suites and index-specific test report directories.
 
 Put parameters shared by explicit goals (for example `durationsFile` and maintained exclusions)
@@ -120,7 +120,7 @@ For one suite, a two-node flow is:
 Run these commands in a consuming project containing the configured plugin, not the repository's
 POM-only parent. Use `verify` instead of `test` for the complete Surefire/Failsafe example, then
 verify each suite separately with the corresponding `shardpilot.runner`. See the
-[example commands](../examples/maven/README.md). Always preserve the normal native test failures;
+[example commands](https://github.com/sjacek/shardpilot/blob/main/examples/maven/README.md). Always preserve the normal native test failures;
 selection coverage can pass even when an assertion failed. A worker failure leaves its actual
 manifest when the job workspace survives.
 
@@ -157,7 +157,7 @@ evidence to merge. Normal Surefire/Failsafe XML remains outside this directory.
 Each reactor module owns this layout under its own build directory, even if two modules contain
 the same binary class names. Preserve module and suite paths when collecting artifacts. `-T2`
 parallelizes reactor projects; it does not create shard jobs or select a shard index. POM-only
-aggregators produce no plan/report. See the [reactor example](../examples/maven/reactor/pom.xml).
+aggregators produce no plan/report. See the [reactor example](https://github.com/sjacek/shardpilot/blob/main/examples/maven/reactor/pom.xml).
 
 ## Parameters
 
@@ -205,7 +205,7 @@ AUTO's baseline default, explicit class-directory pruning, failed-data JSON and 
 `reportFile` / `shardpilot.reportFile` means `durations.json` for this goal and `coverage.json`
 for `verify`: avoid a plugin-level explicit report path shared by these independent goals.
 Do not prepend `clean`, `test`, `verify` or `prepare` to an artifact-only refresh invocation.
-The [runnable Jupiter example](../examples/maven/README.md#refresh-both-suite-histories)
+The [runnable Jupiter example](https://github.com/sjacek/shardpilot/blob/main/examples/maven/README.md#refresh-both-suite-histories)
 refreshes both Surefire and Failsafe after its two-node execution.
 
 ## Boundaries and unsupported overrides

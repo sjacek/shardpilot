@@ -29,13 +29,13 @@ the [Maven guide](maven.md); the following map identifies shared and adapter-spe
 
 The ownership algorithm, nested-class families, YAML schema and report semantics are shared.
 DSL opt-in, lifecycle phases and build-cache behavior are adapter-specific. A Gradle configuration
-cannot be pasted into a POM; use the [runnable POMs](../examples/maven/README.md) for native wiring.
+cannot be pasted into a POM; use the [runnable POMs](https://github.com/sjacek/shardpilot/blob/main/examples/maven/README.md) for native wiring.
 All jobs in one artifact cohort must use the same adapter/version, project/suite and selection inputs.
 
 ## Apply the Gradle adapter
 
-First apply the published plugin as described in [Getting started](../README.md#getting-started).
-An included build is only needed for [local plugin development](../README.md#local-plugin-development).
+First apply the published plugin as described in [Getting started](https://github.com/sjacek/shardpilot/blob/main/README.md#getting-started).
+An included build is only needed for [local plugin development](https://github.com/sjacek/shardpilot/blob/main/README.md#local-plugin-development).
 The plugin ID is `io.github.sjacek.shardpilot`. Applying it adds a `shardPilot` extension to every
 standard Gradle `Test` task, including tasks registered later. It does not apply a JVM plugin or
 create a test task.
@@ -60,7 +60,7 @@ but changing those inputs can still affect Gradle's up-to-date/cache checks.
 
 An explicit `shardPilot.testProcesses { ... }` block sets `maxHeapSize`, `maxParallelForks`
 and/or `forkEvery` on the owning Gradle `Test` task. See the
-[Groovy and Kotlin examples](../README.md#optional-test-process-settings).
+[Groovy and Kotlin examples](https://github.com/sjacek/shardpilot/blob/main/README.md#optional-test-process-settings).
 Version 0.1.0 does not provide this API; it is available in
 [0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1) and retained by 0.5.0.
 
@@ -186,7 +186,7 @@ independently of the current CI index. See the [complete option reference](shard
 
 For lazily declared tasks, call `tasks.named('integrationTest', Test).get().shardPilot.verification`
 from project configuration, outside the owner's deferred registration/configuration action. Register
-this API once per owner. The [Groovy/Kotlin examples](../README.md#optional-class-manifest-verification)
+this API once per owner. The [Groovy/Kotlin examples](https://github.com/sjacek/shardpilot/blob/main/README.md#optional-class-manifest-verification)
 show both forms and layout-provider overrides.
 
 ![Tasks and dependencies for optional verification](diagrams/manifest-tasks.svg)

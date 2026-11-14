@@ -12,10 +12,10 @@ reactor/example pins share this version. `verifyReleaseTag -PreleaseTag=v0.5.0` 
 without creating a tag. Historical sections below retain the toolchains and results recorded
 for their original revisions.
 
-The Docker-free [Gradle selection example](../examples/gradle/junit-jupiter/test-selection/README.md)
+The Docker-free [Gradle selection example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/test-selection/README.md)
 is copied from the actual repository inputs into TestKit. Its regression compares native identities
 for one node and the union of two nodes, preserving per-node XML and rejecting duplicates or Gamma
-execution. The [Maven selection example](../examples/maven/test-selection/README.md) is a third
+execution. The [Maven selection example](https://github.com/sjacek/shardpilot/blob/main/examples/maven/test-selection/README.md) is a third
 runnable Invoker consumer; its post-build hook verifies the original two-node XML, exact class
 identities, execution counts, successful outcomes and selection coverage. Existing negative selection
 fixtures and native full-versus-2/4-shard equivalence checks remain required.
@@ -196,10 +196,10 @@ events for an unsharded reference and two/four nodes. They preserve expected nat
 failures and check invocation identities, multiplicities and skip outcomes with the shared
 [execution oracle](execution-equivalence.md).
 
-- The [Jupiter POM](../examples/maven/junit-jupiter/pom.xml) prepares separate unit/integration plans,
+- The [Jupiter POM](https://github.com/sjacek/shardpilot/blob/main/examples/maven/junit-jupiter/pom.xml) prepares separate unit/integration plans,
   runs two nodes through real Surefire/Failsafe, checks nested methods and a custom `Spec` suffix,
   preserves a deliberately failing consumer exclusion and verifies both JSON/HTML reports.
-- The [reactor POM](../examples/maven/reactor/pom.xml) runs two modules with `-T2`; identical class
+- The [reactor POM](https://github.com/sjacek/shardpilot/blob/main/examples/maven/reactor/pom.xml) runs two modules with `-T2`; identical class
   names remain isolated by module and each receives a complete/disjoint two-node partition.
 - Negative fixtures prove rejection of focused class overrides, missing evidence with failure
   reports, actual evidence surviving a failed assertion, and a deny-all empty shard that cannot
@@ -226,7 +226,7 @@ The Jupiter example additionally refreshes both suite histories through its Invo
 hook checks every candidate value against native XML (including inclusive nested timing, the
 default floor/precision), merge/coverage counters, suite isolation and unchanged maintained weights.
 
-The [Docker-free Gradle example](../examples/gradle/junit-jupiter/duration-history/README.md)
+The [Docker-free Gradle example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/duration-history/README.md)
 demonstrates native outer/nested execution, two-node YAML/HTML verification and candidate TSV/JSON.
 Its four-step sequence is also exercised automatically by `HistoryRefreshExampleFunctionalTest`,
 which copies the actual example inputs and substitutes only plugin resolution through TestKit.
@@ -364,7 +364,7 @@ Provided Maven API dependencies and the declared minimum version are unchanged.
 
 ## Gradle and JDK matrix
 
-The [compatibility workflow](../.github/workflows/compatibility.yml) runs on branch pushes, pull
+The [compatibility workflow](https://github.com/sjacek/shardpilot/blob/main/.github/workflows/compatibility.yml) runs on branch pushes, pull
 requests, manual dispatch and calls from the tag-publication workflow. Every cell runs the complete
 Docker-free `check assemble`, not only plugin application or a compilation smoke test. All cells
 are required; failures do not cancel the others.
@@ -499,7 +499,7 @@ Run both suites locally with:
 python3 -B -m unittest discover -s scripts -p 'test_central_publication*.py' -v
 ```
 
-The [publication workflow](../.github/workflows/publish.yml) calls this same matrix at the tagged
+The [publication workflow](https://github.com/sjacek/shardpilot/blob/main/.github/workflows/publish.yml) calls this same matrix at the tagged
 commit, after checking its version, and publishes only if the entire call succeeds. Workflow
 regressions are checked by parsing YAML 1.2 with SnakeYAML Engine, also used for manifest transport. Release
 guard fixtures use the fixed publishing Wrapper; consumer fixtures use `testGradleVersion`.

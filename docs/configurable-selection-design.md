@@ -1,6 +1,7 @@
 # Configurable test selection: target design
 
-**Product direction confirmed on 14 November 2026. Design only; not available in 0.5.0.**
+**Product direction confirmed on 14 November 2026. Core engine implemented in the development
+checkout; complete adapter/Git integration is planned and not available in 0.5.0.**
 
 ShardPilot will own the complete selection mechanism: discover eligible tests, obtain the
 change set, evaluate configured rules, apply mandatory tests and budgets, produce an immutable
@@ -8,7 +9,8 @@ selection, assign shards and explain the decision. A consumer configures the Gra
 plugin and keeps no selection algorithm in a Python, shell or custom build-script function.
 
 The [0.5.0 selection feature](test-selection.md) already validates and executes a supplied
-class manifest. Generating that selection from configuration is the planned extension.
+class manifest. Generating that selection from configuration is the extension implemented first
+in the [shared core policy contract](selection-policy.md). Build-tool parameter wiring remains planned.
 The existing manifest remains a supported explicit-input mode and a useful interchange
 format. Automatic modes generate their manifest internally.
 
@@ -145,5 +147,7 @@ optional deferral and empty-result policies. Both adapters must select the same 
 and preserve failure/skip gates. A generic example project must work using configuration
 alone; no application-specific selector callback is required for a documented mode.
 
-The next implementation step is the shared policy contract and core engine, coordinated with
-C2's validator contract. The current change records that scope; it does not ship the engine.
+The shared policy contract, profiles, path rules, protected-family budgets and decision reports
+are implemented and tested in core. Next come change acquisition and equivalent adapter parameters,
+coordinated with C2's validator contract. Structured module/contract inference, automatic directly
+changed-test discovery and native adapter wiring remain outside this first implementation stage.

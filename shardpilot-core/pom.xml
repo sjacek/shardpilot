@@ -16,6 +16,7 @@
   <url>https://github.com/sjacek/shardpilot</url>
   <dependencies>
     <dependency><groupId>org.snakeyaml</groupId><artifactId>snakeyaml-engine</artifactId><version>3.2</version></dependency>
+    <dependency><groupId>org.jspecify</groupId><artifactId>jspecify</artifactId><version>1.0.0</version><scope>provided</scope></dependency>
     <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
   </dependencies>
   <build><resources><resource><directory>..</directory><includes><include>LICENSE</include></includes><targetPath>META-INF</targetPath></resource></resources></build>

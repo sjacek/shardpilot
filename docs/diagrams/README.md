@@ -14,6 +14,7 @@ preview together; do not edit an SVG by hand.
 | Release publication | [publication.puml](publication.puml) | [publication.svg](publication.svg) | Automatic Gradle tag publication and later manual Maven publication from the same tag, each with a complete release gate. |
 | Assignment | [shard-assignment.puml](shard-assignment.puml) | [shard-assignment.svg](shard-assignment.svg) | Measured-family packing, hash fallback and candidate exclusion. |
 | Explicit selection | [test-selection.puml](test-selection.puml) | [test-selection.svg](test-selection.svg) | Full eligibility, selected baseline, one/many-node filters and independent coverage/native gates. |
+| Core selection policy | [selection-policy.puml](selection-policy.puml) | [selection-policy.svg](selection-policy.svg) | Shared profiles, protected budgets, optional deferral and the existing manifest/assignment boundary; adapter wiring remains planned. |
 | History refresh | [history-refresh.puml](history-refresh.puml) | [history-refresh.svg](history-refresh.svg) | One report cohort, shared normalization, success/failure artifacts and reviewed adoption. |
 | History pruning | [history-pruning.puml](history-pruning.puml) | [history-pruning.svg](history-pruning.svg) | Explicit source precedence, adapter defaults, disabled pruning and missing-source failure. |
 | History recovery | [history-recovery.puml](history-recovery.puml) | [history-recovery.svg](history-recovery.svg) | Valid class selections with missing XML, candidate cleanup, same-cohort restoration and independent native gates. |
@@ -36,6 +37,8 @@ and refreshed component/CI diagrams use PlantUML 1.2026.9. The 0.4.0 history dia
 module/Maven flow previews use the same 1.2026.9 renderer.
 The explicit-selection and updated assignment previews use the locally available 1.2025.2 renderer,
 with `-tsvg -nometadata -failfast2`, followed by the same SVG normalizer and visual review.
+The core selection-policy preview uses locally available PlantUML 1.2026.9 with the same
+static SVG normalization and visual review.
 
 From the repository root, set `PLANTUML_JAR` to your local JAR path. With the current PlantUML CLI:
 
@@ -69,7 +72,7 @@ PlantUML 1.2026.8 emits SVG 1.1 previews with `lengthAdjust` on a group, interac
 attributes and an unused `xlink` declaration. Strict SVG 1.1 IDE validation reports these attributes
 even though browsers display the diagrams. `lengthAdjust` belongs on text elements, not groups.
 
-The repository's [normalizer](../../scripts/NormalizeSvg.java) runs on a JDK without external
+The repository's [normalizer](https://github.com/sjacek/shardpilot/blob/main/scripts/NormalizeSvg.java) runs on a JDK without external
 dependencies. It moves group text adjustment to the text elements, retaining explicit overrides;
 removes unqualified interactive metadata from these static previews; and removes the root `xlink`
 declaration only when it is unused. Geometry, labels, IDs and actual links are preserved. XML DTDs

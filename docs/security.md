@@ -1,6 +1,6 @@
 # Security and trust boundaries
 
-[Security policy](../SECURITY.md) | [Review follow-up](security-review-2026-11-12.md) |
+[Security policy](https://github.com/sjacek/shardpilot/blob/main/SECURITY.md) | [Review follow-up](security-review-2026-11-12.md) |
 [CI integration](ci.md) | [Release guide](releases.md)
 
 This guide describes implementation boundaries and deployment responsibilities. It is not a

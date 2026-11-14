@@ -39,7 +39,7 @@ valid API imports or suppressing unresolved references does not repair an IDE mo
 | A shard runs no tests. | It owns no candidates after the existing selection. | Compare all shard results to a count-1 baseline. Empty shards are valid; zero timings can pack all measured families onto shard 1. |
 | `--tests` fails with no matching tests. | The matching class belongs to a different shard, or the selector is wrong. | Use count 1/index 1 for focused local execution. Do not disable failure checks globally. |
 | `integrationTest` is missing. | No consumer task/source set has registered it. | Register the task in the consumer, then opt it in. ShardPilot only configures `Test` tasks that exist. |
-| Plugin ID cannot be resolved. | The version is unavailable, plugin repositories omit the Portal, network access is blocked, or an explicit included-build path is wrong. | Pin a published version and retain `gradlePluginPortal()`; follow [installation](../README.md#getting-started). Only plugin development needs a [local checkout override](../README.md#local-plugin-development). |
+| Plugin ID cannot be resolved. | The version is unavailable, plugin repositories omit the Portal, network access is blocked, or an explicit included-build path is wrong. | Pin a published version and retain `gradlePluginPortal()`; follow [installation](https://github.com/sjacek/shardpilot/blob/main/README.md#getting-started). Only plugin development needs a [local checkout override](https://github.com/sjacek/shardpilot/blob/main/README.md#local-plugin-development). |
 | Kotlin DSL cannot find a project-level `shardPilot` block. | The extension belongs to each task. | Use the [typed task extension](configuration.md#kotlin-dsl). |
 
 Do not use a single successful shard as evidence that the suite passed. The CI pipeline must
@@ -106,7 +106,7 @@ declare the integration compatible.
 
 | Symptom | Check / action |
 | --- | --- |
-| A generated sibling task cannot be found, or Gradle rejects registration in the current context. | Configure verification once outside deferred task actions, with an explicitly realized owner; use the [DSL examples](../README.md#optional-class-manifest-verification). |
+| A generated sibling task cannot be found, or Gradle rejects registration in the current context. | Configure verification once outside deferred task actions, with an explicitly realized owner; use the [DSL examples](https://github.com/sjacek/shardpilot/blob/main/README.md#optional-class-manifest-verification). |
 | `Missing class manifest`. | Download the baseline, all planned YAML files and every actual node artifact from the same pipeline. Empty files are not placeholders. Aggregation deliberately does not regenerate evidence. |
 | Invalid YAML, unsupported schema or wrong field types. | Require one mapping with integer `schemaVersion: 1` and a `classes` sequence of strings. Reject unknown fields, duplicate keys and nonstring names. Regenerate old `.txt` artifacts. |
 | Empty baseline or empty shard. | Eligibility must be nonempty. A legitimate empty partition needs `classes: []` and explicit `requireNonEmptyShards=false`; normal test failure policy still applies. |

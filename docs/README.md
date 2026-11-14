@@ -14,6 +14,8 @@ The default [published/audited baseline is 0.5.0](published-artifact-audit.md#pu
 [Current audit status](security-review-2026-11-12.md#current-status-13-november-2026)
 distinguishes registry evidence, source CI checks and remaining assurance work.
 
+![Coding agents choose relevant tests from a growing suite and distribute classes across three balanced parallel CI shards. The screen reads: Too many tests? Choose relevant tests. Run balanced shards.](assets/illustrations/shardpilot-agent-team.png)
+
 ## Guides
 
 | Guide | Read it when you need to… |
@@ -29,6 +31,7 @@ distinguishes registry evidence, source CI checks and remaining assurance work.
 | <img src="assets/branding/guide-icons/ci-integration.svg" width="32" height="32" alt=""> [CI integration](ci.md) | Run all shards with consistent inputs, isolated workspaces and separate reports. |
 | <img src="assets/branding/guide-icons/coverage.svg" width="32" height="32" alt=""> [Class manifests and coverage](shard-verification.md) | Configure artifact gates, read HTML assignment statuses, expose a GitLab MR link and distinguish selection from test completion. |
 | <img src="assets/branding/guide-icons/test-selection.svg" width="32" height="32" alt=""> [Explicit test selection](test-selection.md) | Validate a consumer-owned subset, expand eligible families and run one/many shards with separate reports. |
+| <img src="assets/branding/guide-icons/test-selection.svg" width="32" height="32" alt=""> [Core selection policy v1](selection-policy.md) | Configure profiles, path rules, mandatory tests and budgets through the development Java/YAML contract; read decision artifacts and integration boundaries. |
 | <img src="assets/branding/guide-icons/test-selection.svg" width="32" height="32" alt=""> [Configurable selection: target design](configurable-selection-design.md) | Review the planned complete selector driven by plugin parameters: profiles, Git changes, rules, mandatory tests, budgets and evidence. |
 | <img src="assets/branding/guide-icons/junit-containers.svg" width="32" height="32" alt=""> [PostgreSQL and RabbitMQ example](testcontainers-example.md) | Run a JUnit Jupiter integration suite with shared worker-local Testcontainers fixtures and isolated test data. |
 | <img src="assets/branding/guide-icons/spock-containers.svg" width="32" height="32" alt=""> [Spock with PostgreSQL and RabbitMQ](spock-testcontainers-example.md) | Run specifications and data-table iterations with worker-local containers and specification-local databases. |

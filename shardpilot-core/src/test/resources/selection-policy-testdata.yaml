@@ -1,0 +1,43 @@
+# Portable domain knowledge is data; no callback or application-specific engine code.
+schemaVersion: 1
+profiles:
+  full-testdata:
+    mode: full
+  smoke-testdata:
+    mode: smoke
+    mandatory:
+      classes: [example.LoginIT]
+  explicit-testdata:
+    mode: explicit
+    mandatory:
+      classes: [example.LoginIT]
+  daily-testdata:
+    mode: affected
+    mandatory:
+      classes: [example.LoginIT]
+    onUnknownChanges: full
+    onUnmatchedChanges: full
+    onEmptySelection: fail
+    budget:
+      maxFamilies: 3
+      maxSeconds: 90
+      unknownSeconds: 30
+      overflow: fail
+    rules:
+      - id: payments
+        changes: ['src/payments/**', 'contracts/payments/**']
+        action: require
+        tests:
+          patterns: ['example.payments.**.*IT']
+      - id: compatibility-probes
+        changes: ['src/payments/**']
+        action: optional
+        priority: 10
+        tests:
+          classes: [example.CompatibilityIT]
+      - id: build
+        changes: ['build.gradle', 'pom.xml']
+        action: full
+      - id: documentation
+        changes: ['docs/**', '*.md']
+        action: ignore

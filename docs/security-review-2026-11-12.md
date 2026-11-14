@@ -1,6 +1,6 @@
 # Preliminary review follow-up: 12 November 2026
 
-[Security policy](../SECURITY.md) | [Trust boundaries](security.md) | [Testing](testing.md)
+[Security policy](https://github.com/sjacek/shardpilot/blob/main/SECURITY.md) | [Trust boundaries](security.md) | [Testing](testing.md)
 
 This is a maintainer-side follow-up to the preliminary OSINT/IT/cybersecurity report supplied
 on 12 November 2026. It records reproducible repository evidence, documentation changes and

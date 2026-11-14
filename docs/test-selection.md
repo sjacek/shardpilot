@@ -7,13 +7,15 @@ It applies with one node as well as multiple nodes. ShardPilot does not inspect 
 choose smoke tests, infer impacted classes or decide whether a short suite is sufficient.
 Keep those decisions and the independent native test-result gate in the consumer/CI.
 This feature is available in **0.5.0**. Try the Docker-free
-[Gradle](../examples/gradle/junit-jupiter/test-selection/README.md) and
-[Maven](../examples/maven/test-selection/README.md) consumers against this checkout.
+[Gradle](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/test-selection/README.md) and
+[Maven](https://github.com/sjacek/shardpilot/blob/main/examples/maven/test-selection/README.md) consumers against this checkout.
 
 The target product direction extends this with a
 [complete configurable selection engine](configurable-selection-design.md): profiles,
 Git changes, impact rules, mandatory tests and budgets will be evaluated by ShardPilot.
-That design is planned; the 0.5.0 behavior documented below remains explicit-manifest selection.
+The [core policy engine](selection-policy.md) is implemented in the development checkout;
+Git acquisition and adapter profile parameters remain planned. The 0.5.0 behavior documented
+below remains explicit-manifest selection.
 
 ![Selection validation and native execution](diagrams/test-selection.svg)
 

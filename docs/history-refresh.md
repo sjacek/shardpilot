@@ -1,8 +1,8 @@
 # Refresh duration history
 
 [Documentation index](README.md) · [CI collection](ci.md#refresh-history-from-collected-reports) ·
-[Gradle example](../examples/gradle/junit-jupiter/duration-history/README.md) ·
-[Maven example](../examples/maven/README.md#refresh-both-suite-histories)
+[Gradle example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/duration-history/README.md) ·
+[Maven example](https://github.com/sjacek/shardpilot/blob/main/examples/maven/README.md#refresh-both-suite-histories)
 
 Since 0.4.0, ShardPilot can read **existing** JUnit XML and create a candidate UTF-8 TSV plus diagnostic JSON.
 It never runs tests, compiles classes, fetches remote artifacts or overwrites maintained history.
@@ -245,7 +245,7 @@ There are three independent outcomes to inspect before adopting a candidate:
 | Selection verification | Baseline, planned partitions and actual selections agree. | Whether all selected tests executed successfully or their XML arrived. |
 | History refresh | Accepted measurements meet the configured family policies and coverage threshold. | Native success, artifact provenance or reviewed adoption. |
 
-In the [two-node Gradle example](../examples/gradle/junit-jupiter/duration-history/README.md),
+In the [two-node Gradle example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/duration-history/README.md),
 `minimumCoverage=1.0`. Removing one node's XML after a successful run leaves its actual manifest
 intact: selection verification still passes, but refresh fails with `MINIMUM_COVERAGE`, writes
 FAILED JSON and removes the old successful candidate TSV. This is covered by the automated

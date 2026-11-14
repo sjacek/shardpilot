@@ -1,0 +1,43 @@
+@startuml
+title ShardPilot core: configurable selection contract v1
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam activityBackgroundColor #EFF6FF
+skinparam activityBorderColor #2563EB
+skinparam ArrowColor #475569
+
+start
+:Immutable policy + profile\nFull eligibility E + changes + history;
+:Validate parameters and every configured target;
+if (Valid inputs / targets?) then (yes)
+  :Resolve full / smoke / affected / explicit;
+  :Union rules and mandatory families\nExpand within E only;
+  if (Full mode, full rule or safe full fallback?) then (yes)
+    :Select all E\nReport budget overflow without truncation;
+  else (subset)
+    :Reserve protected families;
+    if (Protected budget exceeded with overflow=fail?) then (yes)
+      :FAILED evidence;
+      :No executable manifest / identity;
+      stop
+    else (no)
+    endif
+    :Pack optional families\nPriority, decimal cost, binary family name;
+    :Explain deferred families\nApply declared empty-selection policy;
+  endif
+else (no)
+  :FAILED evidence\nNo executable manifest / identity;
+  stop
+endif
+if (Accepted nonempty plan after all declared fallbacks?) then (yes)
+else (no)
+  :FAILED evidence\nNo executable manifest / identity;
+  stop
+endif
+:PASSED decision + E / S manifests\nPolicy hash + input identity + JSON / HTML;
+:Existing TestSelection / ShardPlan boundary\nAdapter parameter wiring is the next stage;
+:Native execution outcomes and C2 evidence\nRemain independent of planning success;
+stop
+@enduml

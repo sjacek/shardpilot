@@ -8,7 +8,20 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 ## Unreleased
 
-No user-facing changes recorded after the 0.5.0 release.
+### Added
+
+- The shared core can now select tests from named full, smoke, affected or explicit profiles,
+  configured through Java or versioned YAML. Path rules combine required and optional targets;
+  mandatory tests remain protected when applying family/time budgets. Deterministic reports
+  explain selected/deferred tests, estimates and full-run fallbacks. See the
+  [core policy guide](docs/selection-policy.md). This development API is not yet exposed through
+  Gradle/Maven profile parameters; existing explicit-manifest configuration is unchanged.
+
+### Fixed
+
+- Re-running the Maven smoke-selection example starts a fresh cohort, preventing old native
+  XML reports from being mistaken for extra test executions. Aggregation retains the original
+  evidence from both shards.
 
 ## [0.5.0](docs/releases/0.5.0.md) — 2026-11-13
 

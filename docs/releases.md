@@ -23,7 +23,7 @@ only enforces transport checksums.
 Review the [publication descriptions](publication-descriptions.md) for the complete Maven Central
 and Gradle Plugin Portal text and its source metadata before creating a release tag.
 
-The [publication workflow](../.github/workflows/publish.yml) submits the Gradle plugin automatically
+The [publication workflow](https://github.com/sjacek/shardpilot/blob/main/.github/workflows/publish.yml) submits the Gradle plugin automatically
 after a matching stable version tag, a successful compatibility matrix and the
 [full published-baseline audit](published-artifact-audit.md#full-audit-in-github-actions). A manual run from that
 same tag publishes Maven Central later, with both gates repeated. The maintainer controls
@@ -100,7 +100,7 @@ also need migration notes and updated Groovy/Kotlin examples.
 ## Review publication prerequisites
 
 1. Verify public repository ownership, the `io.github.sjacek.shardpilot` namespace, authorship and
-   copyright attribution. Review the [MIT license](../LICENSE) and [third-party notices](../THIRD_PARTY_NOTICES.md).
+   copyright attribution. Review the [MIT license](https://github.com/sjacek/shardpilot/blob/main/LICENSE) and [third-party notices](https://github.com/sjacek/shardpilot/blob/main/THIRD_PARTY_NOTICES.md).
 2. Review the configured Plugin Portal tooling and project/SCM metadata. Keep publication
    implementation separate from sharding behavior.
 3. Store publication credentials in the host's protected secret mechanism, not in repository files,
@@ -113,7 +113,7 @@ also need migration notes and updated Groovy/Kotlin examples.
    data, secrets and unintended infrastructure dependencies.
 
 The `maven-publish` plugin alone does not make a version available through the Plugin Portal.
-Keep [local composite builds](../README.md#local-plugin-development) as a development option,
+Keep [local composite builds](https://github.com/sjacek/shardpilot/blob/main/README.md#local-plugin-development) as a development option,
 not as a substitute for verifying published artifact resolution.
 
 ## Configure GitHub publication
@@ -213,7 +213,7 @@ tags, including `v0.3.1`, remain unchanged.
 
 Update `version` in `build.gradle`, then update version/status references in the root README,
 [documentation index](README.md) and this guide. Group entries under the version heading in
-[CHANGELOG.md](../CHANGELOG.md), leaving a fresh `Unreleased` section.
+[CHANGELOG.md](https://github.com/sjacek/shardpilot/blob/main/CHANGELOG.md), leaving a fresh `Unreleased` section.
 After successful publication and consumer resolution, add the Portal version link and actual
 creation date. Use the date recorded by the Portal; omit it until known.
 
