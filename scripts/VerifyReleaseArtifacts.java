@@ -153,7 +153,9 @@ public final class VerifyReleaseArtifacts {
             require(text(descriptor, "version").equals(version) && text(descriptor, "goalPrefix").equals("shardpilot"), "Incorrect Maven plugin descriptor");
             var goals = new TreeSet<String>();
             for (Element mojo : children(child(descriptor, "mojos"), "mojo")) goals.add(text(mojo, "goal"));
-            require(goals.equals(Set.of("prepare", "select", "verify", "refresh-durations")), "Missing Maven plugin goals");
+            // Keep an exact release contract: all public goals are required and unreviewed additions fail.
+            require(goals.equals(Set.of("prepare", "select", "verify", "refresh-durations", "verify-executions")),
+                    "Incorrect Maven plugin goals");
         }
     }
 
