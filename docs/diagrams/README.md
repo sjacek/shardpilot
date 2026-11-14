@@ -19,6 +19,7 @@ preview together; do not edit an SVG by hand.
 | History pruning | [history-pruning.puml](history-pruning.puml) | [history-pruning.svg](history-pruning.svg) | Explicit source precedence, adapter defaults, disabled pruning and missing-source failure. |
 | History recovery | [history-recovery.puml](history-recovery.puml) | [history-recovery.svg](history-recovery.svg) | Valid class selections with missing XML, candidate cleanup, same-cohort restoration and independent native gates. |
 | CI execution | [ci-execution.puml](ci-execution.puml) | [ci-execution.svg](ci-execution.svg) | Independent jobs, consistent inputs and CI-owned result collection. |
+| Execution diagnostics | [execution-diagnostics.puml](execution-diagnostics.puml) | [execution-diagnostics.svg](execution-diagnostics.svg) | Optional external supervision, partial samples and independent read-only container checks after interruption. |
 | Manifest tasks | [manifest-tasks.puml](manifest-tasks.puml) | [manifest-tasks.svg](manifest-tasks.svg) | Compilation dependencies, pre-worker evidence and aggregation ordering without reruns. |
 | Manifest CI flow | [manifest-ci.puml](manifest-ci.puml) | [manifest-ci.svg](manifest-ci.svg) | Common planning artifacts, every actual node selection and required CI outcomes. |
 | Manifest validation | [manifest-validation.puml](manifest-validation.puml) | [manifest-validation.svg](manifest-validation.svg) | Validation policy, plan-only mode and passed/failed JSON/HTML outcomes. |
@@ -39,6 +40,7 @@ The explicit-selection and updated assignment previews use the locally available
 with `-tsvg -nometadata -failfast2`, followed by the same SVG normalizer and visual review.
 The core selection-policy preview uses locally available PlantUML 1.2026.9 with the same
 static SVG normalization and visual review.
+The execution-diagnostics preview uses the same local 1.2026.9 renderer and normalization.
 
 From the repository root, set `PLANTUML_JAR` to your local JAR path. With the current PlantUML CLI:
 

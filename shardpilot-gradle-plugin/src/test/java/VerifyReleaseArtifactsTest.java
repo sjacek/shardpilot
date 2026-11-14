@@ -40,6 +40,7 @@ class VerifyReleaseArtifactsTest {
                           <mojo><goal>prepare</goal></mojo><mojo><goal>select</goal></mojo><mojo><goal>verify</goal></mojo>
                           <mojo><goal>refresh-durations</goal></mojo><mojo><goal>verify-executions</goal></mojo>
                           <mojo><goal>seal-compiled-artifacts</goal></mojo><mojo><goal>verify-compiled-artifacts</goal></mojo>
+                          <mojo><goal>prepare-diagnostics</goal></mojo><mojo><goal>verify-diagnostics</goal></mojo>
                         </mojos></plugin>
                         """));
                 attach(prefix + ".jar", zip(binary));
@@ -57,7 +58,7 @@ class VerifyReleaseArtifactsTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"prepare", "select", "verify", "refresh-durations", "verify-executions", "seal-compiled-artifacts", "verify-compiled-artifacts"})
+    @ValueSource(strings = {"prepare", "select", "verify", "refresh-durations", "verify-executions", "seal-compiled-artifacts", "verify-compiled-artifacts", "prepare-diagnostics", "verify-diagnostics"})
     void releaseWithoutARequiredGoalCannotPass(String goal) throws Exception {
         replacePluginDescriptor("<mojo><goal>" + goal + "</goal></mojo>", "");
         var failure = assertThrows(IllegalArgumentException.class,

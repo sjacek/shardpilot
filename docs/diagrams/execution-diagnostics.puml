@@ -1,0 +1,38 @@
+@startuml
+title Optional diagnostics: native supervision and independent final check
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam activityBackgroundColor #EFF6FF
+skinparam activityBorderColor #2563EB
+skinparam ArrowColor #475569
+
+start
+:Gradle prepareTaskDiagnostics / Maven prepare-diagnostics\nPrivate expected settings; no tests or Docker access;
+:External JDK DiagnosticsCli run\nFresh single-use session;
+if (Dedicated Docker checks enabled?) then (yes)
+  :Read daemon identity and ps --all\nInitial daemon must be empty;
+  if (Initial check passed?) then (yes)
+  else (no)
+    :Do not start native build\nRetain failed initial evidence;
+    stop
+  endif
+endif
+:Supervise native Gradle / Maven command\nFlush bounded process / job / DinD / host samples;
+if (Runner survives?) then (yes)
+  :Record native exit / timeout / interruption\nBest-effort stop of owned processes on timeout;
+else (killed)
+  :Partial samples may survive\nMissing final process result is incomplete;
+endif
+:Independent finish / adapter verification\nAlso callable from CI after_script;
+:Recheck identity, process result and samples\nRead-only final ps --all on the same dedicated daemon;
+:Write matching HTML then JSON\nMissing evidence, failure or leftovers cannot pass;
+note right
+  No container creation or deletion.
+  Unknown memory is not zero.
+  Exit 137 alone is not proof of OOM.
+  Preserve native and C2 gates.
+end note
+stop
+@enduml

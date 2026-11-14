@@ -643,6 +643,28 @@ failures rather than accepting a successful build containing only skipped depend
 
 ## Extending coverage
 
+C4 has an [execution diagnostics guide](execution-diagnostics.md). Run its focused tests with:
+
+```shell
+./gradlew :shardpilot-core:test --tests '*Diagnostics*Test' :shardpilot-gradle-plugin:test --tests '*DiagnosticsFunctionalTest' --tests VerifyReleaseArtifactsTest :shardpilot-gradle-plugin:validatePlugins
+python3 -B scripts/maven_verification.py run -- -B -ntp verify '-Dtest=*Diagnostics*Test' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dinvoker.test=diagnostics'
+```
+
+Real JVM fixtures exercise native exit, timeout, interruption and forcibly killed supervisors.
+Counter fixtures cover cgroup v1/v2, missing/invalid counters, resets and separate memory scopes.
+A controlled Docker CLI double checks only `info`/`ps --all`, initial/final leftovers, daemon
+identity and unavailable/malformed output; it does not establish real remote DinD acceptance.
+Additional regressions exercise a hung/interrupted Docker client, full versus truncated/duplicate
+inventories, literal CLI argument forwarding, private error redaction, damaged/missing result files,
+every identity component and revocation of stale JSON when an HTML destination becomes unsafe.
+Unreadable optional OOM counters must preserve otherwise valid usage/limit measurements.
+The native CLI runs without a build-tool classpath. Gradle tests exercise both DSLs and strict
+configuration cache without scheduling producers. Maven's Invoker fixture verifies a successful
+process, rejects another attempt, rejects native exit 7, rejects invalid prepare limits without
+replacing valid settings and rechecks the original cohort. Both
+diagnostic goals are required by the release-descriptor validator. Linux additionally exercises
+the `/proc` collector and symlink path checks; Windows reports process RSS as unavailable.
+
 C3 has a dedicated [compiled-artifact integrity guide](compiled-artifacts.md). Run its focused
 core and Gradle regression suites with:
 

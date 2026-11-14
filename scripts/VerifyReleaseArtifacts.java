@@ -155,7 +155,7 @@ public final class VerifyReleaseArtifacts {
             for (Element mojo : children(child(descriptor, "mojos"), "mojo")) goals.add(text(mojo, "goal"));
             // Keep an exact release contract: all public goals are required and unreviewed additions fail.
             require(goals.equals(Set.of("prepare", "select", "verify", "refresh-durations", "verify-executions",
-                    "seal-compiled-artifacts", "verify-compiled-artifacts")),
+                    "seal-compiled-artifacts", "verify-compiled-artifacts", "prepare-diagnostics", "verify-diagnostics")),
                     "Incorrect Maven plugin goals");
         }
     }

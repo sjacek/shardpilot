@@ -1,7 +1,7 @@
 # C3: compiled artifact integrity
 
 **Development feature. Not included in the published 0.5.0 release.** Build/install the current
-development source using the [local development setup](../README.md#local-plugin-development).
+development source using the [local development setup](https://github.com/sjacek/shardpilot/blob/main/README.md#local-plugin-development).
 
 C3 seals the exact files produced by a compilation job and rejects missing, changed or unexpected
 files before a native test worker starts. It is independent of sharding and selection. The same

@@ -21,6 +21,7 @@ public abstract class ShardPilotExtension {
     private boolean selectionConfigured;
     private boolean executionEvidenceConfigured;
     private boolean compiledArtifactsConfigured;
+    private boolean diagnosticsConfigured;
     private final ShardSelectionOptions selection;
     private final RegularFileProperty selectedManifest;
     private final RegularFileProperty verificationBaseline;
@@ -340,6 +341,34 @@ public abstract class ShardPilotExtension {
         // Never depend on the sealer here: a worker must not regenerate its own expected evidence.
         task.dependsOn(verifier);
         task.doFirst(new CompiledArtifactGuard(options));
+    }
+
+    /**
+     * Prepares external C4 supervision and an independent final check; never wraps this Test in
+     * a nested Gradle invocation or assumes a finalizer can survive SIGKILL.
+     * @param action expected CI identity, bounded sampling and optional dedicated Docker endpoint
+     */
+    @SuppressWarnings("unused") // Public Groovy/Kotlin DSL.
+    public void diagnostics(@org.jspecify.annotations.NonNull Action<? super DiagnosticsOptions> action) {
+        if (diagnosticsConfigured) throw new IllegalStateException("ShardPilot diagnostics are already configured for " + task.getName());
+        diagnosticsConfigured = true;
+        var options = objects.newInstance(DiagnosticsOptions.class);
+        var project = task.getProject(); var layout = project.getLayout();
+        options.getDirectory().convention(layout.getBuildDirectory().dir("shardpilot/" + task.getName() + "/diagnostics"));
+        options.getConfigurationFile().convention(layout.getBuildDirectory().file("shardpilot/" + task.getName() + "/diagnostics-config.json"));
+        options.getSuite().convention(task.getName());
+        options.getRevision().convention(project.getProviders().gradleProperty("shardpilot.diagnosticsRevision"));
+        options.getRunId().convention(project.getProviders().gradleProperty("shardpilot.diagnosticsRunId"));
+        options.getAttempt().convention(project.getProviders().gradleProperty("shardpilot.diagnosticsAttempt").map(Integer::valueOf));
+        options.getNode().convention(project.getProviders().gradleProperty("shardpilot.diagnosticsNode"));
+        action.execute(options);
+        String name = task.getName(); String suffix = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        project.getTasks().register("prepare" + suffix + "Diagnostics", PrepareDiagnostics.class, configuration -> {
+            configuration.setGroup("verification"); configuration.setDescription("Prepares opt-in external diagnostics without starting tests."); configuration.setOptions(options);
+        });
+        project.getTasks().register("verify" + suffix + "Diagnostics", VerifyDiagnostics.class, verifier -> {
+            verifier.setGroup("verification"); verifier.setDescription("Checks retained process diagnostics and final container state."); verifier.setOptions(options);
+        });
     }
 
     /**

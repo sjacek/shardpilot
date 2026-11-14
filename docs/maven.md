@@ -3,6 +3,9 @@
 Development checkout: [configurable profiles and Git acquisition](selection-policy.md#gradle-and-maven-parameters-development-checkout)
 are now available through both adapters. Published 0.5.0 supports the explicit-manifest feature below.
 
+Development also adds optional [execution diagnostics](execution-diagnostics.md):
+`prepare-diagnostics` exports external-runner settings and `verify-diagnostics` rechecks retained
+process evidence and an explicitly configured dedicated Docker daemon. Neither goal runs tests.
 
 Optional [explicit test selection](test-selection.md#maven-surefire-and-failsafe) adds
 `selectionManifestFile` and `selectionSuite` to the existing goals. It preserves the native test

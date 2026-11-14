@@ -162,3 +162,8 @@ The development checkout also implements [C3 compiled-artifact integrity](compil
 in the shared core and both adapters. It binds a complete file inventory to independently supplied
 revision/suite and checks transferred bytes before workers. Consumer migration and full selection
 provenance binding remain separate work; C3 does not imply either has been completed.
+
+[Optional C4 execution diagnostics](execution-diagnostics.md) are also implemented in development:
+an external JDK supervisor, bounded scoped memory sampling, native timeout/interruption evidence
+and independent read-only checks on an explicitly dedicated Docker daemon. These are separate
+from selection provenance and do not imply consumer migration or automatic container cleanup.

@@ -341,6 +341,14 @@ seal an exact SHA-256 inventory after compilation, then verify the independent r
 all transferred bytes before test workers start. Both Gradle and Maven use the same offline core.
 This capability is not included in the published 0.5.0 release.
 
+## Execution diagnostics (development)
+
+Opt in to [execution diagnostics](docs/execution-diagnostics.md) for native timeouts, interrupted
+builds and scoped memory measurements. An external JDK runner and separate Gradle/Maven checks
+retain JSON/HTML reports even when the observed build dies. Optional checks detect containers
+left on an explicitly dedicated Docker daemon without removing them. This capability is not
+included in 0.5.0 and does not replace native build results or execution-evidence checks.
+
 ## Refresh duration history (since 0.4.0)
 
 Register the refresh task once, outside a deferred owner configuration action:

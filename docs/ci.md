@@ -1,5 +1,10 @@
 # CI integration
 
+The development-only [execution diagnostics](execution-diagnostics.md) supervise a native build
+from an external JDK runner. Prepare settings first, retain scoped memory/timeout evidence and
+run the independent final check even after interruption. Docker inspection requires an explicit
+dedicated daemon and never removes containers; diagnostics do not replace native or C2 gates.
+
 The development-only [C3 compiled-artifact gate](compiled-artifacts.md) can seal compiled outputs
 in the producer job and verify SHA-256, revision/suite and the complete restored inventory before
 native workers. Keep frozen inputs separate from mutable worker reports. This is opt-in and does

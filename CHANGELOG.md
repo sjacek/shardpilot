@@ -10,6 +10,8 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 ### Added
 
+- Diagnose test timeouts, interrupted runs and memory use. Detect leftover containers without
+  removing them. [Setup guide](docs/execution-diagnostics.md).
 - Check compiled files shared between test jobs before running tests. Missing, changed or wrong-version
   inputs stop execution. [Setup guide](docs/compiled-artifacts.md).
 - Check test results for missing reports, failed processes and unexpected skips. Get a readable report
@@ -22,6 +24,7 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 ### Fixed
 
+- Memory reports keep valid measurements when an optional OOM counter is unreadable.
 - Failed report generation no longer leaves an old JSON success report behind.
 - Repeating the Maven quick-test example no longer counts results from earlier runs.
 
