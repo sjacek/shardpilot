@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sjacek.github.io/shardpilot/schemas/execution-evidence-v1.schema.json",
+  "title": "Proposed ShardPilot C2 execution evidence v1 (not a released API)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "cohort", "producer", "shard", "selection", "process", "reports", "observed"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "cohort": {"$ref": "#/$defs/cohort"},
+    "producer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["jobId", "toolVersion", "adapterVersion"],
+      "properties": {
+        "jobId": {"$ref": "#/$defs/identifier"},
+        "toolVersion": {"$ref": "#/$defs/identifier"},
+        "adapterVersion": {"$ref": "#/$defs/identifier"}
+      }
+    },
+    "shard": {"$ref": "#/$defs/shard"},
+    "selection": {"$ref": "#/$defs/selection"},
+    "process": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "exitCode", "startedAt", "finishedAt"],
+      "properties": {
+        "state": {"enum": ["completed", "timed-out", "cancelled", "killed", "not-started", "unknown"]},
+        "exitCode": {"type": ["integer", "null"], "minimum": -2147483648, "maximum": 2147483647},
+        "startedAt": {"type": ["string", "null"], "format": "date-time"},
+        "finishedAt": {"type": ["string", "null"], "format": "date-time"}
+      },
+      "allOf": [{
+        "if": {"properties": {"state": {"const": "completed"}}},
+        "then": {"properties": {
+          "exitCode": {"type": "integer"},
+          "startedAt": {"type": "string"}, "finishedAt": {"type": "string"}
+        }}
+      }, {
+        "if": {"properties": {"state": {"const": "not-started"}}},
+        "then": {"properties": {
+          "exitCode": {"type": "null"}, "startedAt": {"type": "null"}, "finishedAt": {"type": "null"}
+        }}
+      }]
+    },
+    "reports": {"type": "array", "maxItems": 20000, "uniqueItems": true, "items": {"$ref": "#/$defs/report"}},
+    "observed": {
+      "description": "Untrusted producer observations; aggregator recomputes these from the retained reports. Null means unavailable, never zero.",
+      "type": ["object", "null"], "additionalProperties": false,
+      "required": ["tests", "failures", "errors", "skipped"],
+      "properties": {
+        "tests": {"type": "integer", "minimum": 0},
+        "failures": {"type": "integer", "minimum": 0},
+        "errors": {"type": "integer", "minimum": 0},
+        "skipped": {"type": "integer", "minimum": 0}
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+-]*$"},
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "cohort": {
+      "type": "object", "additionalProperties": false,
+      "required": ["revision", "runId", "attempt", "project", "suite", "tool", "runner"],
+      "properties": {
+        "revision": {"type": "string", "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"},
+        "runId": {"$ref": "#/$defs/identifier"},
+        "attempt": {"type": "integer", "minimum": 1},
+        "project": {"$ref": "#/$defs/identifier"},
+        "suite": {"$ref": "#/$defs/identifier"},
+        "tool": {"enum": ["gradle", "maven"]},
+        "runner": {"enum": ["gradle-test", "surefire", "failsafe"]}
+      },
+      "allOf": [{
+        "if": {"properties": {"tool": {"const": "gradle"}}},
+        "then": {"properties": {"runner": {"const": "gradle-test"}}},
+        "else": {"properties": {"runner": {"enum": ["surefire", "failsafe"]}}}
+      }]
+    },
+    "shard": {
+      "type": "object", "additionalProperties": false, "required": ["index", "count"],
+      "properties": {
+        "index": {"type": "integer", "minimum": 1, "maximum": 1024},
+        "count": {"type": "integer", "minimum": 1, "maximum": 1024}
+      }
+    },
+    "selection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "sha256", "eligibilitySha256", "planSha256"],
+      "properties": {
+        "mode": {"enum": ["full", "explicit"]},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "eligibilitySha256": {"$ref": "#/$defs/sha256"},
+        "planSha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "report": {
+      "type": "object", "additionalProperties": false, "required": ["path", "sha256", "bytes"],
+      "properties": {
+        "path": {
+          "type": "string", "maxLength": 512,
+          "pattern": "^(?!(?:[^/]+/)*\\.{1,2}(?:/|$))(?:[A-Za-z0-9_.@$+-]+/)*TEST-[A-Za-z0-9_.@$+-]+\\.xml$"
+        },
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 67108864}
+      }
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "cohort": {
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "runId": "example-run",
+    "attempt": 1,
+    "project": "example-project",
+    "suite": "integration",
+    "tool": "gradle",
+    "runner": "gradle-test"
+  },
+  "expectedRequestSha256": "6572bbde4e2690fed20a1699d434a5deaa1be981bda883bbdf1a3c7095ee951b",
+  "status": "PASSED",
+  "gates": {
+    "provenance": "PASSED",
+    "nativeProcess": "PASSED",
+    "plannedCoverage": "PASSED",
+    "reportedCoverage": "PASSED",
+    "skipPolicy": "PASSED"
+  },
+  "totals": {
+    "tests": 2,
+    "executed": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "nodes": [
+    {
+      "index": 1,
+      "evidenceSha256": "54e5619465f86c5a2b1f1191776182082948c42da3f8c7ac8f4162809f17a854",
+      "status": "PASSED",
+      "plannedFamilies": 1,
+      "reportedFamilies": 1,
+      "counts": {
+        "tests": 1,
+        "executed": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "reasons": []
+    },
+    {
+      "index": 2,
+      "evidenceSha256": "a88f4ce95b31a43c585b68d2929b513c0184214455f6539970e3245167e40d62",
+      "status": "PASSED",
+      "plannedFamilies": 1,
+      "reportedFamilies": 1,
+      "counts": {
+        "tests": 1,
+        "executed": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "reasons": []
+    }
+  ],
+  "reasons": []
+}

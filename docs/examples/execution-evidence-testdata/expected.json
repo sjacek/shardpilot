@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "cohort": {
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "runId": "example-run",
+    "attempt": 1,
+    "project": "example-project",
+    "suite": "integration",
+    "tool": "gradle",
+    "runner": "gradle-test"
+  },
+  "selection": {
+    "mode": "full",
+    "sha256": "378c7e92e5bf41d57ac14b4dabaebddc06183700181613194fd8d610986468ef",
+    "eligibilitySha256": "12f26e622b762e051c5b0be256162f710bfe8fbf723a0f5002467b94c8a2090c"
+  },
+  "shardCount": 2,
+  "expectedNodes": [
+    {
+      "index": 1,
+      "jobId": "example-job-1",
+      "planSha256": "9101d844765f323ebe2b0e4f25a55948467dd68f4fc8c4f757d1d119658b9504"
+    },
+    {
+      "index": 2,
+      "jobId": "example-job-2",
+      "planSha256": "3a7eb8742cf46bbc806e19a8371ec794171fe1fc343ebcbda42ce4fc362565d5"
+    }
+  ],
+  "skipPolicy": "reject",
+  "allowEmptyShards": false,
+  "minimumExecutedTests": 2,
+  "maximumSkippedTests": 0
+}

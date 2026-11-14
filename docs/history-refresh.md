@@ -100,6 +100,9 @@ execution. Keep runner/suite overrides consistent for preparation and refresh.
 
 Every parameter below has the CLI prefix `shardpilot.` (for example `-Dshardpilot.precision=3`):
 
+The count CLI property is `shardpilot.count`; its POM configuration element is
+`<shardCount>`, not `<count>`. Maven's plugin descriptor defines these names separately.
+
 | Parameter | Default / contract |
 | --- | --- |
 | `reports` | File array: `target/surefire-reports` or `target/failsafe-reports` according to `runner`. Custom native report paths require an override. |

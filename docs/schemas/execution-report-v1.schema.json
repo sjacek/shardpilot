@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sjacek.github.io/shardpilot/schemas/execution-report-v1.schema.json",
+  "title": "Proposed ShardPilot C2 aggregate report v1 (not a released API)",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "cohort", "expectedRequestSha256", "status", "gates", "totals", "nodes", "reasons"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "cohort": {"$ref": "execution-evidence-v1.schema.json#/$defs/cohort"},
+    "expectedRequestSha256": {"$ref": "execution-evidence-v1.schema.json#/$defs/sha256"},
+    "status": {"enum": ["PASSED", "FAILED"]},
+    "gates": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provenance", "nativeProcess", "plannedCoverage", "reportedCoverage", "skipPolicy"],
+      "properties": {
+        "provenance": {"$ref": "#/$defs/gate"},
+        "nativeProcess": {"$ref": "#/$defs/gate"},
+        "plannedCoverage": {"$ref": "#/$defs/gate"},
+        "reportedCoverage": {"$ref": "#/$defs/gate"},
+        "skipPolicy": {"$ref": "#/$defs/gate"}
+      }
+    },
+    "totals": {"$ref": "#/$defs/counts"},
+    "nodes": {
+      "type": "array", "maxItems": 1024,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["index", "evidenceSha256", "status", "plannedFamilies", "reportedFamilies", "counts", "reasons"],
+        "properties": {
+          "index": {"type": "integer", "minimum": 1, "maximum": 1024},
+          "evidenceSha256": {"anyOf": [{"type": "null"}, {"$ref": "execution-evidence-v1.schema.json#/$defs/sha256"}]},
+          "status": {"enum": ["PASSED", "FAILED"]},
+          "plannedFamilies": {"type": ["integer", "null"], "minimum": 0},
+          "reportedFamilies": {"type": ["integer", "null"], "minimum": 0},
+          "counts": {"$ref": "#/$defs/counts"},
+          "reasons": {"$ref": "#/$defs/reasons"}
+        }
+      }
+    },
+    "reasons": {"$ref": "#/$defs/reasons"}
+  },
+  "$defs": {
+    "gate": {"enum": ["PASSED", "FAILED", "UNKNOWN"]},
+    "counts": {
+      "type": ["object", "null"], "additionalProperties": false,
+      "required": ["tests", "executed", "failures", "errors", "skipped"],
+      "properties": {
+        "tests": {"type": "integer", "minimum": 0},
+        "executed": {"type": "integer", "minimum": 0},
+        "failures": {"type": "integer", "minimum": 0},
+        "errors": {"type": "integer", "minimum": 0},
+        "skipped": {"type": "integer", "minimum": 0}
+      }
+    },
+    "reasons": {
+      "type": "array", "uniqueItems": true,
+      "items": {"enum": [
+        "INVALID_EVIDENCE", "COHORT_MISMATCH", "ATTEMPT_MISMATCH", "MISSING_SHARD", "DUPLICATE_SHARD",
+        "UNEXPECTED_SHARD", "SELECTION_MISMATCH", "ARTIFACT_HASH_MISMATCH", "UNSAFE_ARTIFACT_PATH",
+        "INVALID_XML", "RESOURCE_LIMIT", "NATIVE_PROCESS_FAILED", "INCOMPLETE_PROCESS",
+        "COUNTER_MISMATCH", "AMBIGUOUS_EXECUTION_IDENTITY", "PLANNED_COVERAGE_FAILED",
+        "REPORTED_COVERAGE_FAILED", "MINIMUM_EXECUTION_FAILED", "SKIP_POLICY_FAILED", "UNEXPECTED_EMPTY_SHARD"
+      ]}
+    }
+  }
+}
