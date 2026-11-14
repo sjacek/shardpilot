@@ -19,7 +19,7 @@ class TestSelectionDescriptorTest {
             var xml = factory.newDocumentBuilder().parse(input);
             var xpath = XPathFactory.newInstance().newXPath();
             String mojo = "/plugin/mojos/mojo[goal='" + goal + "']/";
-            for (String parameter : new String[]{"selectionManifestFile", "selectionSuite"}) {
+            for (String parameter : new String[]{"selectionManifestFile", "selectionSuite", "selectionPolicyFile", "selectionProfile", "selectionSnapshotDirectory"}) {
                 assertEquals("${shardpilot." + parameter + "}", xpath.evaluate(mojo + "configuration/" + parameter, xml));
                 assertEquals("false", xpath.evaluate(mojo + "parameters/parameter[name='" + parameter + "']/required", xml));
                 assertEquals("", xpath.evaluate(mojo + "configuration/" + parameter + "/@default-value", xml),
@@ -29,6 +29,18 @@ class TestSelectionDescriptorTest {
             assertEquals("java.lang.String", xpath.evaluate(mojo + "parameters/parameter[name='selectionSuite']/type", xml));
             assertEquals("true", xpath.evaluate(mojo + "threadSafe", xml));
             assertEquals("", xpath.evaluate(mojo + "executePhase", xml), "selection must not fork producers during aggregation");
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"gitBase", "gitHead", "gitMergeBase", "gitFetch", "gitRemote", "gitFetchDepth", "gitTimeoutSeconds", "gitDirectory"})
+    void gitParametersAreInjectedThroughTheSamePortableNames(String parameter) throws Exception {
+        var factory = DocumentBuilderFactory.newInstance();
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        try (var input = Objects.requireNonNull(getClass().getResourceAsStream("/META-INF/maven/plugin.xml"))) {
+            var xml = factory.newDocumentBuilder().parse(input);
+            var xpath = XPathFactory.newInstance().newXPath();
+            assertEquals("${shardpilot." + parameter + "}", xpath.evaluate("/plugin/mojos/mojo[goal='select']/configuration/" + parameter, xml));
         }
     }
 }

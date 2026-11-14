@@ -1,5 +1,11 @@
 # Gradle examples
 
+Development checkout adds [configurable profiles and Git acquisition](https://github.com/sjacek/shardpilot/blob/main/docs/selection-policy.md).
+Runnable consumers: [Gradle Groovy](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/selection-profiles/README.md),
+[Gradle Kotlin](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/selection-profiles-kotlin/README.md),
+[Maven](https://github.com/sjacek/shardpilot/blob/main/examples/maven/selection-profiles/README.md). These features are not in published 0.5.0.
+
+
 Runnable examples are grouped by test framework, then by scenario: `examples/gradle/<framework>/<scenario>/`.
 Each scenario is an independent Gradle consumer build, not a subproject of the plugin build.
 

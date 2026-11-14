@@ -1,5 +1,5 @@
 @startuml
-title ShardPilot core: configurable selection contract v1
+title ShardPilot: configurable selection and frozen execution
 skinparam backgroundColor #FFFFFF
 skinparam shadowing false
 skinparam defaultFontName SansSerif
@@ -9,6 +9,17 @@ skinparam activityBorderColor #2563EB
 skinparam ArrowColor #475569
 
 start
+if (Read-only downloaded profile snapshot?) then (worker)
+  :Validate policy / E / history / count
+Recompute decision from frozen changes;
+  :Verify local HEAD and known clean checkout
+No diff or fetch;
+else (planner / single node)
+  :Read Git at execution time for affected only
+Explicit/CI base + exact HEAD + rename paths;
+  :Bounded opt-in fetch or UNKNOWN
+Dirty/missing history uses declared FULL/FAIL;
+endif
 :Immutable policy + profile\nFull eligibility E + changes + history;
 :Validate parameters and every configured target;
 if (Valid inputs / targets?) then (yes)
@@ -37,7 +48,12 @@ else (no)
   stop
 endif
 :PASSED decision + E / S manifests\nPolicy hash + input identity + JSON / HTML;
-:Existing TestSelection / ShardPlan boundary\nAdapter parameter wiring is the next stage;
+:Freeze decision + Git provenance
+Existing TestSelection / ShardPlan identities;
+:Gradle / Maven native workers
+All nodes consume the same frozen cohort;
+:Artifact-only aggregation
+No Git, producers or native rerun;
 :Native execution outcomes and C2 evidence\nRemain independent of planning success;
 stop
 @enduml

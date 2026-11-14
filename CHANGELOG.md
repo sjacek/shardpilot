@@ -14,8 +14,14 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
   configured through Java or versioned YAML. Path rules combine required and optional targets;
   mandatory tests remain protected when applying family/time budgets. Deterministic reports
   explain selected/deferred tests, estimates and full-run fallbacks. See the
-  [core policy guide](docs/selection-policy.md). This development API is not yet exposed through
-  Gradle/Maven profile parameters; existing explicit-manifest configuration is unchanged.
+  [selection policy guide](docs/selection-policy.md).
+- Gradle and Maven can now activate those profiles through equivalent plugin parameters. Affected
+  profiles obtain committed changes from Git, including complete MR history and both rename paths.
+  Missing ancestry or a dirty checkout follows the declared full-run/fail policy; fetching is opt-in.
+- Freeze profile selection once and reuse its validated artifact across CI shards. Workers reject
+  changed policy, history, eligibility, partition count or checkout instead of selecting independently.
+  Runnable Groovy, Kotlin and Maven examples demonstrate the configuration. Existing explicit
+  manifests and artifact-only aggregation retain their behavior.
 
 ### Fixed
 

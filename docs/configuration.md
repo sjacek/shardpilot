@@ -1,5 +1,9 @@
 # Configuration
 
+Development checkout: [configurable profiles and Git acquisition](selection-policy.md#gradle-and-maven-parameters-development-checkout)
+are now available through both adapters. Published 0.5.0 supports the explicit-manifest feature below.
+
+
 For a consumer-supplied subset, see [explicit test selection](test-selection.md). The optional
 `selection { manifestFile = ...; suite = ...; eligibleClasses.from(...) }` block applies before
 assignment, including at count one, and leaves full-suite configuration unchanged when absent.

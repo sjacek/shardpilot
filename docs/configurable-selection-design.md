@@ -1,7 +1,8 @@
 # Configurable test selection: target design
 
 **Product direction confirmed on 14 November 2026. Core engine implemented in the development
-checkout; complete adapter/Git integration is planned and not available in 0.5.0.**
+checkout, together with Git acquisition and Gradle/Maven profile parameters; none of these
+additions is available in published 0.5.0.**
 
 ShardPilot will own the complete selection mechanism: discover eligible tests, obtain the
 change set, evaluate configured rules, apply mandatory tests and budgets, produce an immutable
@@ -10,7 +11,7 @@ plugin and keeps no selection algorithm in a Python, shell or custom build-scrip
 
 The [0.5.0 selection feature](test-selection.md) already validates and executes a supplied
 class manifest. Generating that selection from configuration is the extension implemented first
-in the [shared core policy contract](selection-policy.md). Build-tool parameter wiring remains planned.
+in the [shared core policy contract](selection-policy.md). The development adapters expose equivalent profile parameters.
 The existing manifest remains a supported explicit-input mode and a useful interchange
 format. Automatic modes generate their manifest internally.
 
@@ -47,7 +48,9 @@ is released. This design does not introduce runnable configuration examples for 
 `shardpilot-core` owns deterministic policy evaluation, class-family normalization,
 mandatory-set validation, rule precedence, budget decisions and reason codes. It receives
 normalized changes, full eligibility, configuration and timing history as inputs. It does
-not depend on GitLab, GitHub, Gradle, Maven or application classes.
+not import Gradle/Maven APIs or application classes. The pure engine has no Git or provider I/O;
+shared `GitChanges` support separately invokes installed Git and interprets bounded CI hints,
+without adding a provider SDK.
 
 Adapters acquire those inputs, resolve native suite configuration and apply the resulting
 selection to native test tasks. Reusable CI/Git input support belongs in ShardPilot's
@@ -148,6 +151,7 @@ and preserve failure/skip gates. A generic example project must work using confi
 alone; no application-specific selector callback is required for a documented mode.
 
 The shared policy contract, profiles, path rules, protected-family budgets and decision reports
-are implemented and tested in core. Next come change acquisition and equivalent adapter parameters,
-coordinated with C2's validator contract. Structured module/contract inference, automatic directly
-changed-test discovery and native adapter wiring remain outside this first implementation stage.
+are implemented and tested in core. Shared committed Git/CI acquisition, equivalent Gradle/Maven
+parameters and frozen worker cohorts are now implemented in the development adapters. Structured
+module/contract inference, working-tree impact, automatic directly changed-test discovery, service
+migration comparisons and C2's execution validator remain separate follow-up work.

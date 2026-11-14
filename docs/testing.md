@@ -5,6 +5,23 @@
 Run checks from the ShardPilot repository, not a consuming application's build. The Wrapper pins
 the Gradle version; use a JDK supported by that Gradle runtime.
 
+## Development profile-selection regression
+
+- `GitChangesTest` uses isolated synthetic Git objects to check multi-commit diffs, rename paths,
+  whitespace/Unicode parsing, missing/shallow history, opt-in local fetching, CI inference and
+  dirty-worktree fallback. No developer-repository history is changed.
+- `ProfileSelectionTest` validates frozen cohorts, altered policy/history/count/eligibility,
+  corrupt/missing artifacts, read-only input protection and native identity binding.
+- `ProfileSelectionFunctionalTest` runs the actual Groovy and Kotlin examples through TestKit,
+  including CLI overrides, strict configuration cache, live refs, two frozen workers and native
+  failures. Native XML is checked independently of selection manifests.
+- `MavenAdapterTest` exercises the same policy/Git support, offline fetch suppression and
+  frozen-worker gates. Descriptor tests check actual generated property injection. The runnable
+  Maven profile example executes a full profile and two smoke nodes, then verifies original XML.
+
+These checks complement the existing full-versus-2/4-shards execution-equivalence fixtures.
+Local validation does not establish the hosted Gradle/JDK and Maven/JDK compatibility matrices.
+
 ## 0.5.0 release verification
 
 **[0.5.0](releases/0.5.0.md)** is published in both registries. Gradle and the Maven

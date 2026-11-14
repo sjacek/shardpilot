@@ -1,5 +1,9 @@
 # Explicit test selection
 
+Development checkout: [configurable profiles and Git acquisition](selection-policy.md#gradle-and-maven-parameters-development-checkout)
+are now available through both adapters. Published 0.5.0 supports the explicit-manifest feature below.
+
+
 [Documentation index](README.md)
 
 An optional consumer-owned YAML manifest selects a class subset **before** shard assignment.
@@ -14,7 +18,7 @@ The target product direction extends this with a
 [complete configurable selection engine](configurable-selection-design.md): profiles,
 Git changes, impact rules, mandatory tests and budgets will be evaluated by ShardPilot.
 The [core policy engine](selection-policy.md) is implemented in the development checkout;
-Git acquisition and adapter profile parameters remain planned. The 0.5.0 behavior documented
+The development adapters also expose Git acquisition and profile parameters. The 0.5.0 behavior documented
 below remains explicit-manifest selection.
 
 ![Selection validation and native execution](diagrams/test-selection.svg)

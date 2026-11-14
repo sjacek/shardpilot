@@ -38,28 +38,73 @@ public abstract class ShardPilotExtension {
         this.verificationShardCount = objects.property(Integer.class);
         this.selection = objects.newInstance(ShardSelectionOptions.class);
         this.selection.getClassDirectories().from(task.getTestClassesDirs());
+        this.selection.getSuite().convention(selection.getProfile().map(ProfileSelection::defaultSuite));
+        this.selection.getGitDirectory().convention(task.getProject().getLayout().getProjectDirectory());
+        this.selection.getGitBase().convention("");
+        this.selection.getGitHead().convention("HEAD");
+        this.selection.getGitMergeBase().convention(true);
+        this.selection.getGitFetch().convention(false);
+        this.selection.getGitRemote().convention("origin");
+        this.selection.getGitFetchDepth().convention(256);
+        this.selection.getGitTimeoutSeconds().convention(30);
         this.selectedManifest = objects.fileProperty();
         this.selectionEnabled = objects.property(Boolean.class).convention(false);
     }
 
     /**
-     * Enables a consumer-supplied subset, including for a single shard. Configure once outside
+     * Enables an explicit manifest or configured profile, including for a single shard. Configure once outside
      * deferred task configuration, like verification(). Eligibility must not use the already
      * filtered candidate tree. Explicit selection requires enabled=true on the owning task.
-     * @param action manifest, separate suite identity and full eligible bytecode
+     * @param action manifest or policy/profile, suite options and independent full eligible bytecode
      */
     public void selection(Action<? super ShardSelectionOptions> action) {
         if (selectionConfigured) throw new IllegalStateException("ShardPilot selection is already configured for " + task.getName());
         selectionConfigured = true;
         selectionEnabled.set(true);
         action.execute(selection);
+        commandLineSelection();
         var project = task.getProject();
         String taskName = task.getName();
         String suffix = Character.toUpperCase(taskName.charAt(0)) + taskName.substring(1);
+        boolean profile = selection.getPolicyFile().isPresent() || selection.getProfile().isPresent();
+        boolean frozen = selection.getSnapshotDirectory().isPresent();
+        if (selection.getPolicyFile().isPresent() != selection.getProfile().isPresent()) {
+            throw new IllegalArgumentException("selectionPolicyFile and selectionProfile must be supplied together");
+        }
+        if (frozen && !profile) throw new IllegalArgumentException("selectionSnapshotDirectory requires profile selection");
+        org.gradle.api.tasks.TaskProvider<AcquireGitChanges> acquisition = null;
+        if (profile && !frozen) {
+            acquisition = project.getTasks().register("acquire" + suffix + "GitChanges", AcquireGitChanges.class, producer -> {
+                producer.setGroup("verification");
+                producer.setDescription("Captures committed Git changes for the selected profile at execution time.");
+                producer.getPolicyFile().set(selection.getPolicyFile());
+                producer.getProfile().set(selection.getProfile());
+                producer.getCheckout().set(selection.getGitDirectory());
+                producer.getBase().set(selection.getGitBase());
+                producer.getHead().set(selection.getGitHead());
+                producer.getMergeBase().set(selection.getGitMergeBase());
+                producer.getFetch().set(selection.getGitFetch());
+                producer.getOffline().set(project.getGradle().getStartParameter().isOffline());
+                producer.getRemote().set(selection.getGitRemote());
+                producer.getFetchDepth().set(selection.getGitFetchDepth());
+                producer.getTimeoutSeconds().set(selection.getGitTimeoutSeconds());
+                producer.getSnapshot().set(project.getLayout().getBuildDirectory().file(selection.getSuite()
+                        .map(suite -> {
+                            TestSelection.validateSuite(suite);
+                            return "shardpilot/" + taskName + "/selections/" + suite + "/git/changes.json";
+                        })));
+            });
+        }
+        var gitAcquisition = acquisition;
         var prepare = project.getTasks().register("prepare" + suffix + "Selection", PrepareTestSelection.class, producer -> {
             producer.setGroup("verification");
-            producer.setDescription("Validates the explicit selection and records both eligibility baselines.");
+            producer.setDescription("Validates configured selection and records both eligibility baselines.");
             producer.getManifestFile().set(selection.getManifestFile());
+            producer.getPolicyFile().set(selection.getPolicyFile());
+            producer.getProfile().set(selection.getProfile());
+            producer.getSnapshotDirectory().set(selection.getSnapshotDirectory());
+            producer.getCheckout().set(selection.getGitDirectory());
+            if (gitAcquisition != null) producer.getChangesFile().set(gitAcquisition.flatMap(AcquireGitChanges::getSnapshot));
             producer.getSuite().set(selection.getSuite());
             producer.getClasses().from(selection.getEligibleClasses());
             producer.getClassDirectories().from(selection.getClassDirectories());
@@ -81,6 +126,8 @@ public abstract class ShardPilotExtension {
             guard.getSelectionManifest().set(selectedManifest);
             guard.getShardCount().set(getShardCount());
             guard.getShardIndex().set(getShardIndex());
+            guard.getProfileSelection().set(profile);
+            guard.getFrozenSelection().set(frozen);
             guard.getHistory().set(project.getProviders().fileContents(getDurationsFile()).getAsText().orElse(""));
         });
         task.dependsOn(validate);
@@ -88,6 +135,49 @@ public abstract class ShardPilotExtension {
                 .dir(outputNamespace().map(path -> path + "/test-results")));
         task.getReports().getHtml().getOutputLocation().set(project.getLayout().getBuildDirectory()
                 .dir(outputNamespace().map(path -> path + "/test-report")));
+    }
+
+    private static File resolve(File base, String path) {
+        File file = new File(path);
+        return (file.isAbsolute() ? file : new File(base, path)).toPath().toAbsolutePath().normalize().toFile();
+    }
+
+    private static boolean booleanValue(String value) {
+        if (!value.equals("true") && !value.equals("false")) throw new IllegalArgumentException("ShardPilot boolean parameters require true or false");
+        return Boolean.parseBoolean(value);
+    }
+
+    private void commandLineSelection() {
+        // Global CLI parameters override each explicitly opted-in task's DSL defaults/settings.
+        var providers = task.getProject().getProviders();
+        var layout = task.getProject().getLayout();
+        File base = layout.getProjectDirectory().getAsFile();
+        var policy = providers.gradleProperty("shardpilot.selectionPolicyFile");
+        if (policy.isPresent()) selection.getPolicyFile().set(layout.file(policy.map(path -> resolve(base, path))));
+        var manifest = providers.gradleProperty("shardpilot.selectionManifestFile");
+        if (manifest.isPresent()) selection.getManifestFile().set(layout.file(manifest.map(path -> resolve(base, path))));
+        var profile = providers.gradleProperty("shardpilot.selectionProfile");
+        if (profile.isPresent()) selection.getProfile().set(profile);
+        var suite = providers.gradleProperty("shardpilot.selectionSuite");
+        if (suite.isPresent()) selection.getSuite().set(suite);
+        var snapshot = providers.gradleProperty("shardpilot.selectionSnapshotDirectory");
+        if (snapshot.isPresent()) selection.getSnapshotDirectory().set(layout.dir(snapshot.map(path -> resolve(base, path))));
+        var checkout = providers.gradleProperty("shardpilot.gitDirectory");
+        if (checkout.isPresent()) selection.getGitDirectory().set(layout.dir(checkout.map(path -> resolve(base, path))));
+        var gitBase = providers.gradleProperty("shardpilot.gitBase");
+        if (gitBase.isPresent()) selection.getGitBase().set(gitBase);
+        var head = providers.gradleProperty("shardpilot.gitHead");
+        if (head.isPresent()) selection.getGitHead().set(head);
+        var merge = providers.gradleProperty("shardpilot.gitMergeBase");
+        if (merge.isPresent()) selection.getGitMergeBase().set(merge.map(ShardPilotExtension::booleanValue));
+        var fetch = providers.gradleProperty("shardpilot.gitFetch");
+        if (fetch.isPresent()) selection.getGitFetch().set(fetch.map(ShardPilotExtension::booleanValue));
+        var remote = providers.gradleProperty("shardpilot.gitRemote");
+        if (remote.isPresent()) selection.getGitRemote().set(remote);
+        var depth = providers.gradleProperty("shardpilot.gitFetchDepth");
+        if (depth.isPresent()) selection.getGitFetchDepth().set(depth.map(Integer::parseInt));
+        var timeout = providers.gradleProperty("shardpilot.gitTimeoutSeconds");
+        if (timeout.isPresent()) selection.getGitTimeoutSeconds().set(timeout.map(Integer::parseInt));
     }
 
     // Internal adapter wiring. Providers keep configuration order independent and cache-safe.

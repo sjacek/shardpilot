@@ -1,5 +1,9 @@
 # Maven adapter
 
+Development checkout: [configurable profiles and Git acquisition](selection-policy.md#gradle-and-maven-parameters-development-checkout)
+are now available through both adapters. Published 0.5.0 supports the explicit-manifest feature below.
+
+
 Optional [explicit test selection](test-selection.md#maven-surefire-and-failsafe) adds
 `selectionManifestFile` and `selectionSuite` to the existing goals. It preserves the native test
 runner and requires selection-specific exclusions and report paths, including for a single node.

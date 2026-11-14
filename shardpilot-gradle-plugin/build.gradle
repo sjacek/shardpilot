@@ -159,6 +159,9 @@ test {
     inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/test-selection') {
         include 'build.gradle', 'settings.gradle', 'selection.yaml', 'durations.tsv', 'src/**'
     }).withPropertyName('selectionConsumerExample')
+    inputs.file(rootProject.file('shardpilot-core/src/test/resources/git-fixture/GitFixture.java')).withPropertyName('syntheticGitFixture')
+    inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-profiles')).withPropertyName('profileSelectionConsumer')
+    inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-profiles-kotlin')).withPropertyName('profileSelectionKotlinConsumer')
     inputs.files(rootProject.fileTree('testing/execution-equivalence')).withPropertyName('nativeExecutionFixtures')
     // Check the actual publication model, including the marker, rather than only a composite classpath.
     def metadataTasks = tasks.matching { it.name in ['generatePomFileForPluginMavenPublication',

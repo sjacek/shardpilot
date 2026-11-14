@@ -1,0 +1,15 @@
+schemaVersion: 1
+profiles:
+  smoke-testdata:
+    mode: smoke
+    mandatory: {classes: [example.selection.AlphaTest, example.selection.BetaTest]}
+  affected-testdata:
+    mode: affected
+    mandatory: {classes: [example.selection.AlphaTest]}
+    rules:
+      - id: source
+        changes: [src/**, deleted.txt]
+        action: require
+        tests: {classes: [example.selection.BetaTest]}
+  full-testdata:
+    mode: full

@@ -461,6 +461,180 @@ class MavenAdapterTest {
         assertFalse(Files.exists(select.selectionDirectory()));
     }
 
+    @Test
+    void policyProfileUsesTheSharedEngineAndASeparateDefaultSuite() throws Exception {
+        enableProfile("smoke");
+        select.execute();
+        assertEquals(Set.of("example.OneTest"), ClassManifest.read(select.selectionDirectory().resolve("actual-1.yaml"), false));
+        assertTrue(select.namespace().endsWith("selections/profile-smoke-testdata"));
+        assertTrue(Files.readString(select.namespace().resolve("selection/decision/git.json")).contains("NOT_REQUIRED"));
+    }
+
+    @Test
+    void unknownGitImpactUsesSafeFullFallbackAndInvalidProfilesFail() throws Exception {
+        enableProfile("affected");
+        select.gitDirectory = directory.resolve("missing-checkout").toFile();
+        select.execute();
+        assertEquals(Set.of("example.OneTest", "example.TwoTest"), ClassManifest.read(select.selectionDirectory().resolve("actual-1.yaml"), false));
+        assertTrue(Files.readString(select.namespace().resolve("selection/decision/git.json")).contains("NOT_REPOSITORY"));
+        select.selectionProfile = "absent-testdata";
+        assertThrows(MojoFailureException.class, select::execute);
+    }
+
+    @Test
+    void multiNodeProfileRequiresFrozenInputAndRejectsChangedCountBeforeNativeExclusions() throws Exception {
+        enableProfile("smoke");
+        select.shardCount = 2;
+        assertTrue(assertThrows(MojoFailureException.class, select::execute).getMessage().contains("requires selectionSnapshotDirectory"));
+        PrepareMojo prepare = selectionContext(new PrepareMojo());
+        prepare.shardCount = 2;
+        prepare.execute();
+        Path snapshot = directory.resolve("target/frozen-selection");
+        try (var paths = Files.walk(select.namespace().resolve("selection"))) {
+            for (Path path : paths.filter(Files::isRegularFile).toList()) {
+                Path target = snapshot.resolve(select.namespace().resolve("selection").relativize(path));
+                Files.createDirectories(target.getParent()); Files.copy(path, target);
+            }
+        }
+        select.selectionSnapshotDirectory = snapshot.toFile();
+        select.execute();
+        assertTrue(Files.exists(select.selectionDirectory().resolve("selection-1.id")));
+        select.shardCount = 4;
+        assertThrows(MojoFailureException.class, select::execute);
+        assertFalse(Files.exists(select.namespace().resolve("selection/selected.yaml")));
+    }
+
+    @Test
+    void incompleteProfileParametersNeverEnableAnImplicitFullRun() throws Exception {
+        select.selectionProfile = "smoke-testdata";
+        assertThrows(MojoFailureException.class, select::execute);
+        assertFalse(Files.exists(directory.resolve("target/shardpilot/unit/excludes.txt")));
+    }
+
+    @Test
+    void affectedProfileObtainsRealGitChangesThroughMavenParameters() throws Exception {
+        enableProfile("affected");
+        Files.writeString(select.selectionPolicyFile.toPath(), """
+                schemaVersion: 1
+                profiles:
+                  smoke-testdata:
+                    mode: affected
+                    mandatory: {classes: [example.OneTest]}
+                    rules:
+                      - id: changed-source
+                        changes: [src/**, deleted.txt]
+                        action: require
+                        tests: {classes: [example.OneTest]}
+                """);
+        Path helper = Path.of("shardpilot-core/src/test/resources/git-fixture/GitFixture.java").toAbsolutePath();
+        if (!Files.exists(helper)) helper = Path.of("../shardpilot-core/src/test/resources/git-fixture/GitFixture.java").toAbsolutePath();
+        Files.writeString(directory.resolve(".shardpilot-fixture-testdata"), "synthetic Git fixture\n");
+        var process = new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
+                helper.toString(), directory.toString()).redirectError(ProcessBuilder.Redirect.INHERIT).start();
+        String output = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        assertEquals(0, process.waitFor(), output);
+        select.gitDirectory = directory.toFile();
+        select.gitBase = "main-testdata";
+        select.execute();
+        var git = io.github.sjacek.shardpilot.GitChanges.read(select.namespace().resolve("selection/decision/git.json"));
+        assertEquals(io.github.sjacek.shardpilot.GitChanges.Failure.NONE, git.failure());
+        assertTrue(git.changes().paths().contains("src/old name.txt"));
+        assertEquals(Set.of("example.OneTest"), ClassManifest.read(select.selectionDirectory().resolve("actual-1.yaml"), false));
+        select.gitBase = "f".repeat(40);
+        select.gitFetch = true;
+        select.session.getRequest().setOffline(true);
+        select.execute();
+        // No configured remote exists: a fetch attempt would produce COMMAND_FAILED instead.
+        assertEquals(io.github.sjacek.shardpilot.GitChanges.Failure.MISSING_REVISION,
+                io.github.sjacek.shardpilot.GitChanges.read(select.namespace().resolve("selection/decision/git.json")).failure());
+        assertEquals(2, ClassManifest.read(select.selectionDirectory().resolve("actual-1.yaml"), false).size());
+    }
+
+    @Test
+    void malformedProfileInvalidatesExecutableSnapshotButRetainsEarlierNativeEvidence() throws Exception {
+        enableProfile("smoke");
+        select.execute();
+        String actual = Files.readString(select.selectionDirectory().resolve("actual-1.yaml"));
+        String exclusions = Files.readString(select.exclusions());
+        Files.writeString(select.selectionPolicyFile.toPath(), "schemaVersion: 999\nprofiles: {}\n");
+        assertThrows(MojoFailureException.class, select::execute);
+        assertFalse(Files.exists(select.namespace().resolve("selection/selected.yaml")));
+        assertFalse(Files.exists(select.namespace().resolve("selection/selection.id")));
+        assertEquals(actual, Files.readString(select.selectionDirectory().resolve("actual-1.yaml")));
+        assertEquals(exclusions, Files.readString(select.exclusions()));
+    }
+
+    @Test
+    void missingMandatoryTargetCannotHideBehindAnUnknownGitFullFallback() throws Exception {
+        enableProfile("affected");
+        select.gitDirectory = directory.resolve("missing-checkout").toFile();
+        select.execute();
+        String actual = Files.readString(select.selectionDirectory().resolve("actual-1.yaml"));
+        Files.writeString(select.selectionPolicyFile.toPath(), """
+                schemaVersion: 1
+                profiles:
+                  smoke-testdata:
+                    mode: affected
+                    mandatory: {classes: [example.MissingTest]}
+                """);
+        assertThrows(MojoFailureException.class, select::execute);
+        assertFalse(Files.exists(select.namespace().resolve("selection/selected.yaml")));
+        assertEquals(actual, Files.readString(select.selectionDirectory().resolve("actual-1.yaml")));
+        assertTrue(Files.readString(select.namespace().resolve("selection/decision/decision.json")).contains("FAILED"));
+    }
+
+    @Test
+    void selectedProfileAggregationRequiresArtifactsButNotPolicyGitOrCompiledClasses() throws Exception {
+        enableProfile("smoke");
+        Files.writeString(select.selectionPolicyFile.toPath(), """
+                schemaVersion: 1
+                profiles:
+                  smoke-testdata:
+                    mode: smoke
+                    mandatory: {classes: [example.OneTest, example.TwoTest]}
+                """);
+        select.durationsFile = directory.resolve("durations.tsv").toFile();
+        // Measured families keep both nodes nonempty, without weakening the default coverage gate.
+        Files.writeString(select.durationsFile.toPath(), "example.OneTest\t2\nexample.TwoTest\t1\n");
+        select.shardCount = 2;
+        PrepareMojo prepare = selectionContext(new PrepareMojo());
+        prepare.shardCount = 2;
+        prepare.durationsFile = select.durationsFile;
+        prepare.execute();
+        Path source = select.namespace().resolve("selection");
+        Path snapshot = directory.resolve("target/downloaded-selection");
+        try (var paths = Files.walk(source)) {
+            for (Path path : paths.filter(Files::isRegularFile).toList()) {
+                Path target = snapshot.resolve(source.relativize(path));
+                Files.createDirectories(target.getParent());
+                Files.copy(path, target);
+            }
+        }
+        select.selectionSnapshotDirectory = snapshot.toFile();
+        for (int index = 1; index <= 2; index++) {
+            select.shardIndex = index;
+            select.execute();
+        }
+        String plan = Files.readString(select.planDirectory().resolve("selection.id"));
+        VerifyMojo verify = selectionContext(new VerifyMojo());
+        verify.shardCount = 2;
+        verify.selectionPolicyFile = directory.resolve("unavailable-policy.yaml").toFile();
+        verify.gitDirectory = directory.resolve("missing-checkout").toFile();
+        verify.project.getBuild().setTestOutputDirectory(directory.resolve("missing-classes").toString());
+        verify.execute();
+        assertEquals(plan, Files.readString(verify.planDirectory().resolve("selection.id")));
+        assertTrue(Files.readString(verify.namespace().resolve("coverage.html")).contains("Verification: PASSED"));
+    }
+
+    private void enableProfile(String mode) throws IOException {
+        select.selectionPolicyFile = directory.resolve("policy.yaml").toFile();
+        select.selectionProfile = "smoke-testdata";
+        Files.writeString(select.selectionPolicyFile.toPath(), "schemaVersion: 1\nprofiles: {smoke-testdata: {mode: " + mode
+                + ", mandatory: {classes: [example.OneTest]}}}\n");
+        configuration.getChild("excludesFile").setValue(select.exclusions().toString());
+        add(configuration, "reportsDirectory", select.namespace().resolve("test-results/shard-1").toString());
+    }
+
     private void enableSelection(String name) throws IOException {
         select.selectionManifestFile = directory.resolve("selection.yaml").toFile();
         select.selectionSuite = "smoke";
@@ -491,6 +665,10 @@ class MavenAdapterTest {
         mojo.directory = select.directory;
         mojo.selectionManifestFile = select.selectionManifestFile;
         mojo.selectionSuite = select.selectionSuite;
+        mojo.selectionPolicyFile = select.selectionPolicyFile;
+        mojo.selectionProfile = select.selectionProfile;
+        mojo.selectionSnapshotDirectory = select.selectionSnapshotDirectory;
+        mojo.gitDirectory = select.gitDirectory;
         return mojo;
     }
 

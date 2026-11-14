@@ -10,6 +10,9 @@ configure per-task worker heap limits, parallel forks and process recycling.
 Works with existing JUnit Jupiter, Spock and TestNG tasks, with no coordinator, CI vendor lock-in,
 test-runner replacement or telemetry. YAML manifests use SnakeYAML Engine in the plugin classloader.
 
+Development checkout adds [configurable profiles and Git acquisition](https://github.com/sjacek/shardpilot/blob/main/docs/selection-policy.md)
+through both adapters; those additions are not in published 0.5.0.
+
 Optional [explicit selection](docs/test-selection.md) runs a consumer-owned YAML class subset with
 one or multiple shards, validates it against full eligibility and keeps separate selection reports.
 The consumer decides when a short suite is sufficient; native test results remain an independent gate.

@@ -26,6 +26,25 @@ public final class SelectionPolicyYaml {
     private SelectionPolicyYaml() { }
 
     /**
+     * Reads a bounded UTF-8 policy without trusting a separate file-size check.
+     * @param file maintained policy file
+     * @return parsed immutable policy
+     * @throws java.io.IOException if the file is inaccessible or contains malformed UTF-8
+     */
+    public static SelectionPolicy read(java.nio.file.Path file) throws java.io.IOException {
+        return parse(readText(file, 1_048_576));
+    }
+
+    static String readText(java.nio.file.Path file, int limit) throws java.io.IOException {
+        byte[] bytes;
+        try (var stream = java.nio.file.Files.newInputStream(file)) { bytes = stream.readNBytes(limit + 1); }
+        if (bytes.length > limit) throw new IllegalArgumentException("Selection input exceeds size limit");
+        return java.nio.charset.StandardCharsets.UTF_8.newDecoder()
+                .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+                .decode(java.nio.ByteBuffer.wrap(bytes)).toString();
+    }
+
+    /**
      * Parses one bounded YAML document. Unknown fields, duplicate keys/list values, collection aliases and unsafe tags
      * are rejected. Diagnostics deliberately exclude parser exception payloads and input fragments.
      * @param text UTF-8 policy snapshot
@@ -33,10 +52,20 @@ public final class SelectionPolicyYaml {
      */
     public static SelectionPolicy parse(String text) {
         if (text.length() > 1_048_576) throw new IllegalArgumentException("Selection policy exceeds size limit");
-        Object loaded;
+        var root = fields(load(text, 1_048_576), Set.of("schemaVersion", "profiles"));
+        if (!root.containsKey("schemaVersion") || !root.containsKey("profiles")) throw invalid();
+        var profiles = fields(root.get("profiles"), null);
+        var parsed = new TreeMap<String, SelectionPolicy.Profile>();
+        profiles.forEach((name, value) -> parsed.put(name, profile(value)));
+        return new SelectionPolicy(integer(root.get("schemaVersion")), parsed);
+    }
+
+    /** Shared bounded composition for policy and frozen input metadata; errors never retain payloads. */
+    static @Nullable Object load(String text, int limit) {
+        if (text.length() > limit) throw invalid();
         try {
             var settings = LoadSettings.builder().setAllowDuplicateKeys(false).setMaxAliasesForCollections(0)
-                    .setCodePointLimit(1_048_576).build();
+                    .setCodePointLimit(limit).build();
             // Bound events before recursive object composition; policy v1 needs fewer than 16 levels.
             int depth = 0;
             int events = 0;
@@ -45,17 +74,11 @@ public final class SelectionPolicyYaml {
                 if (event instanceof CollectionStartEvent && ++depth > 16) throw invalid();
                 if (event instanceof CollectionEndEvent) depth--;
             }
-            loaded = new Load(settings).loadFromString(text);
+            return new Load(settings).loadFromString(text);
         } catch (YamlEngineException invalid) {
             // Parser diagnostics may embed configuration fragments; keep both message and cause out of evidence.
             throw new IllegalArgumentException("Invalid selection policy YAML");
         }
-        var root = fields(loaded, Set.of("schemaVersion", "profiles"));
-        if (!root.containsKey("schemaVersion") || !root.containsKey("profiles")) throw invalid();
-        var profiles = fields(root.get("profiles"), null);
-        var parsed = new TreeMap<String, SelectionPolicy.Profile>();
-        profiles.forEach((name, value) -> parsed.put(name, profile(value)));
-        return new SelectionPolicy(integer(root.get("schemaVersion")), parsed);
     }
 
     private static SelectionPolicy.Profile profile(@Nullable Object value) {
