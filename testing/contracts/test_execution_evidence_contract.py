@@ -25,7 +25,7 @@ def sha(path):
 class ExecutionEvidenceContractExamplesTest(unittest.TestCase):
     def test_every_schema_reference_resolves_offline(self):
         documents = {path.name: read(path) for path in SCHEMAS.glob('*-v1.schema.json')}
-        self.assertEqual(3, len(documents))
+        self.assertEqual(4, len(documents))
 
         def visit(value, current):
             if isinstance(value, dict):

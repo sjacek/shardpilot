@@ -28,6 +28,7 @@ dependencies {
 test {
     useJUnitPlatform()
     maxHeapSize = '256m'
+    inputs.files(rootProject.fileTree('docs/examples/execution-evidence-testdata')).withPropertyName('executionEvidenceFixtures')
 }
 
 // The Gradle distribution embeds these classes. Its final inventory joins this resolved graph

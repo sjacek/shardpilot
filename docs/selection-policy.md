@@ -189,8 +189,9 @@ binds profile, E, change availability/paths/base/head, explicit requests and com
 sorted, length-framed values. It is independent of shard count, which belongs to downstream plans.
 This is a new planning identity, separate from the 0.5.0 raw-manifest hash and `selection.id`.
 It proves repeatable planning, not execution. The
-[C2 execution-evidence contract](execution-evidence-contract.md) still needs its own implementation
-and reviewed binding to automatic-selection provenance.
+[C2 execution-evidence validator](execution-evidence-contract.md) is implemented separately in the
+development checkout. Its trusted selection digest identifies the selected family set; a complete
+automatic-selection policy/Git provenance envelope still needs a reviewed binding.
 
 
 ## Gradle and Maven parameters (development checkout)
@@ -356,4 +357,5 @@ Retain the entire directory, not just the selected class list.
 Aggregation (`verifyTestShards` / `shardpilot:verify`) remains artifact-only: no Git, compilation,
 planning or test rerun. Matching class/selection identities prove a consistent cohort, not that
 all native invocations executed successfully. Native failures/skips retain their existing gates;
-the separate [C2 execution-evidence validator](execution-evidence-contract.md) remains future work.
+the separate [C2 execution-evidence validator](execution-evidence-contract.md) is now available in
+the development checkout through explicit Gradle/Maven opt-in.

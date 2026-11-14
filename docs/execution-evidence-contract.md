@@ -1,7 +1,7 @@
 # C2: execution evidence contract
 
-**Design contract, 14 November 2026. Not implemented or available in ShardPilot 0.5.0.**
-This specifies the next opt-in Gradle/Maven feature. It does not change the existing
+**Implemented in the development checkout, 14 November 2026. Not available in published ShardPilot 0.5.0.**
+The shared core validator powers the opt-in Gradle task and Maven goal described below. It does not change the existing
 `verify`/manifest or history-refresh contracts. The [C1 comparison](history-migration.md)
 shows why matching duration histories cannot establish that a test cohort completed.
 
@@ -15,7 +15,7 @@ JSON keys are rejected; incompatible changes require a new version. JSON Schema 
 | --- | --- | --- |
 | Expected cohort | Trusted aggregating CI job, using CI metadata and reviewed selection/plans | [expected-cohort-v1](schemas/expected-cohort-v1.schema.json) |
 | Per-node evidence | Producer wrapper that observes the actual native test process | [execution-evidence-v1](schemas/execution-evidence-v1.schema.json) |
-| Aggregate result | Future offline validator | [execution-report-v1](schemas/execution-report-v1.schema.json) |
+| Aggregate result | Shared offline core validator | [execution-report-v1](schemas/execution-report-v1.schema.json) |
 
 The expected request is supplied **separately** from downloaded producer artifacts.
 Never construct it by copying a producer's revision, job IDs, selection hash or shard
@@ -39,7 +39,9 @@ unit/integration reports or projects merely because they use the same framework.
 Indices are one-based and must be within the common shard count.
 
 The expected request lists **every** node exactly once, its CI job ID and trusted
-plan SHA-256. The validator must reject duplicate indices/job IDs, holes and extra
+plan SHA-256. Each expected node also supplies `jobStartedAt` and `jobFinishedAt` from
+trusted CI metadata, in UTC. These bound producer process times; they must not be copied
+from the producer's process document. The validator rejects duplicate indices/job IDs, holes and extra
 nodes; array `uniqueItems` alone cannot enforce this. Plan manifests retain their
 current schema and class-family ownership rules. Their union must exactly cover
 the independently supplied eligible selection, without cross-node ownership.
@@ -81,17 +83,18 @@ absolute paths, aliases, duplicate paths and undeclared XML. Validate archive pa
 **before extraction**. Read exact retained bytes; no reruns, discovery, downloads,
 compilation or reconstruction of absent reports. Hash checks precede parsing.
 
-Suggested v1 hard limits are 1 MiB per JSON document, 1,024 nodes, 20,000 XML files,
+Enforced v1 hard limits are 1 MiB per JSON/manifest document, 1,024 nodes, 20,000 XML files per node,
 64 MiB per XML, 256 MiB total XML per node, depth 64 and 2,000,000 testcase elements
 per node. Consumer configuration may lower limits; exceeding a limit fails without
-parsing the remainder. A future adapter must expose the effective limits in its
-configuration and validation evidence. This is not an unbounded XML file walker.
+parsing the remainder. Both adapters expose all eight limits, recorded in the aggregate
+`limits` object. Directory scans also bound the number of entries (four times `maxReports`
+plus 32 per node). Where filesystem file keys are unavailable, alias comparisons have
+a separate bounded work budget; exhausting it fails with `RESOURCE_LIMIT`.
 
 ## XML interpretation and coverage
 
-Reuse or extend the existing safe JUnit reader with dedicated regression tests;
-do not silently change history timing semantics or copy an independent unsafe parser.
-Reject DTDs, external entities, malformed/truncated XML, non-finite/negative counters,
+The execution view reuses the existing JUnit reader's hardened XML factory; history
+timing semantics remain unchanged. It rejects DTDs, external entities, malformed/truncated XML, non-finite/negative counters,
 counter inconsistencies and unknown report dialects. Disable external schema/network
 access. Read only suite/testcase metadata needed for coverage and counters. Do not
 include `system-out`, `system-err`, failure messages, method names, parameter values,
@@ -105,10 +108,10 @@ does not count as executed. Unknown or ambiguous identities fail explicitly inst
 of being treated as a duplicate successful execution.
 
 Spock iterations and TestNG data-provider invocations may legitimately share display
-names. Do not deduplicate by `(classname, name)` alone or manufacture identities from
-XML row positions. The C1 archival example exhibits this ambiguity. Before C2 ships,
-the dialect fixtures must establish when XML alone suffices and when a separately
-specified native invocation ledger is required. No ledger format is introduced here.
+names. The validator never deduplicates by `(classname, name)` or manufactures identities
+from XML row positions. Repeated XML identities require a retained native invocation ledger,
+described below. Distinct display names are accepted without a ledger. Retry markers,
+duplicate suites and overlapping inclusive summaries remain unsupported and fail explicitly.
 C2 does not claim method-level equivalence to an independent full run merely from
 matching counters or class coverage; that remains the separate native-equivalence gate.
 
@@ -145,10 +148,10 @@ and reasons lexicographically, with no current timestamp in the logical result.
 
 Schema validation cannot check cross-document identities, hashes, uniqueness by
 index, counts, XML, manifest coverage or all-gates-pass logic. Those are mandatory
-semantic checks in the future validator. Syntax-valid evidence can describe a failed
+semantic checks in the core validator. Syntax-valid evidence can describe a failed
 process and must never itself imply successful execution.
 
-## Adapter acceptance criteria for the next implementation
+## Adapter acceptance criteria
 
 Both adapters must delegate to one portable core validator with no service-specific
 classes. Register validation/report tasks or standalone Maven goals only after explicit
@@ -165,8 +168,110 @@ fixtures must cover Gradle Jupiter/Spock/TestNG and Maven Surefire/Failsafe, inc
 allowed empty nodes and legitimate repeated invocations. Verify that every failure
 keeps native CI gates blocking and that output contains no private payloads.
 
-The current change delivers schemas, examples and this contract only. Implementing
-that validator, JSON/HTML rendering and adapter wiring is a separate C2 step.
+The shared validator, JSON/HTML rendering and both adapter entry points are implemented
+in the development checkout. Native execution-equivalence tests remain a separate gate.
+
+## Native invocation ledger
+
+An optional evidence field `invocations` is a `{path, sha256, bytes}` descriptor for
+a bounded JSON file following [invocation-ledger-v1](schemas/invocation-ledger-v1.schema.json).
+The file contains `schemaVersion: 1`, a native `runner` (`junit-platform` or `testng`)
+and `invocations`, each with `id`, `className` and `outcome` (`passed`, `failed`, `error`,
+`skipped`). IDs are SHA-256 digests of native engine identities captured by a producer
+listener. Hash them before retention: do not retain raw method names or argument values.
+
+The validator requires unique native IDs across the whole cohort and compares per-binary-class
+outcome multiplicities with the original XML. A ledger does not erase skips or failures and
+does not authorize overlapping reports or retries. Changing its bytes fails the digest gate.
+XML alone can establish unambiguous class coverage/counters; it does not establish independent
+method-level equivalence. A producer remains inside the CI trust boundary in either mode.
+
+## Gradle configuration
+
+Configure this once outside a deferred `TaskProvider.configure` action:
+
+```groovy
+tasks.named('integrationTest', Test).get().shardPilot.executionEvidence {
+    expectedRequest = layout.projectDirectory.file('trusted/expected.json')
+    eligibilityFile = layout.projectDirectory.file('trusted/baseline.yaml')
+    selectionFile = layout.projectDirectory.file('trusted/selection.json')
+    nodesDirectory = layout.projectDirectory.dir('downloaded')
+    // Optional: lower any distribution ceiling.
+    maxReports = 5000
+}
+```
+
+Run `./gradlew --offline verifyIntegrationTestExecutionEvidence`. Default outputs are
+`build/shardpilot/integrationTest/execution-evidence.json` and `.html`, or the corresponding
+selected-suite namespace. Override `reportFile`/`htmlReportFile` independently. An aggregation-only
+project can register the public `VerifyExecutionEvidence` task type directly, supplying those
+six paths. No Java plugin is required for that standalone task.
+
+Kotlin DSL uses the same managed properties:
+
+```kotlin
+tasks.named<Test>("integrationTest").get().extensions
+    .getByType<io.github.sjacek.shardpilot.ShardPilotExtension>().executionEvidence {
+        expectedRequest.set(layout.projectDirectory.file("trusted/expected.json"))
+        eligibilityFile.set(layout.projectDirectory.file("trusted/baseline.yaml"))
+        selectionFile.set(layout.projectDirectory.file("trusted/selection.json"))
+        nodesDirectory.set(layout.projectDirectory.dir("downloaded"))
+    }
+```
+
+## Maven configuration
+
+Invoke the standalone `verify-executions` goal on the development build of the Maven plugin:
+
+```shell
+mvn -o shardpilot:verify-executions \
+  -Dshardpilot.executionExpectedRequest=trusted/expected.json \
+  -Dshardpilot.executionEligibilityFile=trusted/baseline.yaml \
+  -Dshardpilot.executionSelectionFile=trusted/selection.json \
+  -Dshardpilot.executionNodesDirectory=downloaded
+```
+
+POM configuration names are `expectedRequest`, `eligibilityFile`, `selectionFile`,
+`nodesDirectory`, `reportFile` and `htmlReportFile`. The output properties are
+`shardpilot.executionReportFile`/`executionHtmlReportFile`; defaults are
+`target/shardpilot/execution-evidence.json` and `.html`. For multiple suites, use a
+separate trusted request, node directory and output pair per invocation. There is no
+default lifecycle phase or dependency resolution. Without a project, invoke the fully
+qualified development plugin coordinate and supply both output paths explicitly.
+
+| Gradle task property | Maven property (prefix `shardpilot.execution`) | Ceiling |
+| --- | --- | ---: |
+| `jsonBytes` | `JsonBytes` | 1048576 |
+| `manifestBytes` | `ManifestBytes` | 1048576 |
+| `maxNodes` | `MaxNodes` | 1024 |
+| `maxReports` | `MaxReports` | 20000 |
+| `maxReportBytes` | `MaxReportBytes` | 67108864 |
+| `maxTotalReportBytes` | `MaxTotalReportBytes` | 268435456 |
+| `maxDepth` | `MaxDepth` | 64 |
+| `maxTestCases` | `MaxTestCases` | 2000000 |
+
+## Collection and failure handling
+
+Both entry points inspect an already extracted, read-only directory with exactly the
+immediate `node-N` subdirectories. Each contains `evidence.json`, `plan.yaml`, declared
+`TEST-*.xml` reports and its optional ledger. The verifier does not extract archives:
+the CI collector must validate archive entries before extraction. Symlinks, special files,
+hard-link aliases, undeclared native reports and unsafe relative paths fail validation.
+Collect exactly the declared `TEST-*.xml` files: other XML files (including Maven's
+`failsafe-summary.xml`) are not a supported C2 report and must stay outside node directories.
+
+The producer wrapper must record the actual native command's process result. Neither adapter
+invents a process result from successful XML, a successful artifact upload or a class-selection
+manifest. Collect artifacts even after a native failure and retain each job's native gate.
+Do not configure `ignoreFailures`, `testFailureIgnore` or a pipeline continuation that turns
+native failures into successful CI gates. C2 adds a required aggregate gate, not a replacement.
+
+Every verifier invocation rechecks bytes, including after Configuration Cache restoration.
+No Test, JavaCompile, prepare/selection, Git or history-refresh dependency is added. Missing
+inputs produce FAILED reports with unknown counts, replacing earlier successes. JSON and
+HTML share one immutable evaluation and are deterministic for identical inputs. An unreadable
+expected request has `cohort: null`; a missing request also has `expectedRequestSha256: null`.
+Output/input aliases are rejected before any write. Unwritable outputs fail the adapter.
 
 ## Validate the authored examples
 
@@ -183,7 +288,7 @@ For full offline Draft 2020-12 validation, provide an existing separate AJV 8 an
 node testing/contracts/validate-schemas.cjs /path/to/validator-installation
 ```
 
-That optional development check compiles the three schemas, validates the five authored
+That optional development check compiles the four schemas, validates the five authored
 documents and rejects 25 invalid shapes. Three schema-valid shapes deliberately describe
 semantic failures (native exit 137, a different attempt, an index beyond the expected
-count). They illustrate why the future semantic validator is still necessary.
+count). They illustrate why semantic validation is required in addition to schemas.

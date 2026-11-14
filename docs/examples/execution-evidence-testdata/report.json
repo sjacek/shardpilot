@@ -9,7 +9,7 @@
     "tool": "gradle",
     "runner": "gradle-test"
   },
-  "expectedRequestSha256": "6572bbde4e2690fed20a1699d434a5deaa1be981bda883bbdf1a3c7095ee951b",
+  "expectedRequestSha256": "40211be79282618dff440a87d913c711a1032924baf8100b10f606030dfafa4e",
   "status": "PASSED",
   "gates": {
     "provenance": "PASSED",
@@ -57,5 +57,15 @@
       "reasons": []
     }
   ],
-  "reasons": []
+  "reasons": [],
+  "limits": {
+    "jsonBytes": 1048576,
+    "manifestBytes": 1048576,
+    "maxNodes": 1024,
+    "maxReports": 20000,
+    "maxReportBytes": 67108864,
+    "maxTotalReportBytes": 268435456,
+    "maxDepth": 64,
+    "maxTestCases": 2000000
+  }
 }

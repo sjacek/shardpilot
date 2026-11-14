@@ -154,4 +154,6 @@ The shared policy contract, profiles, path rules, protected-family budgets and d
 are implemented and tested in core. Shared committed Git/CI acquisition, equivalent Gradle/Maven
 parameters and frozen worker cohorts are now implemented in the development adapters. Structured
 module/contract inference, working-tree impact, automatic directly changed-test discovery, service
-migration comparisons and C2's execution validator remain separate follow-up work.
+migration comparisons and complete automatic-selection provenance binding remain separate follow-up
+work. C2's offline execution validator and both adapter entry points are implemented in the
+development checkout; retain native CI gates alongside the new aggregate gate.

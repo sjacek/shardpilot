@@ -12,7 +12,7 @@ const ajv = new Ajv({strict: true, allErrors: true, allowUnionTypes: true});
 formats(ajv);
 const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
 const base = 'https://sjacek.github.io/shardpilot/schemas/';
-for (const name of ['execution-evidence-v1', 'expected-cohort-v1', 'execution-report-v1']) {
+for (const name of ['execution-evidence-v1', 'expected-cohort-v1', 'execution-report-v1', 'invocation-ledger-v1']) {
   ajv.addSchema(read(`docs/schemas/${name}.schema.json`));
 }
 const root = 'docs/examples/execution-evidence-testdata';
@@ -54,5 +54,5 @@ for (const change of [x=>x.process.exitCode=137, x=>x.cohort.attempt=2, x=>x.sha
  const modified=structuredClone(evidence); change(modified);
  if (!ajv.getSchema(base+'execution-evidence-v1.schema.json')(modified)) throw Error('Semantic rule incorrectly presented as schema validation');
 }
-const result={status:'PASSED',validator:'AJV '+requireValidator('ajv/package.json').version,draft:'2020-12',schemas:3,validExamples:positives,invalidShapeControls:negatives,semanticBoundaryControls:3,network:'not used'};
+const result={status:'PASSED',validator:'AJV '+requireValidator('ajv/package.json').version,draft:'2020-12',schemas:4,validExamples:positives,invalidShapeControls:negatives,semanticBoundaryControls:3,network:'not used'};
 console.log(result);

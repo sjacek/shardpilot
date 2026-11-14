@@ -19,6 +19,7 @@ public abstract class ShardPilotExtension {
     private boolean verificationConfigured;
     private boolean historyConfigured;
     private boolean selectionConfigured;
+    private boolean executionEvidenceConfigured;
     private final ShardSelectionOptions selection;
     private final RegularFileProperty selectedManifest;
     private final RegularFileProperty verificationBaseline;
@@ -283,6 +284,29 @@ public abstract class ShardPilotExtension {
         options.getPruning().convention(ShardHistoryOptions.Pruning.AUTO);
         action.execute(options);
         ShardHistory.configure(task, this, options, verificationBaseline, verificationShardCount);
+    }
+
+    /**
+     * Registers one explicit, artifact-only C2 gate named verify&lt;Task&gt;ExecutionEvidence.
+     * Configure once outside a deferred TaskProvider.configure action. The action supplies trusted
+     * request/eligibility/selection and downloaded nodes; this task never depends on Test, compile,
+     * prepare or Git acquisition tasks. Missing inputs fail with fresh JSON/HTML diagnostics.
+     * @param action retained evidence, output paths and optional lowered resource limits
+     */
+    @SuppressWarnings("unused") // Public Groovy/Kotlin DSL entry point; invoked dynamically in TestKit builds.
+    public void executionEvidence(@org.jspecify.annotations.NonNull Action<? super VerifyExecutionEvidence> action) {
+        if (executionEvidenceConfigured) throw new IllegalStateException("ShardPilot execution evidence is already configured for " + task.getName());
+        executionEvidenceConfigured = true;
+        String name = task.getName();
+        String suffix = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        var layout = task.getProject().getLayout();
+        task.getProject().getTasks().register("verify" + suffix + "ExecutionEvidence", VerifyExecutionEvidence.class, verifier -> {
+            verifier.setGroup("verification");
+            verifier.setDescription("Validates retained native execution evidence without running producers.");
+            verifier.getReportFile().convention(layout.getBuildDirectory().file(outputNamespace().map(path -> path + "/execution-evidence.json")));
+            verifier.getHtmlReportFile().convention(layout.getBuildDirectory().file(outputNamespace().map(path -> path + "/execution-evidence.html")));
+            action.execute(verifier);
+        });
     }
 
     /**

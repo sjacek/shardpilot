@@ -10,6 +10,12 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 ### Added
 
+- Validate retained test execution evidence through an opt-in Gradle task or Maven
+  `verify-executions` goal. Independent gates check run/job identity, native process results,
+  planned and reported coverage, minimum execution counts and skip policy. JSON/HTML reports
+  retain failure diagnostics without test payloads; missing artifacts cannot reuse earlier success.
+  Native invocation ledgers support repeated display names without silently deduplicating test rows.
+  See the [C2 configuration and collection guide](docs/execution-evidence-contract.md).
 - The shared core can now select tests from named full, smoke, affected or explicit profiles,
   configured through Java or versioned YAML. Path rules combine required and optional targets;
   mandatory tests remain protected when applying family/time budgets. Deterministic reports
@@ -25,6 +31,7 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 ### Fixed
 
+- A C2 output-directory failure no longer leaves an earlier successful JSON report in place.
 - Re-running the Maven smoke-selection example starts a fresh cohort, preventing old native
   XML reports from being mistaken for extra test executions. Aggregation retains the original
   evidence from both shards.
