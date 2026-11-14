@@ -1,5 +1,10 @@
 # CI integration
 
+The development-only [C3 compiled-artifact gate](compiled-artifacts.md) can seal compiled outputs
+in the producer job and verify SHA-256, revision/suite and the complete restored inventory before
+native workers. Keep frozen inputs separate from mutable worker reports. This is opt-in and does
+not replace native results or the separate [C2 execution gate](execution-evidence-contract.md).
+
 [Documentation index](README.md)
 
 Treat every shard as an ordinary invocation of the same Gradle task or Maven lifecycle in an isolated workspace.

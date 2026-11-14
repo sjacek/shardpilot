@@ -20,6 +20,7 @@ public abstract class ShardPilotExtension {
     private boolean historyConfigured;
     private boolean selectionConfigured;
     private boolean executionEvidenceConfigured;
+    private boolean compiledArtifactsConfigured;
     private final ShardSelectionOptions selection;
     private final RegularFileProperty selectedManifest;
     private final RegularFileProperty verificationBaseline;
@@ -307,6 +308,38 @@ public abstract class ShardPilotExtension {
             verifier.getHtmlReportFile().convention(layout.getBuildDirectory().file(outputNamespace().map(path -> path + "/execution-evidence.html")));
             action.execute(verifier);
         });
+    }
+
+    /**
+     * Opts this Test task into C3 without enabling sharding. Registers seal&lt;Task&gt;CompiledArtifacts
+     * and verify&lt;Task&gt;CompiledArtifacts; verification is a Test dependency and a final pre-worker
+     * check. Neither C3 task schedules compilation, planning or dependency resolution. Native Test
+     * dependencies remain consumer-owned; artifact-only CI workers must still disable producers.
+     * @param action trusted cohort, root-relative paths and optional lowered resource limits
+     */
+    @SuppressWarnings("unused") // Public Groovy/Kotlin DSL, exercised through real TestKit consumers.
+    public void compiledArtifacts(@org.jspecify.annotations.NonNull Action<? super CompiledArtifactOptions> action) {
+        if (compiledArtifactsConfigured) throw new IllegalStateException("ShardPilot compiled artifacts are already configured for " + task.getName());
+        compiledArtifactsConfigured = true;
+        var options = objects.newInstance(CompiledArtifactOptions.class);
+        var layout = task.getProject().getLayout();
+        options.getBaseDirectory().convention(layout.getProjectDirectory());
+        options.getManifestFile().convention(layout.getBuildDirectory().file("shardpilot/" + task.getName() + "/compiled-artifacts.json"));
+        options.getSuite().convention(task.getName());
+        options.getRevision().convention(task.getProject().getProviders().gradleProperty("shardpilot.compiledRevision"));
+        options.getExpectedManifestSha256().convention(task.getProject().getProviders().gradleProperty("shardpilot.compiledManifestSha256").orElse(""));
+        action.execute(options);
+        String name = task.getName(); String suffix = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        task.getProject().getTasks().register("seal" + suffix + "CompiledArtifacts", SealCompiledArtifacts.class, producer -> {
+            producer.setGroup("build"); producer.setDescription("Seals already compiled artifacts without running producers."); producer.setOptions(options);
+        });
+        var verifier = task.getProject().getTasks().register("verify" + suffix + "CompiledArtifacts", VerifyCompiledArtifacts.class, gate -> {
+            gate.setGroup("verification"); gate.setDescription("Verifies retained compiled artifacts without rebuilding them."); gate.setOptions(options);
+        });
+        // Keep this gate independent of sharding opt-in and of Test's NO-SOURCE/cache outcome.
+        // Never depend on the sealer here: a worker must not regenerate its own expected evidence.
+        task.dependsOn(verifier);
+        task.doFirst(new CompiledArtifactGuard(options));
     }
 
     /**

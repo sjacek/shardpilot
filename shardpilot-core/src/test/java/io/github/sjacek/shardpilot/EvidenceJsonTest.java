@@ -1,5 +1,7 @@
 package io.github.sjacek.shardpilot;
 
+import java.math.BigDecimal;
+import java.util.Collections;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,16 @@ class EvidenceJsonTest {
             "\"\\u０００１\"", "\"unterminated", "\"literal\nnewline\"", "/* comment */{}", "[1,,2]"})
     void rejectsNonJsonSyntaxWithoutEchoingRejectedPayload(String input) {
         var failure = assertThrows(IllegalArgumentException.class, () -> EvidenceJson.parse(input));
+        assertEquals("Invalid C2 JSON document", failure.getMessage()); assertNull(failure.getCause());
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {2, 3, 8})
+    void theValueBudgetAcceptsItsBoundaryAndRejectsOneFewerValue(int maxValues) {
+        // The array itself consumes one value, in addition to its scalar elements.
+        String document = "[" + "0,".repeat(maxValues - 2) + "0]";
+        assertEquals(Collections.nCopies(maxValues - 1, BigDecimal.ZERO), EvidenceJson.parse(document, maxValues));
+        var failure = assertThrows(IllegalArgumentException.class, () -> EvidenceJson.parse(document, maxValues - 1));
         assertEquals("Invalid C2 JSON document", failure.getMessage()); assertNull(failure.getCause());
     }
 

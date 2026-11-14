@@ -1,8 +1,8 @@
 # Changelog
 
-User-facing changes, fixes and upgrade guidance for ShardPilot. Release dates follow the version
-creation dates recorded by the Gradle Plugin Portal. Changes under **Unreleased** are available
-in the development checkout; they do not imply a published release.
+ShardPilot splits test suites across parallel Gradle or Maven jobs to shorten CI runs.
+Changes under **Unreleased** require the development version and are not yet published.
+Release dates follow the version creation dates recorded by the Gradle Plugin Portal.
 
 For build, CI and publication details, see the [maintainer documentation](docs/README.md).
 
@@ -10,65 +10,45 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 ### Added
 
-- Validate retained test execution evidence through an opt-in Gradle task or Maven
-  `verify-executions` goal. Independent gates check run/job identity, native process results,
-  planned and reported coverage, minimum execution counts and skip policy. JSON/HTML reports
-  retain failure diagnostics without test payloads; missing artifacts cannot reuse earlier success.
-  Native invocation ledgers support repeated display names without silently deduplicating test rows.
-  See the [C2 configuration and collection guide](docs/execution-evidence-contract.md).
-- The shared core can now select tests from named full, smoke, affected or explicit profiles,
-  configured through Java or versioned YAML. Path rules combine required and optional targets;
-  mandatory tests remain protected when applying family/time budgets. Deterministic reports
-  explain selected/deferred tests, estimates and full-run fallbacks. See the
-  [selection policy guide](docs/selection-policy.md).
-- Gradle and Maven can now activate those profiles through equivalent plugin parameters. Affected
-  profiles obtain committed changes from Git, including complete MR history and both rename paths.
-  Missing ancestry or a dirty checkout follows the declared full-run/fail policy; fetching is opt-in.
-- Freeze profile selection once and reuse its validated artifact across CI shards. Workers reject
-  changed policy, history, eligibility, partition count or checkout instead of selecting independently.
-  Runnable Groovy, Kotlin and Maven examples demonstrate the configuration. Existing explicit
-  manifests and artifact-only aggregation retain their behavior.
+- Check compiled files shared between test jobs before running tests. Missing, changed or wrong-version
+  inputs stop execution. [Setup guide](docs/compiled-artifacts.md).
+- Check test results for missing reports, failed processes and unexpected skips. Get a readable report
+  explaining any problems. [Setup guide](docs/execution-evidence-contract.md).
+- Choose all tests, a quick check or a custom group in Gradle or Maven. Set size or estimated time
+  limits while keeping required tests. [Setup guide](docs/selection-policy.md).
+- Select tests using your rules for files changed in Git. If change information is unavailable,
+  configure a full test run or stop with an error.
+- Share one test selection across parallel jobs. Stop if their source versions or test settings differ.
 
 ### Fixed
 
-- A C2 output-directory failure no longer leaves an earlier successful JSON report in place.
-- Re-running the Maven smoke-selection example starts a fresh cohort, preventing old native
-  XML reports from being mistaken for extra test executions. Aggregation retains the original
-  evidence from both shards.
+- Failed report generation no longer leaves an old JSON success report behind.
+- Repeating the Maven quick-test example no longer counts results from earlier runs.
 
 ## [0.5.0](docs/releases/0.5.0.md) — 2026-11-13
 
 ### Added
 
-- Run a chosen subset of test classes in Gradle or Maven, with one shard or several. Provide a
-  YAML selection manifest to run a smoke suite or another explicitly chosen group of tests;
-  invalid or empty selections fail instead of silently running a different suite.
-- Selected nested tests stay with their eligible class family. Separate suite reports let you
-  inspect selected-test assignments without overwriting full-suite reports. See the
-  [selection guide](docs/test-selection.md) for configuration and report paths.
+- Run a chosen group of tests in Gradle or Maven, optionally split across parallel jobs.
+  [Setup guide](docs/test-selection.md).
+- Keep nested tests together. See which job is assigned each chosen test in a separate report.
 
 ### Security
 
 - Added [instructions for reporting vulnerabilities privately](SECURITY.md) and a
   [guide to plugin permissions and trust boundaries](docs/security.md).
-- Separate [dependency inventories and vulnerability reports](docs/dependency-security.md)
-  cover Gradle and Maven release candidates, including runtime, supported build tooling, test and
-  provided dependencies. High or critical findings in blocking scopes prevent release checks
-  from passing, including findings without an available fix. Maven's full-tooling diagnostic
-  retains inherited Site/Jetty findings; producer CI guards prohibit Site and unclassified plugins in ShardPilot builds.
-- Release builds reject downloaded dependencies with missing or unexpected SHA-256 checksums,
-  including files restored from cache. See the [dependency integrity guide](docs/dependency-verification.md)
-  for the scope of these checks and instructions for building from source.
+- Inspect [dependency lists and vulnerability reports](docs/dependency-security.md) for Gradle and Maven.
+- Release builds [check dependency downloads](docs/dependency-verification.md) and reject files
+  with missing or unexpected checksums, including cached files.
 
 ### Upgrade
 
-- Set the Gradle plugin or Maven adapter version to `0.5.0` after publication. Selection is
-  opt-in; existing configurations keep their full eligible suite when no manifest is supplied.
-- Use one immutable manifest and the same version, history and shard count on every node.
-  Keep all native test outcomes required alongside selection verification. See the
-  [0.5.0 guide and runnable examples](docs/releases/0.5.0.md).
+- Upgrade the Gradle plugin or Maven adapter to `0.5.0`. Choosing a test subset is optional;
+  existing configurations keep running their configured test suite.
+- Give parallel jobs the same selection file, timing history, plugin version and job count.
+  Require both test jobs and selection checks to pass. [Upgrade guide](docs/releases/0.5.0.md).
 
-## [0.4.0](docs/releases/0.4.0.md)
+## [0.4.0](docs/releases/0.4.0.md) — 2026-11-05
 
 ### Added
 
@@ -93,7 +73,7 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
   pipeline. Refresh does not replace your maintained history automatically.
 - See the [0.4.0 upgrade guide](docs/releases/0.4.0.md#upgrade-and-opt-in) for Gradle and Maven examples.
 
-## [0.3.1](docs/releases/0.3.1.md)
+## [0.3.1](docs/releases/0.3.1.md) — 2026-10-24
 
 ### Fixed
 
@@ -102,7 +82,7 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 See the [0.3.1 release notes](docs/releases/0.3.1.md) for upgrade details.
 
-## [0.3.0](docs/releases/0.3.0.md)
+## [0.3.0](docs/releases/0.3.0.md) — 2026-10-23
 
 ### Added
 
@@ -130,7 +110,7 @@ See the [0.3.1 release notes](docs/releases/0.3.1.md) for upgrade details.
 
 See the [0.3.0 release notes](docs/releases/0.3.0.md) for setup and migration examples.
 
-## [0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1)
+## [0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1) — 2026-10-23
 
 ### Changed
 
@@ -155,7 +135,7 @@ See the [0.3.0 release notes](docs/releases/0.3.0.md) for setup and migration ex
 - This candidate was not published. Use 0.2.1 and the
   [configuration examples](docs/releases/0.2.0.md) to adopt these features.
 
-## [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0) - 2026-10-20
+## [0.1.0](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.1.0) — 2026-10-20
 
 ### Added
 

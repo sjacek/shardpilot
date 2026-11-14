@@ -30,6 +30,12 @@ Keep machine-specific JDK, Gradle installation and linked-project paths in local
 outside version control. The command-line check remains `./gradlew check assemble`; removing
 valid API imports or suppressing unresolved references does not repair an IDE model.
 
+The same checks apply when Java code cannot resolve a new plugin class such as
+`CompiledArtifactOptions`, while the IDE also marks that class as unused. Run
+`./gradlew :shardpilot-gradle-plugin:compileJava --rerun-tasks` to check the actual compiler.
+If it succeeds, reload the repository's Gradle project, wait for indexing and rerun the inspection.
+The Gradle plugin module needs its Gradle model even when the Maven modules are already imported.
+
 ## Selection and execution
 
 | Symptom | Likely cause | Check |

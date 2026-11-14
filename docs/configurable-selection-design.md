@@ -157,3 +157,8 @@ module/contract inference, working-tree impact, automatic directly changed-test 
 migration comparisons and complete automatic-selection provenance binding remain separate follow-up
 work. C2's offline execution validator and both adapter entry points are implemented in the
 development checkout; retain native CI gates alongside the new aggregate gate.
+
+The development checkout also implements [C3 compiled-artifact integrity](compiled-artifacts.md)
+in the shared core and both adapters. It binds a complete file inventory to independently supplied
+revision/suite and checks transferred bytes before workers. Consumer migration and full selection
+provenance binding remain separate work; C3 does not imply either has been completed.

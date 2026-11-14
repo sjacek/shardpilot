@@ -334,6 +334,13 @@ Only classes are distributed. Methods stay together, and framework parallelism i
 enabled or disabled. Startup, container reuse, Spring context locality and unknown classes can
 affect wall-clock balance; recorded seconds are not a promise of a particular speedup.
 
+## Compiled artifact integrity (development)
+
+The development checkout also provides an opt-in [C3 compiled-artifact gate](docs/compiled-artifacts.md):
+seal an exact SHA-256 inventory after compilation, then verify the independent revision/suite and
+all transferred bytes before test workers start. Both Gradle and Maven use the same offline core.
+This capability is not included in the published 0.5.0 release.
+
 ## Refresh duration history (since 0.4.0)
 
 Register the refresh task once, outside a deferred owner configuration action:

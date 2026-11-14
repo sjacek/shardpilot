@@ -12,12 +12,26 @@ import org.jspecify.annotations.Nullable;
 @NullMarked
 final class EvidenceJson {
     private final String text;
+    private final int maxValues;
+    private final int maxNumberCharacters;
+    private int values;
     private int position;
 
-    private EvidenceJson(String text) { this.text = text; }
+    private EvidenceJson(String text, int maxValues, int maxNumberCharacters) {
+        this.text = text; this.maxValues = maxValues; this.maxNumberCharacters = maxNumberCharacters;
+    }
 
     static @Nullable Object parse(String text) {
-        var parser = new EvidenceJson(text);
+        return parse(text, Integer.MAX_VALUE, Integer.MAX_VALUE);
+    }
+
+    /** Larger C3 documents additionally bound allocations; existing C2 byte-limit semantics are unchanged. */
+    static @Nullable Object parse(String text, int maxValues) {
+        return parse(text, maxValues, 128);
+    }
+
+    private static @Nullable Object parse(String text, int maxValues, int maxNumberCharacters) {
+        var parser = new EvidenceJson(text, maxValues, maxNumberCharacters);
         Object value = parser.value(0);
         parser.whitespace();
         if (parser.position != text.length()) throw invalid();
@@ -25,7 +39,7 @@ final class EvidenceJson {
     }
 
     private @Nullable Object value(int depth) {
-        if (depth > 32) throw invalid();
+        if (depth > 32 || ++values > maxValues) throw invalid();
         whitespace();
         if (position == text.length()) throw invalid();
         char token = text.charAt(position);
@@ -81,6 +95,8 @@ final class EvidenceJson {
             while (position < text.length() && digit(text.charAt(position))) position++;
             if (digits == position) throw invalid();
         }
+        // A byte limit alone does not bound BigInteger's cost for a single enormous number.
+        if (position - start > maxNumberCharacters) throw invalid();
         try { return new BigDecimal(text.substring(start, position)); }
         catch (NumberFormatException failure) { throw invalid(); }
     }

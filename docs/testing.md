@@ -643,6 +643,25 @@ failures rather than accepting a successful build containing only skipped depend
 
 ## Extending coverage
 
+C3 has a dedicated [compiled-artifact integrity guide](compiled-artifacts.md). Run its focused
+core and Gradle regression suites with:
+
+```shell
+./gradlew :shardpilot-core:test --tests '*CompiledArtifactsTest' :shardpilot-gradle-plugin:test --tests '*CompiledArtifactsFunctionalTest' --tests VerifyReleaseArtifactsTest
+python3 -B scripts/maven_verification.py run -- -B -ntp verify
+```
+
+The Maven invocation includes `CompiledArtifactsMojoTest`, generated-descriptor assertions and
+the `compiled-artifacts` Invoker project. Its native marker must contain exactly one Surefire and
+one Failsafe execution despite intervening rejected revision/digest invocations. The release-bundle
+gate requires both new goals too. Core regressions also relocate the sealed cohort to another worker,
+change bytes around stream-buffer boundaries and verify that only restoring the original bytes
+recovers a failed check. Gradle regressions reject a bad digest supplied through project properties,
+an empty compiled test tree and duplicate DSL declarations before a native worker can start.
+Linux CI additionally runs symlink, FIFO and case-collision controls that are platform-restricted
+locally. The Maven fixture resolves its provider before sealing, then runs verification and native
+workers offline without compilation. A green local run does not replace the hosted compatibility matrix.
+
 For assignment changes, preserve determinism across input orders and prove exactly one owner per
 family across all indices. Include equal weights, missing measurements, nested classes, negative
 hashes, zero durations and arithmetic overflow. Check changes against an unsharded baseline rather
