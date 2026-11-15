@@ -122,7 +122,8 @@ Identical normalized inputs must produce identical selected families, ordering, 
 identity in Gradle and Maven. A changed policy must invalidate the decision even when it happens
 to choose the same families. Bind the retained decision to plan/selection identities and the
 [C2 evidence contract](execution-evidence-contract.md) with reviewed versioned contract changes.
-The existing C2 draft does not yet define a complete automatic-selection provenance envelope.
+The development [execution-selection bridge](execution-selection.md) implements that envelope as a new
+canonical selection v2, preserving v1 requests, node evidence and C3 manifests.
 
 ## Delivery and acceptance
 
@@ -156,14 +157,14 @@ parameters and frozen worker cohorts are now implemented in the development adap
 [Policy v2](selection-impact.md) now adds conventional changed-test source mappings, explicit
 module dependencies and semantic JSON/YAML contract rules through that same configuration.
 It does not infer arbitrary source/package layouts or application dependencies. Working-tree
-impact, service migration comparisons and complete automatic-selection provenance binding remain
-separate follow-up work. C2's offline execution validator and both adapter entry points are implemented in the
+impact and service migration comparisons remain separate follow-up work. Automatic-selection provenance
+binding is now implemented for both adapters. C2's offline execution validator and both adapter entry points are implemented in the
 development checkout; retain native CI gates alongside the new aggregate gate.
 
 The development checkout also implements [C3 compiled-artifact integrity](compiled-artifacts.md)
 in the shared core and both adapters. It binds a complete file inventory to independently supplied
-revision/suite and checks transferred bytes before workers. Consumer migration and full selection
-provenance binding remain separate work; C3 does not imply either has been completed.
+revision/suite and checks transferred bytes before workers. The execution-selection bridge optionally binds
+that manifest and rechecks actual trees during aggregation. Consumer migration remains separate work.
 
 [Optional C4 execution diagnostics](execution-diagnostics.md) are also implemented in development:
 an external JDK supervisor, bounded scoped memory sampling, native timeout/interruption evidence

@@ -14,6 +14,8 @@ Development checkout adds [configurable profiles and Git acquisition](https://gi
 through both adapters; those additions are not in published 0.5.0.
 It also supports [changed tests, module dependencies and JSON/YAML contract rules](docs/selection-impact.md)
 through one shared configuration file.
+The development [selection-to-evidence bridge](docs/execution-selection.md) binds those decisions and
+optional compiled inputs to native test results, retaining existing manifest and node-evidence formats.
 
 Optional [explicit selection](docs/test-selection.md) runs a consumer-owned YAML class subset with
 one or multiple shards, validates it against full eligibility and keeps separate selection reports.

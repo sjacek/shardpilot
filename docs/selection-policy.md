@@ -197,8 +197,9 @@ When present, frozen contract pointers, formats, raw blob hashes and failure cod
 This is a new planning identity, separate from the 0.5.0 raw-manifest hash and `selection.id`.
 It proves repeatable planning, not execution. The
 [C2 execution-evidence validator](execution-evidence-contract.md) is implemented separately in the
-development checkout. Its trusted selection digest identifies the selected family set; a complete
-automatic-selection policy/Git provenance envelope still needs a reviewed binding.
+development checkout. Its legacy selection digest identifies the selected family set. A complete
+automatic-selection policy/Git provenance envelope is now available through the opt-in
+[selection-to-evidence bridge](execution-selection.md), including exact node plans and optional C3 binding.
 
 
 ## Gradle and Maven parameters (development checkout)

@@ -1,0 +1,7 @@
+# ShardPilot decision: fb578b958215346b2b827fe21564c6546f64a38a460f9d59399b4fba115ef944
+# ShardPilot Git inputs: b84ae2358f8978b0aef19f02eb309001265ad62ad6eebd4d7d814843e8247abb
+schemaVersion: 1
+classes:
+  - example.AlphaIT
+  - example.AlphaIT$Nested
+  - example.BetaIT

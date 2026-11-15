@@ -1,0 +1,1 @@
+Synthetic compiled-input fixture, not executable bytecode.

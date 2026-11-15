@@ -24,10 +24,11 @@ def sha(path):
 
 class ExecutionEvidenceContractExamplesTest(unittest.TestCase):
     def test_every_schema_reference_resolves_offline(self):
-        documents = {path.name: read(path) for path in SCHEMAS.glob('*-v1.schema.json')}
+        documents = {path.name: read(path) for path in SCHEMAS.glob('*-v*.schema.json')}
         self.assertEqual({'execution-evidence-v1.schema.json', 'execution-report-v1.schema.json',
                           'expected-cohort-v1.schema.json', 'invocation-ledger-v1.schema.json',
-                          'compiled-artifacts-v1.schema.json'}, set(documents))
+                          'compiled-artifacts-v1.schema.json', 'execution-selection-v2.schema.json',
+                          'execution-report-v2.schema.json'}, set(documents))
 
         def visit(value, current):
             if isinstance(value, dict):
@@ -101,6 +102,40 @@ class ExecutionEvidenceContractExamplesTest(unittest.TestCase):
         self.assertEqual(['MISSING_SHARD'], missing['reasons'])
         self.assertEqual('UNKNOWN', report['gates']['nativeProcess'])
         self.assertEqual('FAILED', report['gates']['provenance'])
+
+    def test_bound_selection_retains_old_node_schema_and_exact_c5_c3_byte_bindings(self):
+        root = ROOT / 'docs/examples/execution-selection-testdata'
+        selection = read(root / 'selection.json')
+        metadata = selection['provenance']
+        self.assertEqual(json.dumps(selection, sort_keys=True, separators=(',', ':')).encode(),
+                         (root / 'selection.json').read_bytes())
+        for field, path in [('gitSha256', 'snapshot/decision/git.json'), ('historySha256', 'history.tsv'),
+                            ('eligibilitySha256', 'baseline.yaml'), ('sourceManifestSha256', 'snapshot/decision/selected.yaml'),
+                            ('compiledArtifactsSha256', 'compiled-manifest.json')]:
+            self.assertEqual(sha(root / path), metadata[field])
+        self.assertEqual((root / 'snapshot/selection.id').read_text().strip(), metadata['cohortSha256'])
+        expected = read(root / 'expected.json')
+        self.assertEqual(1, expected['schemaVersion'])
+        self.assertEqual(sha(root / 'selection.json'), expected['selection']['sha256'])
+        for node in expected['expectedNodes']:
+            evidence = read(root / f"nodes/node-{node['index']}/evidence.json")
+            self.assertEqual(1, evidence['schemaVersion'])
+            self.assertEqual(node['planSha256'], metadata['planSha256'][str(node['index'])])
+            self.assertEqual(node['planSha256'], sha(root / f"nodes/node-{node['index']}/plan.yaml"))
+            self.assertEqual(expected['selection']['sha256'], evidence['selection']['sha256'])
+        report = read(root / 'report.json')
+        self.assertEqual(2, report['schemaVersion'])
+        self.assertEqual('PASSED', report['status'])
+        self.assertEqual(metadata, report['selectionProvenance'])
+        self.assertEqual(1, read(root / 'compiled-manifest.json')['schemaVersion'])
+
+    def test_maven_retains_the_identical_reviewed_bridge_fixture(self):
+        source = ROOT / 'docs/examples/execution-selection-testdata'
+        target = ROOT / 'shardpilot-maven-plugin/src/it/execution-selection/retained'
+        files = {path.relative_to(source) for path in source.rglob('*') if path.is_file()}
+        self.assertEqual(files, {path.relative_to(target) for path in target.rglob('*') if path.is_file()})
+        for name in files:
+            self.assertEqual((source / name).read_bytes(), (target / name).read_bytes(), str(name))
 
 
 if __name__ == '__main__':

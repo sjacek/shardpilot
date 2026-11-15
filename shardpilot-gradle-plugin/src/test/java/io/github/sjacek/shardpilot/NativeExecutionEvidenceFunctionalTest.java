@@ -64,7 +64,42 @@ class NativeExecutionEvidenceFunctionalTest {
             Files.writeString(node.resolve("evidence.json"), EvidenceJson.write(without));
             assertTrue(ExecutionEvidence.writeReports(inputs, retained.resolve("without-ledger.json"), retained.resolve("without-ledger.html"))
                     .json().contains("AMBIGUOUS_EXECUTION_IDENTITY"));
+            Files.writeString(node.resolve("evidence.json"), EvidenceJson.write(evidence));
         }
+        bindFrozenSelection(framework, baseline, selection, expected, node, retained);
+    }
+
+    /** Reuses the actual framework XML/ledger, keeping v1 request/node documents and v1 golden behavior. */
+    private void bindFrozenSelection(String suite, Path baseline, Path selection, Path expected, Path node, Path retained) throws Exception {
+        var policy = SelectionPolicyYaml.parse("schemaVersion: 1\nprofiles: {smoke-testdata: {mode: smoke, mandatory: {classes: [example.AlphaTest]}}}\n");
+        Path policyFile = directory.resolve("policy.yaml"); Files.writeString(policyFile, SelectionPolicyYaml.format(policy));
+        var eligible = ClassManifest.read(baseline, false); var git = GitChanges.notRequired();
+        ProfileSelection.prepare(directory.resolve("snapshot"), policy,
+                new SelectionContext("smoke-testdata", eligible, git.changes(), Map.of(), Set.of()), git, suite, "", 1);
+        var compiled = new CompiledArtifacts.Inputs(directory, "a".repeat(40), suite,
+                Files.isDirectory(directory.resolve("build/resources")) ? List.of("build/classes", "build/resources") : List.of("build/classes"),
+                List.of("build/classes"), List.of(), CompiledArtifacts.Limits.defaults());
+        Path manifest = directory.resolve("compiled-manifest.json"); CompiledArtifacts.seal(compiled, manifest);
+        var binding = new ExecutionSelection.Compiled(compiled, manifest, "");
+        ExecutionSelection.write(new ExecutionSelection.Inputs(directory.resolve("snapshot"), policyFile, baseline, null, null,
+                "smoke-testdata", "a".repeat(40), suite, 1, binding), selection);
+        // Only the canonical-selection mode/hash changes: no new producer fields are needed.
+        for (Path file : List.of(expected, node.resolve("evidence.json"))) {
+            var document = object(EvidenceJson.parse(Files.readString(file)));
+            var selected = object(document.get("selection"));
+            selected.put("mode", "explicit"); selected.put("sha256", hash(selection));
+            document.put("selection", selected);
+            Files.writeString(file, EvidenceJson.write(document));
+        }
+        var inputs = new ExecutionEvidence.Inputs(expected, baseline, selection, directory.resolve("nodes"), ExecutionEvidence.Limits.defaults(), binding);
+        var bound = ExecutionEvidence.writeReports(inputs, retained.resolve("bound-report.json"), retained.resolve("bound-report.html"));
+        assertTrue(bound.passed(), bound.json()); assertTrue(bound.json().contains("\"selectionProvenance\""));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> object(@org.jspecify.annotations.Nullable Object value) {
+        assertInstanceOf(Map.class, value);
+        return (Map<String, Object>) value;
     }
 
     private void fixture(String framework) throws Exception {

@@ -8,6 +8,10 @@ files before a native test worker starts. It is independent of sharding and sele
 `CompiledArtifacts` implementation is used by Gradle and Maven. It never compiles, repairs outputs,
 executes Git, downloads dependencies or extracts archives.
 
+The optional [execution-selection bridge](execution-selection.md) binds this v1 manifest to a frozen selection
+and C2's existing selection digest. Aggregation rechecks actual files with independently configured roots and
+identity. This complements the pre-test guard; it does not replace it or change the C3 manifest format.
+
 ## Trust and inventory contract
 
 The producer and consumer independently configure:

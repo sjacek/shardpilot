@@ -5,6 +5,10 @@ The shared core validator powers the opt-in Gradle task and Maven goal described
 `verify`/manifest or history-refresh contracts. The [C1 comparison](history-migration.md)
 shows why matching duration histories cannot establish that a test cohort completed.
 
+For automatic profiles, the opt-in [selection-to-evidence bridge](execution-selection.md) adds a canonical
+selection v2 that binds the C5 decision, per-node plans and optional C3 inputs. Expected requests and node
+documents remain v1; aggregate report v2 adds validated provenance. Legacy v1 selection/report behavior is unchanged.
+
 ## Three documents and a trust boundary
 
 The proposed wire format is UTF-8 JSON, schema version 1. Unknown fields and duplicate
@@ -288,7 +292,7 @@ For full offline Draft 2020-12 validation, provide an existing separate AJV 8 an
 node testing/contracts/validate-schemas.cjs /path/to/validator-installation
 ```
 
-That optional development check compiles the four schemas, validates the five authored
-documents and rejects 25 invalid shapes. Three schema-valid shapes deliberately describe
+That optional development check compiles the v1/v2 schemas, validates both authored cohorts
+and rejects malformed shapes, including missing selection provenance and invalid plan digests. Three schema-valid shapes deliberately describe
 semantic failures (native exit 137, a different attempt, an index beyond the expected
 count). They illustrate why semantic validation is required in addition to schemas.

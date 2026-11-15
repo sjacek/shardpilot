@@ -12,7 +12,7 @@ const ajv = new Ajv({strict: true, allErrors: true, allowUnionTypes: true});
 formats(ajv);
 const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
 const base = 'https://sjacek.github.io/shardpilot/schemas/';
-for (const name of ['execution-evidence-v1', 'expected-cohort-v1', 'execution-report-v1', 'invocation-ledger-v1']) {
+for (const name of ['execution-evidence-v1', 'expected-cohort-v1', 'execution-report-v1', 'invocation-ledger-v1', 'execution-selection-v2', 'execution-report-v2']) {
   ajv.addSchema(read(`docs/schemas/${name}.schema.json`));
 }
 const root = 'docs/examples/execution-evidence-testdata';
@@ -23,6 +23,20 @@ for (const [name, schema] of [['expected.json', 'expected-cohort-v1'], ['node-1/
   positives++;
 }
 const evidence = read(`${root}/node-1/evidence.json`);
+const bindingRoot = 'docs/examples/execution-selection-testdata';
+for (const [name, schema] of [['selection.json','execution-selection-v2'], ['report.json','execution-report-v2'],
+  ['expected.json','expected-cohort-v1'], ['nodes/node-1/evidence.json','execution-evidence-v1']]) {
+  const validate = ajv.getSchema(base+schema+'.schema.json');
+  if (!validate(read(`${bindingRoot}/${name}`))) throw Error(JSON.stringify(validate.errors));
+  positives++;
+}
+for (const change of [x=>delete x.provenance, x=>x.provenance.extra=true,
+  x=>x.provenance.compiledArtifactsSha256='invalid', x=>delete x.provenance.planSha256,
+  x=>x.provenance.planSha256['0']='a'.repeat(64), x=>x.schemaVersion=1]) {
+  const modified=read(`${bindingRoot}/selection.json`); change(modified);
+  if (ajv.getSchema(base+'execution-selection-v2.schema.json')(modified)) throw Error('Invalid selection shape accepted');
+  negatives++;
+}
 const changes = [
   x=>delete x.cohort,
   x=>x.schemaVersion=2,
@@ -54,5 +68,5 @@ for (const change of [x=>x.process.exitCode=137, x=>x.cohort.attempt=2, x=>x.sha
  const modified=structuredClone(evidence); change(modified);
  if (!ajv.getSchema(base+'execution-evidence-v1.schema.json')(modified)) throw Error('Semantic rule incorrectly presented as schema validation');
 }
-const result={status:'PASSED',validator:'AJV '+requireValidator('ajv/package.json').version,draft:'2020-12',schemas:4,validExamples:positives,invalidShapeControls:negatives,semanticBoundaryControls:3,network:'not used'};
+const result={status:'PASSED',validator:'AJV '+requireValidator('ajv/package.json').version,draft:'2020-12',schemas:6,validExamples:positives,invalidShapeControls:negatives,semanticBoundaryControls:3,network:'not used'};
 console.log(result);

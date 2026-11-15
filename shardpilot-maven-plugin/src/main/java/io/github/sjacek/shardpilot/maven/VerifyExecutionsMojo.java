@@ -3,7 +3,6 @@ package io.github.sjacek.shardpilot.maven;
 import io.github.sjacek.shardpilot.ExecutionEvidence;
 import java.io.File;
 import java.io.IOException;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -15,7 +14,7 @@ import org.apache.maven.plugins.annotations.Parameter;
  * dependency resolution or project requirement is declared; an empty workspace can aggregate.
  */
 @Mojo(name = "verify-executions", threadSafe = true, requiresProject = false)
-public final class VerifyExecutionsMojo extends AbstractMojo {
+public final class VerifyExecutionsMojo extends AbstractExecutionArtifactMojo {
     /** Creates the Maven-managed offline execution gate. */
     public VerifyExecutionsMojo() { }
     /** Independently CI-authored expected request. */
@@ -57,7 +56,7 @@ public final class VerifyExecutionsMojo extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         try {
             var limits = new ExecutionEvidence.Limits(jsonBytes, manifestBytes, maxNodes, maxReports, maxReportBytes, maxTotalReportBytes, maxDepth, maxTestCases);
-            var inputs = new ExecutionEvidence.Inputs(expectedRequest.toPath(), eligibilityFile.toPath(), selectionFile.toPath(), nodesDirectory.toPath(), limits);
+            var inputs = new ExecutionEvidence.Inputs(expectedRequest.toPath(), eligibilityFile.toPath(), selectionFile.toPath(), nodesDirectory.toPath(), limits, compiledInputs(null, null));
             var result = ExecutionEvidence.writeReports(inputs, reportFile.toPath(), htmlReportFile.toPath());
             if (!result.passed()) throw new MojoFailureException("ShardPilot execution evidence FAILED; inspect the C2 JSON/HTML reports");
             getLog().info("ShardPilot execution evidence PASSED");

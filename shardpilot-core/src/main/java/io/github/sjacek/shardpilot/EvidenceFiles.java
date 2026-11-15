@@ -129,6 +129,7 @@ final class EvidenceFiles {
      * ancestors cover not-yet-created paths; isSameFile additionally covers hard-linked aliases.
      */
     static void protect(ExecutionEvidence.Inputs inputs, Path json, Path html) throws IOException {
+        if (inputs.compiled() != null) inputs.compiled().protect(json, html);
         Path first = canonical(json);
         Path second = canonical(html);
         if (first.startsWith(second) || second.startsWith(first) || same(json, html)) throw new IllegalArgumentException("C2 reports require separate output files");
@@ -161,7 +162,7 @@ final class EvidenceFiles {
         return Files.exists(first) && Files.exists(second) && Files.isSameFile(first, second);
     }
 
-    private static Path canonical(Path path) throws IOException {
+    static Path canonical(Path path) throws IOException {
         Path absolute = path.toAbsolutePath().normalize();
         Path parent = absolute;
         while (!Files.exists(parent)) parent = parent.getParent();

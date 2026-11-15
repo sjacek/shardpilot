@@ -165,6 +165,7 @@ test {
     inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-profiles-kotlin')).withPropertyName('profileSelectionKotlinConsumer')
     inputs.files(rootProject.fileTree('testing/execution-equivalence')).withPropertyName('nativeExecutionFixtures')
     inputs.files(rootProject.fileTree('docs/examples/execution-evidence-testdata')).withPropertyName('executionEvidenceFixtures')
+    inputs.files(rootProject.fileTree('docs/examples/execution-selection-testdata')).withPropertyName('executionSelectionFixtures')
     // Check the actual publication model, including the marker, rather than only a composite classpath.
     def metadataTasks = tasks.matching { it.name in ['generatePomFileForPluginMavenPublication',
             'generatePomFileForShardpilotPluginMarkerMavenPublication', 'generateMetadataFileForPluginMavenPublication'] }

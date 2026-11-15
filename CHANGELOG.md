@@ -10,6 +10,8 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 ### Added
 
+- Check that test results belong to the chosen selection policy and, optionally, the expected compiled files.
+  [Setup guide](docs/execution-selection.md).
 - Automatically include changed tests and tests affected by module or JSON/YAML contract changes.
   Use the same configuration in Gradle and Maven. [Setup guide](docs/selection-impact.md).
 - Diagnose test timeouts, interrupted runs and memory use. Detect leftover containers without

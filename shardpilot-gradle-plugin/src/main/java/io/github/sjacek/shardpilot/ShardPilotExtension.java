@@ -20,6 +20,7 @@ public abstract class ShardPilotExtension {
     private boolean historyConfigured;
     private boolean selectionConfigured;
     private boolean executionEvidenceConfigured;
+    private boolean executionSelectionConfigured;
     private boolean compiledArtifactsConfigured;
     private boolean diagnosticsConfigured;
     private final ShardSelectionOptions selection;
@@ -286,6 +287,34 @@ public abstract class ShardPilotExtension {
         options.getPruning().convention(ShardHistoryOptions.Pruning.AUTO);
         action.execute(options);
         ShardHistory.configure(task, this, options, verificationBaseline, verificationShardCount);
+    }
+
+    /**
+     * Registers an opt-in artifact-only C5/C2 bridge. Call after selection() to inherit its profile,
+     * policy and timing conventions. A retained baseline/snapshot and trusted revision are still required;
+     * this task never schedules Test, Git, compilation, planning or C3 sealing.
+     * @param action frozen inputs, canonical output and optional independent C3 verification
+     */
+    @SuppressWarnings("unused") // Public managed Groovy/Kotlin DSL, exercised by TestKit.
+    public void executionSelection(@org.jspecify.annotations.NonNull Action<? super PrepareExecutionSelection> action) {
+        if (executionSelectionConfigured) throw new IllegalStateException("Execution selection is already configured");
+        executionSelectionConfigured = true;
+        String name = task.getName();
+        String suffix = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        var layout = task.getProject().getLayout();
+        task.getProject().getTasks().register("prepare" + suffix + "ExecutionSelection", PrepareExecutionSelection.class, producer -> {
+            producer.setGroup("verification"); producer.setDescription("Binds a frozen C5 decision and optional compiled inputs to C2 selection identity.");
+            // Empty owner selection properties must not erase standalone CLI/default conventions.
+            if (selectionConfigured) {
+                producer.getPolicyFile().convention(selection.getPolicyFile()); producer.getProfile().convention(selection.getProfile());
+                producer.getSuite().convention(selection.getSuite()); producer.getHistoryFile().convention(getDurationsFile());
+                producer.getSnapshotDirectory().convention(selection.getSnapshotDirectory());
+                producer.getExplicitManifestFile().convention(selection.getManifestFile());
+            }
+            producer.getShardCount().convention(getShardCount());
+            producer.getSelectionFile().convention(layout.getBuildDirectory().file("shardpilot/" + name + "/execution-selection.json"));
+            action.execute(producer);
+        });
     }
 
     /**

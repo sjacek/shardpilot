@@ -50,6 +50,10 @@ public final class ExecutionEvidence {
         UNEXPECTED_SHARD,
         /** The independently expected selection differs. */
         SELECTION_MISMATCH,
+        /** C5 decision inputs, source revision, suite or partition count differ. */
+        SELECTION_PROVENANCE_MISMATCH,
+        /** Optional C3 identity, manifest pin or actual compiled bytes differ. */
+        COMPILED_ARTIFACT_MISMATCH,
         /** Retained bytes differ from their declared digest. */
         ARTIFACT_HASH_MISMATCH,
         /** An artifact uses traversal, an alias or a symbolic link. */
@@ -113,8 +117,21 @@ public final class ExecutionEvidence {
      * @param selection canonical full/explicit selection JSON, independently retained
      * @param nodesDirectory extracted producer nodes, kept read-only
      * @param limits effective bounded-input settings
+     * @param compiled optional trusted C3 verification required by selection v2 when its manifest is bound
      */
-    public record Inputs(Path expectedRequest, Path eligibility, Path selection, Path nodesDirectory, Limits limits) { }
+    public record Inputs(Path expectedRequest, Path eligibility, Path selection, Path nodesDirectory, Limits limits,
+                         ExecutionSelection.@Nullable Compiled compiled) {
+        /** Source-compatible v1 constructor, without automatic-selection/C3 binding.
+         * @param expectedRequest trusted expected-cohort JSON
+         * @param eligibility full native baseline
+         * @param selection canonical selection JSON
+         * @param nodesDirectory downloaded node directories
+         * @param limits enforced resource ceilings
+         */
+        public Inputs(Path expectedRequest, Path eligibility, Path selection, Path nodesDirectory, Limits limits) {
+            this(expectedRequest, eligibility, selection, nodesDirectory, limits, null);
+        }
+    }
 
     /** Immutable, deterministic snapshot used by both renderers and the build-tool outcome.
      * @param passed whether all five independent gates passed
@@ -131,6 +148,7 @@ public final class ExecutionEvidence {
      */
     public static Evaluation evaluate(Inputs inputs) {
         var state = new State(inputs.limits());
+        if (inputs.compiled() != null) state.reportVersion = 2;
         try {
             byte[] requestBytes = EvidenceFiles.read(inputs.expectedRequest(), inputs.limits().jsonBytes());
             state.requestHash = EvidenceFiles.digest(requestBytes);
@@ -138,7 +156,7 @@ public final class ExecutionEvidence {
             state.cohort = expected.cohort;
             // Establish the trusted selected set before consuming producer claims. A matching
             // producer digest alone does not establish which suite this CI job intended to verify.
-            Set<String> selected = selection(inputs, expected);
+            Set<String> selected = selection(inputs, expected, state);
             var directories = directories(inputs.nodesDirectory(), inputs.limits());
             if (!directories.keySet().equals(expected.nodes.keySet())) {
                 if (!expected.nodes.keySet().containsAll(directories.keySet())) state.fail("provenance", UNEXPECTED_SHARD);
@@ -252,7 +270,7 @@ public final class ExecutionEvidence {
                 number(root.get("minimumExecutedTests"), 0, Long.MAX_VALUE), maximum);
     }
 
-    private static Set<String> selection(Inputs inputs, Expected expected) {
+    private static Set<String> selection(Inputs inputs, Expected expected, State state) {
         byte[] baseline = EvidenceFiles.read(inputs.eligibility(), inputs.limits().manifestBytes());
         if (!EvidenceFiles.digest(baseline).equals(expected.selection.get("eligibilitySha256"))) throw problem(ARTIFACT_HASH_MISMATCH);
         Set<String> eligible = families(manifest(baseline, false, inputs.limits()));
@@ -260,9 +278,20 @@ public final class ExecutionEvidence {
         if (!EvidenceFiles.digest(bytes).equals(expected.selection.get("sha256"))) throw problem(SELECTION_MISMATCH);
         var root = object(document(bytes));
         String mode = choice(root.get("mode"), "full", "explicit");
+        if (!mode.equals(expected.selection.get("mode"))) throw problem(SELECTION_MISMATCH);
+        if (BigDecimal.valueOf(2).equals(root.get("schemaVersion"))) {
+            state.reportVersion = 2;
+            var plans = new TreeMap<String, String>();
+            expected.nodes.forEach((index, node) -> plans.put(Integer.toString(index), node.planHash));
+            var binding = ExecutionSelection.validate(root, bytes, eligible, text(expected.cohort.get("revision")),
+                    text(expected.cohort.get("suite")), expected.count, EvidenceFiles.digest(baseline), plans,
+                    inputs.limits().maxTestCases(), inputs.compiled());
+            state.selectionProvenance = binding.provenance();
+            return binding.selected();
+        }
+        if (inputs.compiled() != null) throw problem(COMPILED_ARTIFACT_MISMATCH);
         fields(root, mode.equals("full") ? new String[] {"mode", "schemaVersion"} : new String[] {"families", "mode", "schemaVersion"});
         version(root);
-        if (!mode.equals(expected.selection.get("mode"))) throw problem(SELECTION_MISMATCH);
         Set<String> selected = eligible;
         String canonical = "{\"mode\":\"full\",\"schemaVersion\":1}";
         if (mode.equals("explicit")) {
@@ -550,6 +579,8 @@ public final class ExecutionEvidence {
     /** Gate aggregation is monotone: FAILED dominates UNKNOWN, which dominates PASSED. */
     private static final class State {
         final Limits limits;
+        int reportVersion = 1;
+        @Nullable Map<String, @Nullable Object> selectionProvenance;
         @Nullable Map<String, @Nullable Object> cohort;
         @Nullable String requestHash;
         JUnitXmlExecutions.@Nullable Counts totals;
@@ -565,7 +596,8 @@ public final class ExecutionEvidence {
         Evaluation report() {
             boolean passed = gates.values().stream().allMatch("PASSED"::equals);
             var json = new LinkedHashMap<String, @Nullable Object>();
-            json.put("schemaVersion", 1); json.put("cohort", cohort); json.put("expectedRequestSha256", requestHash);
+            json.put("schemaVersion", reportVersion); json.put("cohort", cohort); json.put("expectedRequestSha256", requestHash);
+            if (reportVersion == 2) json.put("selectionProvenance", selectionProvenance);
             json.put("status", passed ? "PASSED" : "FAILED"); json.put("gates", gates); json.put("totals", counts(totals));
             json.put("nodes", nodes.stream().map(Node::json).toList()); json.put("reasons", names(reasons));
             json.put("limits", Map.of("jsonBytes", limits.jsonBytes(), "manifestBytes", limits.manifestBytes(), "maxNodes", limits.maxNodes(),

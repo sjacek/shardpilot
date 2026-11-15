@@ -1,0 +1,1 @@
+{"schemaVersion":1,"revision":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","suite":"profile-smoke-testdata","roots":["classes"],"requiredDirectories":["classes"],"requiredFiles":["classes/synthetic-testdata.txt"],"directories":["classes"],"files":{"classes/synthetic-testdata.txt":{"bytes":59,"sha256":"7a73c1f11c714acbc20945cc3fdf47f296806ad6ee4699ef6b54d3c5d010c7d7"}}}

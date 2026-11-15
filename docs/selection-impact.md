@@ -171,8 +171,8 @@ The decision identity includes policy semantics and frozen contract metadata. Wo
 the pure engine, validate identity, current E/policy/history and checkout HEAD, without diffing
 or rereading base blobs. Tampered snapshots fail before test execution; they do not request
 a fresh/full selection. The outer manifest protocol and decision JSON version remain compatible.
-This does not complete the separate automatic-selection provenance binding to
-[C2 execution evidence](execution-evidence-contract.md) and [C3 compiled inputs](compiled-artifacts.md).
+The opt-in [execution-selection bridge](execution-selection.md) now binds this decision and its plans to
+[C2 execution evidence](execution-evidence-contract.md), optionally including [C3 compiled inputs](compiled-artifacts.md).
 Selection consistency alone is not proof that native test invocations passed.
 
 Bounds: at most 64 unique source roots, 256 modules, 256 contract rules, 256 patterns/dependencies

@@ -1,7 +1,6 @@
 package io.github.sjacek.shardpilot;
 
 import java.io.IOException;
-import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFileProperty;
@@ -14,7 +13,7 @@ import org.gradle.work.DisableCachingByDefault;
 
 /** Artifact-only C2 gate. No producer dependencies, native test execution or dependency resolution. */
 @DisableCachingByDefault(because = "C2 must inspect every retained cohort on every invocation")
-public abstract class VerifyExecutionEvidence extends DefaultTask {
+public abstract class VerifyExecutionEvidence extends ExecutionArtifactTask {
     /** Creates an always-running verifier with the distribution's hard limits. */
     public VerifyExecutionEvidence() {
         // Disable all state snapshots, not only cache hits: Gradle must not traverse untrusted
@@ -103,7 +102,7 @@ public abstract class VerifyExecutionEvidence extends DefaultTask {
         var limits = new ExecutionEvidence.Limits(getJsonBytes().get(), getManifestBytes().get(), getMaxNodes().get(),
                 getMaxReports().get(), getMaxReportBytes().get(), getMaxTotalReportBytes().get(), getMaxDepth().get(), getMaxTestCases().get());
         var inputs = new ExecutionEvidence.Inputs(getExpectedRequest().get().getAsFile().toPath(), getEligibilityFile().get().getAsFile().toPath(),
-                getSelectionFile().get().getAsFile().toPath(), getNodesDirectory().get().getAsFile().toPath(), limits);
+                getSelectionFile().get().getAsFile().toPath(), getNodesDirectory().get().getAsFile().toPath(), limits, compiledInputs());
         var result = ExecutionEvidence.writeReports(inputs, getReportFile().get().getAsFile().toPath(), getHtmlReportFile().get().getAsFile().toPath());
         if (!result.passed()) throw new GradleException("ShardPilot execution evidence FAILED; inspect the C2 JSON/HTML reports");
         getLogger().lifecycle("ShardPilot execution evidence PASSED");
