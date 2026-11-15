@@ -20,6 +20,8 @@ import org.snakeyaml.engine.v2.events.CollectionEndEvent;
 import org.snakeyaml.engine.v2.events.CollectionStartEvent;
 import org.snakeyaml.engine.v2.exceptions.YamlEngineException;
 
+import static io.github.sjacek.shardpilot.DocumentMaps.object;
+
 /** Strict, versioned policy transport shared by both build-tool adapters; no executable expressions. */
 @NullMarked
 public final class SelectionPolicyYaml {
@@ -54,10 +56,12 @@ public final class SelectionPolicyYaml {
         if (text.length() > 1_048_576) throw new IllegalArgumentException("Selection policy exceeds size limit");
         var root = fields(load(text, 1_048_576), Set.of("schemaVersion", "profiles"));
         if (!root.containsKey("schemaVersion") || !root.containsKey("profiles")) throw invalid();
+        int version = integer(root.get("schemaVersion"));
+        if (version != 1 && version != 2) throw invalid();
         var profiles = fields(root.get("profiles"), null);
         var parsed = new TreeMap<String, SelectionPolicy.Profile>();
-        profiles.forEach((name, value) -> parsed.put(name, profile(value)));
-        return new SelectionPolicy(integer(root.get("schemaVersion")), parsed);
+        profiles.forEach((name, value) -> parsed.put(name, profile(value, version)));
+        return new SelectionPolicy(version, parsed);
     }
 
     /** Shared bounded composition for policy and frozen input metadata; errors never retain payloads. */
@@ -81,9 +85,10 @@ public final class SelectionPolicyYaml {
         }
     }
 
-    private static SelectionPolicy.Profile profile(@Nullable Object value) {
-        var fields = fields(value, Set.of("mode", "mandatory", "rules", "budget", "onUnknownChanges",
-                "onUnmatchedChanges", "onEmptySelection"));
+    private static SelectionPolicy.Profile profile(@Nullable Object value, int version) {
+        var allowed = new TreeSet<>(Set.of("mode", "mandatory", "rules", "budget", "onUnknownChanges", "onUnmatchedChanges", "onEmptySelection"));
+        if (version == 2) allowed.addAll(Set.of("impact", "onUnknownImpact"));
+        var fields = fields(value, allowed);
         var mode = enumeration(fields.get("mode"), SelectionPolicy.Mode.class);
         var rules = new ArrayList<SelectionPolicy.Rule>();
         if (!(fields.getOrDefault("rules", List.of()) instanceof List<?> list)) throw invalid();
@@ -103,7 +108,34 @@ public final class SelectionPolicyYaml {
         return new SelectionPolicy.Profile(mode, targets(fields.getOrDefault("mandatory", Map.of())), rules, limits,
                 enumeration(fields.getOrDefault("onUnknownChanges", fallback), SelectionPolicy.Fallback.class),
                 enumeration(fields.getOrDefault("onUnmatchedChanges", fallback), SelectionPolicy.Fallback.class),
-                enumeration(fields.getOrDefault("onEmptySelection", fallback), SelectionPolicy.Fallback.class));
+                enumeration(fields.getOrDefault("onEmptySelection", fallback), SelectionPolicy.Fallback.class),
+                impact(fields.getOrDefault("impact", Map.of())),
+                enumeration(fields.getOrDefault("onUnknownImpact", "full"), SelectionPolicy.Fallback.class));
+    }
+
+    private static SelectionImpact.Configuration impact(@Nullable Object value) {
+        var fields = fields(value, Set.of("changedTests", "modules", "contracts"));
+        var roots = new ArrayList<SelectionImpact.SourceRoot>();
+        for (Object entry : list(fields.getOrDefault("changedTests", List.of()))) {
+            var root = fields(entry, Set.of("path", "packagePrefix", "extensions"));
+            roots.add(new SelectionImpact.SourceRoot(string(root.get("path")), string(root.getOrDefault("packagePrefix", "")),
+                    strings(root.getOrDefault("extensions", List.of("java", "groovy", "kt")))));
+        }
+        var modules = new ArrayList<SelectionImpact.Module>();
+        for (Object entry : list(fields.getOrDefault("modules", List.of()))) {
+            var module = fields(entry, Set.of("id", "changes", "dependsOn", "tests"));
+            modules.add(new SelectionImpact.Module(string(module.get("id")), strings(module.get("changes")),
+                    strings(module.getOrDefault("dependsOn", List.of())), targets(module.getOrDefault("tests", Map.of()))));
+        }
+        var contracts = new ArrayList<SelectionImpact.ContractRule>();
+        for (Object entry : list(fields.getOrDefault("contracts", List.of()))) {
+            var rule = fields(entry, Set.of("id", "files", "format", "pointers", "action", "tests", "priority"));
+            contracts.add(new SelectionImpact.ContractRule(string(rule.get("id")), strings(rule.get("files")),
+                    enumeration(rule.get("format"), SelectionImpact.Format.class), strings(rule.get("pointers")),
+                    enumeration(rule.get("action"), SelectionPolicy.Action.class), targets(rule.getOrDefault("tests", Map.of())),
+                    integer(rule.getOrDefault("priority", 0))));
+        }
+        return new SelectionImpact.Configuration(roots, modules, contracts);
     }
 
     private static SelectionPolicy.Targets targets(@Nullable Object value) {
@@ -122,29 +154,31 @@ public final class SelectionPolicyYaml {
         policy.profiles().forEach((name, profile) -> {
             var rules = new ArrayList<Map<String, Object>>();
             for (var rule : profile.rules()) {
-                rules.add(mapping("id", rule.id(), "changes", new ArrayList<>(rule.changes()),
+                rules.add(object("id", rule.id(), "changes", new ArrayList<>(rule.changes()),
                         "action", word(rule.action()), "tests", targets(rule.tests()), "priority", rule.priority()));
             }
             var budget = profile.budget();
-            profiles.put(name, mapping("mode", word(profile.mode()), "mandatory", targets(profile.mandatory()),
-                    "rules", rules, "budget", mapping("maxFamilies", budget.maxFamilies(), "maxSeconds", budget.maxSeconds(),
+            var formatted = object("mode", word(profile.mode()), "mandatory", targets(profile.mandatory()),
+                    "rules", rules, "budget", object("maxFamilies", budget.maxFamilies(), "maxSeconds", budget.maxSeconds(),
                             "unknownSeconds", budget.unknownSeconds(), "overflow", word(budget.overflow())),
                     "onUnknownChanges", word(profile.onUnknownChanges()), "onUnmatchedChanges", word(profile.onUnmatchedChanges()),
-                    "onEmptySelection", word(profile.onEmptySelection())));
+                    "onEmptySelection", word(profile.onEmptySelection()));
+            if (policy.schemaVersion() == 2) {
+                formatted.put("onUnknownImpact", word(profile.onUnknownImpact()));
+                formatted.put("impact", object(
+                        "changedTests", new ArrayList<>(profile.impact().changedTests().stream().map(root -> object("path", root.path(), "packagePrefix", root.packagePrefix(), "extensions", new ArrayList<>(root.extensions()))).toList()),
+                        "modules", new ArrayList<>(profile.impact().modules().stream().map(module -> object("id", module.id(), "changes", new ArrayList<>(module.changes()), "dependsOn", new ArrayList<>(module.dependsOn()), "tests", targets(module.tests()))).toList()),
+                        "contracts", new ArrayList<>(profile.impact().contracts().stream().map(rule -> object("id", rule.id(), "files", new ArrayList<>(rule.files()), "format", word(rule.format()), "pointers", new ArrayList<>(rule.pointers()), "action", word(rule.action()), "tests", targets(rule.tests()), "priority", rule.priority())).toList())));
+            }
+            profiles.put(name, formatted);
         });
         return new Dump(DumpSettings.builder().setDefaultFlowStyle(FlowStyle.BLOCK).setSplitLines(false)
                 .setIndent(2).setIndicatorIndent(2).setIndentWithIndicator(true).build())
-                .dumpToString(mapping("schemaVersion", policy.schemaVersion(), "profiles", profiles));
+                .dumpToString(object("schemaVersion", policy.schemaVersion(), "profiles", profiles));
     }
 
     private static Map<String, Object> targets(SelectionPolicy.Targets targets) {
-        return mapping("classes", new ArrayList<>(targets.classes()), "patterns", new ArrayList<>(targets.patterns()));
-    }
-
-    private static Map<String, Object> mapping(Object... pairs) {
-        var result = new LinkedHashMap<String, Object>();
-        for (int index = 0; index < pairs.length; index += 2) result.put((String) pairs[index], pairs[index + 1]);
-        return result;
+        return object("classes", new ArrayList<>(targets.classes()), "patterns", new ArrayList<>(targets.patterns()));
     }
 
     private static String word(Enum<?> value) {
@@ -178,6 +212,11 @@ public final class SelectionPolicyYaml {
         var result = new TreeSet<String>();
         for (Object item : list) if (!result.add(string(item))) throw invalid();
         return result;
+    }
+
+    private static List<?> list(@Nullable Object value) {
+        if (value instanceof List<?> list) return list;
+        throw invalid();
     }
 
     private static Map<String, Object> fields(@Nullable Object value, @Nullable Set<String> allowed) {

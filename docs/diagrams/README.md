@@ -15,6 +15,7 @@ preview together; do not edit an SVG by hand.
 | Assignment | [shard-assignment.puml](shard-assignment.puml) | [shard-assignment.svg](shard-assignment.svg) | Measured-family packing, hash fallback and candidate exclusion. |
 | Explicit selection | [test-selection.puml](test-selection.puml) | [test-selection.svg](test-selection.svg) | Full eligibility, selected baseline, one/many-node filters and independent coverage/native gates. |
 | Core selection policy | [selection-policy.puml](selection-policy.puml) | [selection-policy.svg](selection-policy.svg) | Shared Git acquisition, frozen worker cohorts, profiles, protected budgets and the existing manifest/assignment boundary. |
+| Test impact | [selection-impact.puml](selection-impact.puml) | [selection-impact.svg](selection-impact.svg) | Shared changed-test, module and JSON/YAML contract rules, safe fallback and frozen native worker inputs. |
 | History refresh | [history-refresh.puml](history-refresh.puml) | [history-refresh.svg](history-refresh.svg) | One report cohort, shared normalization, success/failure artifacts and reviewed adoption. |
 | History pruning | [history-pruning.puml](history-pruning.puml) | [history-pruning.svg](history-pruning.svg) | Explicit source precedence, adapter defaults, disabled pruning and missing-source failure. |
 | History recovery | [history-recovery.puml](history-recovery.puml) | [history-recovery.svg](history-recovery.svg) | Valid class selections with missing XML, candidate cleanup, same-cohort restoration and independent native gates. |
@@ -41,6 +42,7 @@ with `-tsvg -nometadata -failfast2`, followed by the same SVG normalizer and vis
 The core selection-policy preview uses locally available PlantUML 1.2026.9 with the same
 static SVG normalization and visual review.
 The execution-diagnostics preview uses the same local 1.2026.9 renderer and normalization.
+The selection-impact preview uses that same renderer and normalization.
 
 From the repository root, set `PLANTUML_JAR` to your local JAR path. With the current PlantUML CLI:
 

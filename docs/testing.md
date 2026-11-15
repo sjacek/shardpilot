@@ -643,6 +643,31 @@ failures rather than accepting a successful build containing only skipped depend
 
 ## Extending coverage
 
+Policy v2 has a [shared impact guide](selection-impact.md). Focused verification:
+
+```shell
+./gradlew :shardpilot-core:test :shardpilot-gradle-plugin:test --tests '*ProfileSelectionFunctionalTest' :shardpilot-gradle-plugin:validatePlugins
+python3 -B scripts/maven_verification.py run -- -B -ntp verify '-Dtest=*Selection*Test,*Impact*Test,StructuredContractsTest' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dinvoker.test=selection-impact'
+```
+
+Core tests cover protected changed/nested families, module graph validation and transitive reverse
+impact, contract priorities/budgets, pointer coverage, decimal precision, arrays, malformed inputs,
+bounded parsing and immutable snapshot identity. Real Git fixtures read exact committed JSON/YAML
+blobs from repository-root paths, including acquisition from a subdirectory. Restored workers
+reuse frozen impact after a base ref moves; tampered observations invalidate executable output.
+TestKit checks native Gradle XML across two nodes. The Maven impact fixture repeats this with
+Surefire and Failsafe in separate namespaces and independently requires exactly the three
+affected test invocations once per runner, excluding the unrelated eligible test. These are
+synthetic acceptance fixtures, not evidence of migration of a real service's selector.
+
+Additional C5 regressions exercise the exact 32-file/8-MiB acquisition boundaries, the final
+allowed pointer and byte/depth limits, and corrupt downloaded observations. Tampering with either
+raw SHA-256, pointer sets, formats or failure codes must revoke executable selection. A semantic
+no-op differs from an unreadable observation, and a root `ignore` cannot veto required targets.
+Gradle also exercises v2 with Kotlin DSL, both `full`/`fail` on malformed committed contracts and
+strict Configuration Cache reuse; inactive profiles cannot add formats or targets to the active
+suite. Model-level Maven tests check the same fallback before native exclusions are written.
+
 C4 has an [execution diagnostics guide](execution-diagnostics.md). Run its focused tests with:
 
 ```shell

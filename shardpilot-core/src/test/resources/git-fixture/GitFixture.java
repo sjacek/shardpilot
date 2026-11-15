@@ -20,12 +20,24 @@ class GitFixture {
         if (Files.exists(root.resolve(".git")) || !Files.readString(root.resolve(".shardpilot-fixture-testdata")).equals("synthetic Git fixture\n")) {
             throw new IllegalArgumentException("A new marked fixture directory is required");
         }
-        Files.writeString(root.resolve(".gitignore"), "build/\ntarget/\n.gradle/\n");
+        Files.writeString(root.resolve(".gitignore"), "build/\ntarget/\n.gradle/\nbuild.log\n");
         Files.writeString(root.resolve(".gitattributes"), "* -text\n");
         Files.createDirectories(root.resolve("src"));
         Files.writeString(root.resolve("src/old name.txt"), "rename content\n");
         Files.writeString(root.resolve("src/modified.txt"), "before\n");
         Files.writeString(root.resolve("deleted.txt"), "deleted\n");
+        String mode = args.length > 1 ? args[1] : "paths";
+        boolean impact = mode.startsWith("impact");
+        if (impact) {
+            Files.createDirectories(root.resolve("src/test/java/example/selection"));
+            Path alpha = root.resolve("src/test/java/example/selection/AlphaTest.java");
+            if (!Files.exists(alpha)) Files.writeString(alpha, "package example.selection; class AlphaTest {}\n");
+            Files.createDirectories(root.resolve("src/library")); Files.writeString(root.resolve("src/library/Api.txt"), "before\n");
+            Files.createDirectories(root.resolve("contracts"));
+            Files.writeString(root.resolve("contracts/service.json"), "{\"paths\":{\"/payments\":{\"summary\":\"before\"}},\"metadata\":1}\n");
+            Files.writeString(root.resolve("contracts/service.yaml"), "paths:\n  /payments:\n    summary: before\nmetadata: 1\n");
+            impactExtras(root, mode, 0);
+        }
         // The object writer below uses Git's SHA-1 object format, independently of global Git settings.
         git(root, "init", "--quiet", "--object-format=sha1");
         String baseTree = tree(root, root);
@@ -38,6 +50,15 @@ class GitFixture {
         String middle = commit(root, tree(root, root), base);
         Files.writeString(root.resolve("src/addition.txt"), "added\n");
         Files.delete(root.resolve("deleted.txt"));
+        if (impact) {
+            Files.writeString(root.resolve("src/test/java/example/selection/AlphaTest.java"), "// Directly changed eligible test\n", java.nio.file.StandardOpenOption.APPEND);
+            Files.writeString(root.resolve("src/library/Api.txt"), "after\n");
+            Files.writeString(root.resolve("contracts/service.json"), "{\"paths\":{\"/payments\":{\"summary\":\"after\"}},\"metadata\":1}\n");
+            Files.writeString(root.resolve("contracts/service.yaml"), "paths:\n  /payments:\n    summary: after\nmetadata: 1\n");
+            if (mode.equals("impact-invalid")) Files.writeString(root.resolve("contracts/service.json"), "{PRIVATE_INVALID_INPUT");
+            if (mode.equals("impact-oversized")) Files.write(root.resolve("contracts/service.json"), new byte[1_048_577]);
+            impactExtras(root, mode, 1);
+        }
         String headTree = tree(root, root);
         String head = commit(root, headTree, middle);
         // A divergent target and a synthetic merge exercise ancestry without changing the worktree.
@@ -61,6 +82,21 @@ class GitFixture {
         System.out.println(head);
     }
 
+    /** Each budget blob is valid and exactly half a MiB; eight before/after pairs exhaust eight MiB. */
+    private static void impactExtras(Path root, String mode, int value) throws Exception {
+        int count = switch (mode) {
+            case "impact-count-32" -> 30;
+            case "impact-count-33" -> 31;
+            case "impact-budget" -> 9;
+            default -> 0;
+        };
+        String start = "{\"value\":" + value + ",\"padding\":\"", end = "\"}";
+        String padding = mode.equals("impact-budget") ? "x".repeat(524_288 - start.length() - end.length()) : "";
+        for (int index = 0; index < count; index++) {
+            Files.writeString(root.resolve("contracts/batch-%02d.json".formatted(index)), start + padding + end);
+        }
+    }
+
     private static String commit(Path root, String tree, String... parents) throws Exception {
         String text = "tree " + tree + "\n" + String.join("", java.util.Arrays.stream(parents).map(parent -> "parent " + parent + "\n").toList())
                 + "author Fixture <fixture@example.invalid> 1700000000 +0000\n"
@@ -71,7 +107,7 @@ class GitFixture {
     private static String tree(Path root, Path directory) throws Exception {
         var output = new ByteArrayOutputStream();
         try (var entries = Files.list(directory)) {
-            for (Path entry : entries.filter(path -> !Set.of(".git", "build", "target", ".gradle").contains(path.getFileName().toString()))
+            for (Path entry : entries.filter(path -> !Set.of(".git", "build", "target", ".gradle", "build.log").contains(path.getFileName().toString()))
                     .sorted(Comparator.comparing(path -> path.getFileName() + (Files.isDirectory(path) ? "/" : ""))).toList()) {
                 if (Files.isSymbolicLink(entry)) throw new IllegalArgumentException("Fixture symlinks are not supported");
                 boolean folder = Files.isDirectory(entry);

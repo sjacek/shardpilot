@@ -1,4 +1,4 @@
-# Configurable selection: core contract v1
+# Configurable selection: shared policy contract
 
 [Documentation index](README.md)
 
@@ -88,6 +88,10 @@ profiles:
 
 All three fallbacks default to `full` in `affected` and `fail` in other modes. The Java factory
 methods `Profile.full()`, `.smoke(...)`, `.affected(...)` and `.explicit(...)` use these defaults.
+This table describes policy v1. Optional [policy v2 impact rules](selection-impact.md) add
+directly changed tests, explicit module dependencies, structured JSON/YAML contracts and
+`onUnknownImpact`, using the same adapter parameters. V1 remains supported with its existing
+canonical policy hash and no implicit impact extensions.
 No profile inheritance or executable expressions are supported. Unknown fields, duplicate keys
 or sequence values, collection aliases, unsafe tags and incorrect scalar types fail parsing.
 The parser bounds input to 1,048,576 UTF-16 characters, 100,000 events and 16 collection levels.
@@ -113,6 +117,8 @@ Actual paths may contain spaces and Unicode; each path is bounded to 4,096 chara
    `explicit` adds the supplied exact names, all protected.
 3. In `affected`, union **all** matching rules. `require` protects targets; `optional` proposes
    budget-limited targets. `ignore` classifies a path without suppressing overlapping rules.
+   In v2, directly changed eligible tests and affected modules also protect families; all
+   matching contract rules contribute, and unknown structural impact has its own full/fail policy.
 4. An activated `full` rule selects all E and takes precedence over unmatched-path fallback.
    Otherwise apply declared unknown/unmatched-change policies before budget packing.
 5. Reserve all protected families. Consider optional families by priority, cost, then binary
@@ -187,6 +193,7 @@ families not yet evaluated. Do not put secrets or personal data in policy IDs, p
 changing any profile, including an unused one, changes the policy hash. `identity` additionally
 binds profile, E, change availability/paths/base/head, explicit requests and complete history using
 sorted, length-framed values. It is independent of shard count, which belongs to downstream plans.
+When present, frozen contract pointers, formats, raw blob hashes and failure codes are also bound.
 This is a new planning identity, separate from the 0.5.0 raw-manifest hash and `selection.id`.
 It proves repeatable planning, not execution. The
 [C2 execution-evidence validator](execution-evidence-contract.md) is implemented separately in the
@@ -310,8 +317,9 @@ profile's normal mandatory/empty-selection policy, distinct from UNKNOWN.
 
 This stage deliberately supports **committed-only** impact: tracked edits and untracked files
 make the checkout UNKNOWN. Ignore generated `build/`, `target/` and downloaded artifact folders
-in the consumer repository. Working-tree impact, structured contract diffs and automatic module
-dependency inference are not implemented. Fetch is opt-in, uses a configured remote with bounded
+in the consumer repository. Working-tree impact and automatic dependency inference are not
+implemented. [Policy v2](selection-impact.md) supports explicit module dependencies and semantic
+JSON/YAML contract diffs. Fetch is opt-in, uses a configured remote with bounded
 depth and never runs offline. Prefer a checkout with adequate history in CI. Git stderr, credential
 URLs and arbitrary subprocess error bodies are excluded from logs and evidence; `git.json` retains
 stable source/failure codes and exact known revisions/paths.

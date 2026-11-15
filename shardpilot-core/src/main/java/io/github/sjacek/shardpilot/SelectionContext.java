@@ -46,17 +46,31 @@ public record SelectionContext(String profile, Set<String> eligible, ChangeSet c
      * @param paths sorted repository-relative paths; empty when acquisition is unavailable
      * @param baseRevision full commit ID or empty for non-Git input/unavailable base
      * @param headRevision full commit ID or empty for non-Git input/unavailable head
+     * @param contracts bounded semantic observations for changed contract paths, without document values
      */
-    public record ChangeSet(Availability availability, Set<String> paths, String baseRevision, String headRevision) {
+    public record ChangeSet(Availability availability, Set<String> paths, String baseRevision, String headRevision,
+                            Map<String, SelectionImpact.Change> contracts) {
         /** Enforces normalized paths, bounded counts and full revision provenance without invoking Git. */
         public ChangeSet {
             paths = SelectionPolicy.sorted(paths);
+            contracts = Collections.unmodifiableMap(new TreeMap<>(Map.copyOf(contracts)));
             if (paths.size() > 20_000 || availability == Availability.UNKNOWN && !paths.isEmpty()
+                    || contracts.size() > 32 || !paths.containsAll(contracts.keySet())
                     || invalidRevision(baseRevision) || invalidRevision(headRevision)
                     || availability == Availability.KNOWN && baseRevision.isEmpty() != headRevision.isEmpty()) {
                 throw new IllegalArgumentException("Invalid selection change provenance");
             }
             paths.forEach(path -> SelectionGlob.path(path, false));
+        }
+
+        /** Legacy path-only context, without structured-contract observations.
+         * @param availability acquisition outcome
+         * @param paths complete changed paths
+         * @param baseRevision exact base or empty
+         * @param headRevision exact head or empty
+         */
+        public ChangeSet(Availability availability, Set<String> paths, String baseRevision, String headRevision) {
+            this(availability, paths, baseRevision, headRevision, Map.of());
         }
 
         /**

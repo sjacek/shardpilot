@@ -74,14 +74,15 @@ public final class GitChanges {
 
         /**
          * Serializes only bounded metadata; JSON is also valid input to the strict snapshot reader.
-         * @return deterministic version-1 acquisition snapshot
+         * @return deterministic v1 snapshot, or v2 when structured observations are present
          */
         public String json() {
-            return "{\"schemaVersion\":1,\"source\":" + ShardCoverage.quote(source.name()) + ",\"failure\":"
+            return "{\"schemaVersion\":" + (changes.contracts().isEmpty() ? 1 : 2) + ",\"source\":" + ShardCoverage.quote(source.name()) + ",\"failure\":"
                     + ShardCoverage.quote(failure.name()) + ",\"availability\":" + ShardCoverage.quote(changes.availability().name())
                     + ",\"baseRevision\":" + ShardCoverage.quote(changes.baseRevision()) + ",\"headRevision\":"
                     + ShardCoverage.quote(changes.headRevision()) + ",\"paths\":["
-                    + String.join(",", changes.paths().stream().map(ShardCoverage::quote).toList()) + "]}\n";
+                    + String.join(",", changes.paths().stream().map(ShardCoverage::quote).toList()) + "]"
+                    + (changes.contracts().isEmpty() ? "" : ",\"contracts\":" + ImpactSnapshots.json(changes.contracts())) + "}\n";
         }
     }
 
@@ -139,6 +140,75 @@ public final class GitChanges {
     }
 
     /**
+     * Acquires committed paths and bounded structural observations from the same exact Git trees.
+     * Only files matched by configured contract rules are read; no worktree content or external filter
+     * is used. Workers consume these frozen metadata without reading the base again.
+     * @param options bounded Git settings
+     * @param environment supported CI hints
+     * @param impact selected profile's declarative impact settings
+     * @return complete path evidence and at most 32 structured file observations
+     */
+    public static Result acquire(GitChangeOptions options, Map<String, String> environment, SelectionImpact.Configuration impact) {
+        var result = acquire(options, environment);
+        if (result.changes().availability() != SelectionContext.Availability.KNOWN || impact.contracts().isEmpty()) return result;
+        var changes = new java.util.TreeMap<String, SelectionImpact.Change>(); var work = new SelectionGlob.Work();
+        var git = new Commands(options); long bytes = 0;
+        try {
+            for (String path : result.changes().paths()) {
+                var rules = impact.contracts().stream().filter(rule -> rule.files().stream().anyMatch(pattern -> SelectionGlob.matches(pattern, path, "/", work))).toList();
+                if (rules.isEmpty() || changes.size() == 32) continue; // Missing observations remain UNKNOWN to the engine.
+                var format = rules.get(0).format();
+                if (rules.stream().anyMatch(rule -> rule.format() != format)) {
+                    changes.put(path, StructuredContracts.unknown(format, SelectionImpact.Failure.FORMAT_CONFLICT)); continue;
+                }
+                if (bytes >= OUTPUT_LIMIT) {
+                    // Do not read further blobs after exhausting the cohort budget. Keep an explicit
+                    // unknown observation so even a broad path rule cannot accept incomplete coverage.
+                    changes.put(path, StructuredContracts.unknown(format, SelectionImpact.Failure.RESOURCE_LIMIT)); continue;
+                }
+                try {
+                    byte[] before = blob(git, result.changes().baseRevision(), path, OUTPUT_LIMIT - (int) bytes);
+                    bytes += before == null ? 0 : before.length;
+                    byte[] after = blob(git, result.changes().headRevision(), path, OUTPUT_LIMIT - (int) bytes);
+                    bytes += after == null ? 0 : after.length;
+                    changes.put(path, before == null && after == null
+                            ? StructuredContracts.unknown(format, SelectionImpact.Failure.READ_FAILED)
+                            : StructuredContracts.compare(format, before, after));
+                } catch (CommandFailure failure) {
+                    changes.put(path, StructuredContracts.unknown(format, failure.failure == Failure.OUTPUT_LIMIT
+                            ? SelectionImpact.Failure.RESOURCE_LIMIT : SelectionImpact.Failure.READ_FAILED));
+                }
+            }
+            if (!result.changes().headRevision().equals(git.resolve("HEAD"))
+                    || git.checked("status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=none").length != 0) {
+                return unavailable(result.source(), Failure.DIRTY_WORKTREE, result.changes().headRevision());
+            }
+        } catch (CommandFailure failure) { return unavailable(result.source(), failure.failure, result.changes().headRevision()); }
+        catch (SelectionGlob.Limit exhausted) { return unavailable(result.source(), Failure.OUTPUT_LIMIT, result.changes().headRevision()); }
+        return new Result(new SelectionContext.ChangeSet(result.changes().availability(), result.changes().paths(),
+                result.changes().baseRevision(), result.changes().headRevision(), changes), result.source(), result.failure());
+    }
+
+    /** Resolves a literal tree entry before reading its immutable object; symlinks/submodules are never followed. */
+    private static byte @org.jspecify.annotations.Nullable [] blob(Commands git, String revision, String path, int remainingBytes) {
+        byte[] listing = git.checked("--literal-pathspecs", "ls-tree", "--full-tree", "-z", revision, "--", path);
+        if (listing.length == 0) return null;
+        String entry = decode(listing); int tab = entry.indexOf('\t');
+        if (tab < 0 || !entry.endsWith("\0") || !entry.substring(tab + 1, entry.length() - 1).equals(path)
+                || !entry.substring(0, tab).matches("100(?:644|755) blob (?:[a-f0-9]{40}|[a-f0-9]{64})")) throw new CommandFailure(Failure.INVALID_INPUT);
+        String object = entry.substring(0, tab).split(" ")[2];
+        String size = decode(git.checked("cat-file", "-s", object)).strip();
+        if (!size.matches("[0-9]{1,18}")) throw new CommandFailure(Failure.INVALID_INPUT);
+        long length = Long.parseLong(size);
+        // Inspect immutable object size first: oversized contracts never fill a subprocess pipe or
+        // bypass the aggregate read budget. No partial document can become a successful comparison.
+        if (length > Math.min(1_048_576, remainingBytes)) throw new CommandFailure(Failure.OUTPUT_LIMIT);
+        byte[] contents = git.checked("cat-file", "blob", object);
+        if (contents.length != length) throw new CommandFailure(Failure.INVALID_INPUT);
+        return contents;
+    }
+
+    /**
      * Reads only local HEAD, used to reject a frozen selection on another checkout. No diff/fetch is performed.
      * @param directory worker checkout
      * @return full local commit identity
@@ -188,15 +258,19 @@ public final class GitChanges {
         } catch (IllegalArgumentException failure) {
             throw new IllegalArgumentException("Invalid Git snapshot");
         }
-        if (!(parsed instanceof Map<?, ?> fields) || !fields.keySet().equals(Set.of("schemaVersion", "source", "failure", "availability", "baseRevision", "headRevision", "paths"))
-                || !Integer.valueOf(1).equals(fields.get("schemaVersion")) || !(fields.get("paths") instanceof List<?> list)) {
+        if (!(parsed instanceof Map<?, ?> fields) || !(fields.get("paths") instanceof List<?> list)) {
             throw new IllegalArgumentException("Invalid Git snapshot");
         }
+        var allowed = new TreeSet<>(Set.of("schemaVersion", "source", "failure", "availability", "baseRevision", "headRevision", "paths"));
+        if (Integer.valueOf(2).equals(fields.get("schemaVersion"))) allowed.add("contracts");
+        else if (!Integer.valueOf(1).equals(fields.get("schemaVersion"))) throw new IllegalArgumentException("Invalid Git snapshot");
+        if (!fields.keySet().equals(allowed)) throw new IllegalArgumentException("Invalid Git snapshot");
         try {
             var paths = new TreeSet<String>();
             for (Object value : list) if (!(value instanceof String path) || !paths.add(path)) throw new IllegalArgumentException("Invalid Git snapshot paths");
             return new Result(new SelectionContext.ChangeSet(SelectionContext.Availability.valueOf((String) fields.get("availability")), paths,
-                    (String) fields.get("baseRevision"), (String) fields.get("headRevision")),
+                    (String) fields.get("baseRevision"), (String) fields.get("headRevision"),
+                    fields.containsKey("contracts") ? ImpactSnapshots.read(fields.get("contracts")) : Map.of()),
                     Source.valueOf((String) fields.get("source")), Failure.valueOf((String) fields.get("failure")));
         } catch (ClassCastException | NullPointerException | IllegalArgumentException failure) {
             throw new IllegalArgumentException("Invalid Git snapshot values");

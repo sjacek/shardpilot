@@ -10,6 +10,8 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 ### Added
 
+- Automatically include changed tests and tests affected by module or JSON/YAML contract changes.
+  Use the same configuration in Gradle and Maven. [Setup guide](docs/selection-impact.md).
 - Diagnose test timeouts, interrupted runs and memory use. Detect leftover containers without
   removing them. [Setup guide](docs/execution-diagnostics.md).
 - Check compiled files shared between test jobs before running tests. Missing, changed or wrong-version

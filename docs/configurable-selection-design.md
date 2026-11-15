@@ -152,10 +152,12 @@ alone; no application-specific selector callback is required for a documented mo
 
 The shared policy contract, profiles, path rules, protected-family budgets and decision reports
 are implemented and tested in core. Shared committed Git/CI acquisition, equivalent Gradle/Maven
-parameters and frozen worker cohorts are now implemented in the development adapters. Structured
-module/contract inference, working-tree impact, automatic directly changed-test discovery, service
-migration comparisons and complete automatic-selection provenance binding remain separate follow-up
-work. C2's offline execution validator and both adapter entry points are implemented in the
+parameters and frozen worker cohorts are now implemented in the development adapters.
+[Policy v2](selection-impact.md) now adds conventional changed-test source mappings, explicit
+module dependencies and semantic JSON/YAML contract rules through that same configuration.
+It does not infer arbitrary source/package layouts or application dependencies. Working-tree
+impact, service migration comparisons and complete automatic-selection provenance binding remain
+separate follow-up work. C2's offline execution validator and both adapter entry points are implemented in the
 development checkout; retain native CI gates alongside the new aggregate gate.
 
 The development checkout also implements [C3 compiled-artifact integrity](compiled-artifacts.md)

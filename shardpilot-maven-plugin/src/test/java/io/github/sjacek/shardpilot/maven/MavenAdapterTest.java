@@ -526,13 +526,7 @@ class MavenAdapterTest {
                         action: require
                         tests: {classes: [example.OneTest]}
                 """);
-        Path helper = Path.of("shardpilot-core/src/test/resources/git-fixture/GitFixture.java").toAbsolutePath();
-        if (!Files.exists(helper)) helper = Path.of("../shardpilot-core/src/test/resources/git-fixture/GitFixture.java").toAbsolutePath();
-        Files.writeString(directory.resolve(".shardpilot-fixture-testdata"), "synthetic Git fixture\n");
-        var process = new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
-                helper.toString(), directory.toString()).redirectError(ProcessBuilder.Redirect.INHERIT).start();
-        String output = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-        assertEquals(0, process.waitFor(), output);
+        initializeGitFixture();
         select.gitDirectory = directory.toFile();
         select.gitBase = "main-testdata";
         select.execute();
@@ -624,6 +618,51 @@ class MavenAdapterTest {
         verify.execute();
         assertEquals(plan, Files.readString(verify.planDirectory().resolve("selection.id")));
         assertTrue(Files.readString(verify.namespace().resolve("coverage.html")).contains("Verification: PASSED"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"full", "fail"})
+    void v2MalformedCommittedContractHonorsTheSelectedFallbackBeforeWritingNativeExclusions(String fallback) throws Exception {
+        enableProfile("affected");
+        Files.writeString(select.selectionPolicyFile.toPath(), """
+                schemaVersion: 2
+                profiles:
+                  smoke-testdata:
+                    mode: affected
+                    onUnknownChanges: fail
+                    onUnknownImpact: %s
+                    onUnmatchedChanges: fail
+                    rules: [{id: known-paths, changes: ['src/**', 'contracts/**', deleted.txt], action: ignore}]
+                    impact:
+                      contracts:
+                        - {id: api, files: ['contracts/*.json'], format: json, pointers: ['/paths/~1payments'], action: require, tests: {classes: [example.OneTest]}}
+                """.formatted(fallback));
+        initializeGitFixture("impact-invalid");
+        select.gitDirectory = directory.toFile();
+        select.gitBase = "main-testdata";
+        if (fallback.equals("full")) {
+            select.execute();
+            assertEquals(Set.of("example.OneTest", "example.TwoTest"), ClassManifest.read(select.selectionDirectory().resolve("actual-1.yaml"), false));
+        } else {
+            assertThrows(MojoFailureException.class, select::execute);
+            assertFalse(Files.exists(select.exclusions()));
+            assertFalse(Files.exists(select.namespace().resolve("selection/selected.yaml")));
+        }
+        String decision = Files.readString(select.namespace().resolve("selection/decision/decision.json"));
+        assertTrue(decision.contains("UNKNOWN_IMPACT"));
+        assertFalse(decision.contains("PRIVATE_INVALID_INPUT"));
+    }
+
+    /** Shared object-writer fixture, without commits/pushes or any change to the developer's history. */
+    private void initializeGitFixture(String... modes) throws Exception {
+        Path helper = Path.of("shardpilot-core/src/test/resources/git-fixture/GitFixture.java").toAbsolutePath();
+        if (!Files.exists(helper)) helper = Path.of("../shardpilot-core/src/test/resources/git-fixture/GitFixture.java").toAbsolutePath();
+        Files.writeString(directory.resolve(".shardpilot-fixture-testdata"), "synthetic Git fixture\n");
+        var arguments = new java.util.ArrayList<>(List.of(Path.of(System.getProperty("java.home"), "bin", "java").toString(), helper.toString(), directory.toString()));
+        arguments.addAll(List.of(modes));
+        var process = new ProcessBuilder(arguments).redirectError(ProcessBuilder.Redirect.INHERIT).start();
+        String output = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        assertEquals(0, process.waitFor(), output);
     }
 
     private void enableProfile(String mode) throws IOException {

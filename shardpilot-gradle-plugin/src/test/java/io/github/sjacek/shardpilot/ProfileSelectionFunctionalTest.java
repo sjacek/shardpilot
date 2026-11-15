@@ -104,6 +104,82 @@ class ProfileSelectionFunctionalTest {
         assertFalse(Files.exists(directory.resolve("build/shardpilot/test/escape-testdata/git/changes.json")));
     }
 
+    @Test
+    void v2ImpactCombinesChangedTestsModulesAndJsonYamlAndFreezesBothNodes() throws Exception {
+        copy(Path.of("examples/gradle/junit-jupiter/selection-impact"), directory);
+        Files.writeString(directory.resolve("settings.gradle"), "rootProject.name = 'impact-testdata'\n");
+        // Inactive profiles may describe another suite. Their targets/formats cannot expand this
+        // profile's eligibility or contract reads; merging them would create a format conflict.
+        Files.writeString(directory.resolve("policy.yaml"), """
+                  unrelated-testdata:
+                    mode: affected
+                    impact:
+                      contracts:
+                        - {id: other-suite, files: ['contracts/*.json'], format: yaml, pointers: [''], action: require, tests: {classes: [other.MissingTest]}}
+                """, java.nio.file.StandardOpenOption.APPEND);
+        VerifiedTestKit.create(directory);
+        String[] ids = gitFixture("impact");
+        runner("prepareTestShardManifests", "-Pshardpilot.selectionProfile=impact-testdata", "-Pshardpilot.gitBase=main-testdata", "-Pshardpilot.count=2").build();
+        Path frozen = directory.resolve("build/downloaded-selection"); copy(output("impact-testdata", "selection"), frozen);
+        var git = GitChanges.read(frozen.resolve("decision/git.json"));
+        assertEquals(2, git.changes().contracts().size());
+        String decision = Files.readString(frozen.resolve("decision/decision.json"));
+        assertTrue(decision.contains("CHANGED_TEST")); assertTrue(decision.contains("DEPENDENT_MODULE")); assertTrue(decision.contains("REQUIRED_CONTRACT"));
+        // A worker must use the frozen comparison, even when the mutable base now points at HEAD.
+        Files.writeString(directory.resolve(".git/refs/heads/main-testdata"), ids[1] + "\n");
+        var executed = new java.util.TreeSet<String>();
+        for (int node = 1; node <= 2; node++) {
+            var run = runner("test", "-Pshardpilot.selectionProfile=impact-testdata", "-Pshardpilot.count=2", "-Pshardpilot.index=" + node,
+                    "-Pshardpilot.selectionSnapshotDirectory=" + frozen).build();
+            assertNull(run.task(":acquireTestGitChanges"));
+            var nativeClasses = executedClasses("impact-testdata", node);
+            assertEquals(actual("impact-testdata", node), nativeClasses);
+            assertTrue(java.util.Collections.disjoint(executed, nativeClasses)); executed.addAll(nativeClasses);
+        }
+        assertEquals(Set.of("example.selection.AlphaTest", "example.selection.BetaTest", "example.selection.GammaTest"), executed);
+        runner("verifyTestShards", "-Pshardpilot.selectionProfile=impact-testdata", "-Pshardpilot.count=2").build();
+        Files.writeString(frozen.resolve("decision/git.json"), Files.readString(frozen.resolve("decision/git.json")).replace("/paths/~1payments/summary", "/metadata"));
+        var rejected = runner("test", "-Pshardpilot.selectionProfile=impact-testdata", "-Pshardpilot.count=2", "-Pshardpilot.selectionSnapshotDirectory=" + frozen).buildAndFail();
+        assertNull(rejected.task(":test")); assertFalse(Files.exists(output("impact-testdata", "selection/selection.id")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"full", "fail"})
+    void kotlinV2PreservesTheDeclaredFallbackForMalformedCommittedContracts(String fallback) throws Exception {
+        copy(Path.of("examples/gradle/junit-jupiter/selection-profiles-kotlin"), directory);
+        Files.writeString(directory.resolve("settings.gradle.kts"), "rootProject.name = \"kotlin-impact-testdata\"\n");
+        Files.copy(Path.of("examples/gradle/junit-jupiter/selection-impact/src/test/java/example/selection/UnusedTest.java"),
+                directory.resolve("src/test/java/example/selection/UnusedTest.java"));
+        String policy = Files.readString(Path.of("examples/gradle/junit-jupiter/selection-impact/policy.yaml"));
+        Files.writeString(directory.resolve("policy.yaml"), policy.replace("onUnknownImpact: fail", "onUnknownImpact: " + fallback));
+        Files.writeString(directory.resolve("build.gradle.kts"), """
+
+                tasks.named<Test>("test") {
+                    reports.junitXml.outputLocation.set(layout.buildDirectory.dir("shardpilot/test/selections/profile-impact-testdata/test-results/1"))
+                }
+                """, java.nio.file.StandardOpenOption.APPEND);
+        VerifiedTestKit.create(directory);
+        gitFixture("impact-invalid");
+        String[] arguments = {"test", "-Pshardpilot.selectionProfile=impact-testdata", "-Pshardpilot.gitBase=main-testdata"};
+        var run = fallback.equals("full") ? runner(arguments).build() : runner(arguments).buildAndFail();
+        String decision = Files.readString(output("impact-testdata", "selection/decision/decision.json"));
+        assertTrue(decision.contains("UNKNOWN_IMPACT"));
+        assertFalse(decision.contains("PRIVATE_INVALID_INPUT"));
+        if (fallback.equals("full")) {
+            assertEquals(TaskOutcome.SUCCESS, requireNonNull(run.task(":test")).getOutcome());
+            assertEquals(Set.of("example.selection.AlphaTest", "example.selection.BetaTest", "example.selection.GammaTest", "example.selection.UnusedTest"), executedClasses("impact-testdata", 1));
+        } else {
+            assertNull(run.task(":test"));
+            assertFalse(Files.exists(output("impact-testdata", "selection/selected.yaml")));
+            assertFalse(Files.exists(output("impact-testdata", "actual/actual-1.yaml")));
+        }
+        // Reusing the Kotlin build model cannot turn incomplete impact into a cached successful subset.
+        var repeated = fallback.equals("full") ? runner(arguments).build() : runner(arguments).buildAndFail();
+        assertTrue(repeated.getOutput().contains("Reusing configuration cache."));
+        assertEquals(TaskOutcome.SUCCESS, requireNonNull(repeated.task(":acquireTestGitChanges")).getOutcome());
+        if (fallback.equals("fail")) assertNull(repeated.task(":test"));
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"dirty", "different-head"})
     void frozenCheckoutValidationRunsBeforeReusingAlreadySuccessfulNativeOutputs(String mutation) throws Exception {
@@ -133,7 +209,11 @@ class ProfileSelectionFunctionalTest {
     }
 
     private Set<String> executedAffectedClasses(int index) throws Exception {
-        Path reports = output("affected-testdata", "test-results/" + index);
+        return executedClasses("affected-testdata", index);
+    }
+
+    private Set<String> executedClasses(String profile, int index) throws Exception {
+        Path reports = output(profile, "test-results/" + index);
         var result = new java.util.TreeSet<String>();
         var factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -166,10 +246,12 @@ class ProfileSelectionFunctionalTest {
         VerifiedTestKit.create(directory); // Checksum policy belongs in the synthetic committed baseline.
     }
 
-    private String[] gitFixture() throws Exception {
+    private String[] gitFixture(String... mode) throws Exception {
         Path launcher = Path.of("shardpilot-core/src/test/resources/git-fixture/GitFixture.java").toAbsolutePath();
         Files.writeString(directory.resolve(".shardpilot-fixture-testdata"), "synthetic Git fixture\n");
-        var process = new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", "java").toString(), launcher.toString(), directory.toString())
+        var arguments = new ArrayList<>(List.of(Path.of(System.getProperty("java.home"), "bin", "java").toString(), launcher.toString(), directory.toString()));
+        arguments.addAll(List.of(mode));
+        var process = new ProcessBuilder(arguments)
                 .redirectError(ProcessBuilder.Redirect.INHERIT).start();
         String output = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).strip();
         assertEquals(0, process.waitFor(), output);

@@ -60,6 +60,12 @@ public final class SelectionDecision {
         REQUIRED_RULE,
         /** Matching optional rule proposed this family. */
         OPTIONAL_RULE,
+        /** A changed eligible source protects its compiled outer family. */ CHANGED_TEST,
+        /** This module's configured source paths changed. */ CHANGED_MODULE,
+        /** A provider changed; reverse dependency propagation protected this module. */ DEPENDENT_MODULE,
+        /** A structured contract rule protected this family. */ REQUIRED_CONTRACT,
+        /** A structured contract rule proposed budget-limited coverage. */ OPTIONAL_CONTRACT,
+        /** Structured input is unavailable, ambiguous or changed outside configured pointers. */ UNKNOWN_IMPACT,
         /** History lacked this family; the configured substitute was used. */
         UNKNOWN_ESTIMATE,
         /** Optional addition exceeded the estimated seconds limit. */
@@ -286,7 +292,9 @@ public final class SelectionDecision {
                 + ",\"policySha256\":" + quote(policySha256) + ",\"identity\":" + quote(identity)
                 + ",\"changes\":{\"availability\":" + quote(context.changes().availability().name())
                 + ",\"baseRevision\":" + quote(context.changes().baseRevision()) + ",\"headRevision\":" + quote(context.changes().headRevision())
-                + ",\"pathCount\":" + context.changes().paths().size() + "},\"eligibleClasses\":" + eligible().size()
+                + ",\"pathCount\":" + context.changes().paths().size()
+                + (context.changes().contracts().isEmpty() ? "" : ",\"contracts\":" + ImpactSnapshots.json(context.changes().contracts()))
+                + "},\"eligibleClasses\":" + eligible().size()
                 + ",\"selectedClasses\":" + selected.size() + ",\"selectedFamilies\":"
                 + families.values().stream().filter(family -> family.disposition() == Disposition.SELECTED).count()
                 + ",\"estimatedSeconds\":" + estimatedSeconds() + ",\"budget\":{\"maxFamilies\":" + budget.maxFamilies()

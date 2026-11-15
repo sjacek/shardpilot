@@ -6,18 +6,11 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** Private C4 storage: fixed filenames, bounded JSON and no diagnostic payloads in exceptions. */
 final class DiagnosticsFiles {
     private DiagnosticsFiles() { }
-
-    static Map<String, Object> object(Object... pairs) {
-        var result = new LinkedHashMap<String, Object>();
-        for (int i = 0; i < pairs.length; i += 2) result.put((String) pairs[i], pairs[i + 1]);
-        return result;
-    }
 
     /** Rejects known alias paths, including Windows reparse entries; not a sandbox against concurrent writers. */
     static void safe(Path path) throws IOException {

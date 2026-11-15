@@ -9,7 +9,7 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static io.github.sjacek.shardpilot.DiagnosticsFiles.object;
+import static io.github.sjacek.shardpilot.DocumentMaps.object;
 
 /** Only info/ps are issued. No create, pull, exec, stop, rm, prune or access to container payloads. */
 final class DiagnosticDocker {

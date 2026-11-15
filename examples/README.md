@@ -17,3 +17,8 @@ gates and report paths that remain distinct after artifact collection.
 
 See the tool-specific indexes for prerequisites, shard commands, local development and IDE import.
 The [documentation index](../docs/README.md) describes the supported contracts and verification scope.
+
+Development impact-selection examples use the same v2 policy for
+[Gradle](gradle/junit-jupiter/selection-impact/README.md) and
+[Maven](maven/selection-impact/README.md): directly changed tests, transitive module consumers
+and scoped JSON/YAML contract changes, with no consumer selector scripts.

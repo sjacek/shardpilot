@@ -9,9 +9,9 @@ import java.util.TreeSet;
 import org.jspecify.annotations.NullMarked;
 
 /**
- * Immutable, build-tool-independent configuration for the version-1 selection engine.
+ * Immutable, build-tool-independent configuration for the selection engine; v1 remains supported.
  * Required parameters are non-null; adapters must snapshot their own lazy properties first.
- * @param schemaVersion supported wire-contract version, currently 1
+ * @param schemaVersion 1 for legacy profiles, 2 to enable changed tests/modules/contract rules
  * @param profiles named independent suite policies, copied and ordered by name
  */
 @NullMarked
@@ -19,7 +19,8 @@ public record SelectionPolicy(int schemaVersion, Map<String, Profile> profiles) 
     /** Validates version/profile bounds and snapshots the supplied profile map. */
     public SelectionPolicy {
         profiles = Collections.unmodifiableMap(new TreeMap<>(Map.copyOf(profiles)));
-        if (schemaVersion != 1 || profiles.isEmpty() || profiles.size() > 64) {
+        if ((schemaVersion != 1 && schemaVersion != 2) || profiles.isEmpty() || profiles.size() > 64
+                || schemaVersion == 1 && profiles.values().stream().anyMatch(profile -> !profile.impact().isEmpty())) {
             throw new IllegalArgumentException("Invalid selection policy version or profile count");
         }
         profiles.keySet().forEach(SelectionPolicy::identifier);
@@ -113,13 +114,20 @@ public record SelectionPolicy(int schemaVersion, Map<String, Profile> profiles) 
         public Rule {
             identifier(id);
             changes = sorted(changes);
-            boolean targetsRequired = action == Action.REQUIRE || action == Action.OPTIONAL;
-            if (changes.isEmpty() || changes.size() > 256 || priority < 0
-                    || targetsRequired && tests.isEmpty() || !targetsRequired && !tests.isEmpty()
-                    || action != Action.OPTIONAL && priority != 0) {
+            if (changes.isEmpty() || changes.size() > 256) {
                 throw new IllegalArgumentException("Invalid selection rule configuration");
             }
+            validateAction(action, tests, priority);
             changes.forEach(pattern -> SelectionGlob.path(pattern, true));
+        }
+    }
+
+    /** Shared action contract for path and structural rules, independent of their matching mechanism. */
+    static void validateAction(Action action, Targets tests, int priority) {
+        boolean targetsRequired = action == Action.REQUIRE || action == Action.OPTIONAL;
+        if (priority < 0 || targetsRequired && tests.isEmpty() || !targetsRequired && !tests.isEmpty()
+                || action != Action.OPTIONAL && priority != 0) {
+            throw new IllegalArgumentException("Invalid selection rule configuration");
         }
     }
 
@@ -158,16 +166,34 @@ public record SelectionPolicy(int schemaVersion, Map<String, Profile> profiles) 
      * @param onUnknownChanges action when change acquisition is unavailable
      * @param onUnmatchedChanges action for unclassified paths
      * @param onEmptySelection action when an automatic profile would select nothing
+     * @param impact version-2 changed-test roots, module graph and structured-contract rules
+     * @param onUnknownImpact full/fail for unreadable or unclassified structured changes
      */
     public record Profile(Mode mode, Targets mandatory, List<Rule> rules, Budget budget,
-                          Fallback onUnknownChanges, Fallback onUnmatchedChanges, Fallback onEmptySelection) {
+                          Fallback onUnknownChanges, Fallback onUnmatchedChanges, Fallback onEmptySelection,
+                          SelectionImpact.Configuration impact, Fallback onUnknownImpact) {
         /** Snapshots rules by ID and rejects duplicates or rules on a non-affected profile. */
         public Profile {
             rules = List.copyOf(rules).stream().sorted(java.util.Comparator.comparing(Rule::id)).toList();
-            if (rules.size() > 256 || mode != Mode.AFFECTED && !rules.isEmpty()
+            if (rules.size() > 256 || mode != Mode.AFFECTED && (!rules.isEmpty() || !impact.isEmpty())
                     || rules.stream().map(Rule::id).distinct().count() != rules.size()) {
                 throw new IllegalArgumentException("Invalid selection profile rules");
             }
+        }
+
+        /** Source-compatible version-1 constructor, with all additional impact analysis disabled.
+         * @param mode selection algorithm
+         * @param mandatory protected targets
+         * @param rules path rules
+         * @param budget configured limits
+         * @param onUnknownChanges unavailable Git policy
+         * @param onUnmatchedChanges unmatched path policy
+         * @param onEmptySelection empty selection policy
+         */
+        public Profile(Mode mode, Targets mandatory, List<Rule> rules, Budget budget,
+                       Fallback onUnknownChanges, Fallback onUnmatchedChanges, Fallback onEmptySelection) {
+            this(mode, mandatory, rules, budget, onUnknownChanges, onUnmatchedChanges, onEmptySelection,
+                    SelectionImpact.Configuration.none(), Fallback.FULL);
         }
 
         /**

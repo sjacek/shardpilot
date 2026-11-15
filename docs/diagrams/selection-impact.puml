@@ -1,0 +1,39 @@
+@startuml
+title Shared declarative test impact
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam activity {
+  BackgroundColor #E8F5F0
+  BorderColor #167C61
+  FontColor #173A32
+}
+start
+:Read policy v2 and independent\nnative eligible classes E;
+:Acquire clean committed Git changes\nand exact base/head contract blobs;
+fork
+  :Map changed test source paths\nto eligible outer families;
+fork again
+  :Find changed modules and\ntransitive consumers;
+fork again
+  :Compare JSON/YAML values;\nmatch changed JSON Pointers;
+end fork
+if (Impact incomplete?) then (yes)
+  :Apply declared full / fail policy;\nnever accept a partial subset;
+else (no)
+  :Union mandatory and required families;\npack optional tests within budget;
+endif
+:Freeze decision, pointers and SHA-256;\nretain JSON / HTML explanation;
+if (Accepted?) then (yes)
+  :Replay and validate frozen selection\nbefore starting every node;
+  fork
+    :Gradle Test workers;
+  fork again
+    :Maven Surefire / Failsafe workers;
+  end fork
+  :Keep native results\nand independent coverage gates;
+else (no)
+  :Remove stale executable selection;\nstop before test workers;
+endif
+stop
+@enduml

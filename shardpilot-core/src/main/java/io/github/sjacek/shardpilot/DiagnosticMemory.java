@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
-import static io.github.sjacek.shardpilot.DiagnosticsFiles.object;
+import static io.github.sjacek.shardpilot.DocumentMaps.object;
 
 /** Allowlisted counters only; never reads command lines, environments, Docker logs or application output. */
 final class DiagnosticMemory {

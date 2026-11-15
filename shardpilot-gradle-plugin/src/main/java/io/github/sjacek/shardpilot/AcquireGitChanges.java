@@ -121,10 +121,12 @@ public abstract class AcquireGitChanges extends DefaultTask {
         var profile = policy.profiles().get(getProfile().get());
         // An unknown profile is left for the engine's failed decision; it must never trigger implicit
         // affected-mode I/O. Non-affected modes work even outside a Git checkout.
+        // Only the active profile may request contract blobs. Other profiles' paths/formats must not
+        // expand I/O or leak observations into this cohort's frozen metadata.
         var result = profile != null && profile.mode() == SelectionPolicy.Mode.AFFECTED
                 ? GitChanges.acquire(new GitChangeOptions(getCheckout().get().getAsFile().toPath(), getBase().get(), getHead().get(),
                     getMergeBase().get(), getFetch().get() && !getOffline().get(), getRemote().get(), getFetchDepth().get(), getTimeoutSeconds().get()),
-                    System.getenv()) : GitChanges.notRequired();
+                    System.getenv(), profile.impact()) : GitChanges.notRequired();
         var output = getSnapshot().get().getAsFile().toPath();
         Files.createDirectories(output.toAbsolutePath().getParent());
         Files.writeString(output, result.json());

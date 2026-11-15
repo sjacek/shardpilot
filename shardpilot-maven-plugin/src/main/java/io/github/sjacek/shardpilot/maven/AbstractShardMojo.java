@@ -235,9 +235,11 @@ public abstract class AbstractShardMojo extends AbstractMojo {
             throw new IllegalArgumentException("Multi-shard profile execution requires selectionSnapshotDirectory from one planning job");
         }
         var profile = policy.profiles().get(selectionProfile);
+        // Structured observations belong to this profile and exact checkout. Restored workers return
+        // above, so a downloaded cohort never rereads contract blobs or applies a different base.
         GitChanges.Result changes = profile != null && profile.mode() == SelectionPolicy.Mode.AFFECTED
                 ? GitChanges.acquire(new GitChangeOptions(checkout, gitBase, gitHead, gitMergeBase,
-                    gitFetch && (session == null || !session.isOffline()), gitRemote, gitFetchDepth, gitTimeoutSeconds), System.getenv())
+                    gitFetch && (session == null || !session.isOffline()), gitRemote, gitFetchDepth, gitTimeoutSeconds), System.getenv(), profile.impact())
                 : GitChanges.notRequired();
         var context = new SelectionContext(selectionProfile, eligible, changes.changes(), DurationHistory.parse(history), explicit);
         return ProfileSelection.prepare(output, policy, context, changes, selectedSuite, history, shardCount);

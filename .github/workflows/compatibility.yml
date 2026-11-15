@@ -314,6 +314,10 @@ jobs:
             shardpilot-maven-plugin/target/it/execution-equivalence-*/build*.log
             shardpilot-maven-plugin/target/it/execution-evidence/target/*.json
             shardpilot-maven-plugin/target/it/execution-evidence/target/*.html
+            shardpilot-maven-plugin/target/it/selection-impact/target/**/decision/*.json
+            shardpilot-maven-plugin/target/it/selection-impact/target/**/decision/*.html
+            shardpilot-maven-plugin/target/it/selection-impact/target/**/test-results/**/*.xml
+            shardpilot-maven-plugin/target/it/selection-impact/target/**/coverage.html
             shardpilot-maven-plugin/target/it/diagnostics/target/diagnostics/**/report.json
             shardpilot-maven-plugin/target/it/diagnostics/target/diagnostics/**/report.html
             shardpilot-maven-plugin/target/it/diagnostics/target/diagnostics/**/samples.jsonl

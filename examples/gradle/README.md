@@ -14,6 +14,7 @@ Each scenario is an independent Gradle consumer build, not a subproject of the p
 | JUnit Jupiter | [PostgreSQL and RabbitMQ with Testcontainers](junit-jupiter/testcontainers/README.md) | Available |
 | JUnit Jupiter | [Duration-history refresh without Docker](junit-jupiter/duration-history/README.md) | Available |
 | JUnit Jupiter | [Explicit selection without Docker](junit-jupiter/test-selection/README.md) | Prepared for 0.5.0 |
+| JUnit Jupiter | [Changed tests, modules and contracts](junit-jupiter/selection-impact/README.md) | Development checkout, policy v2 |
 | Spock | [PostgreSQL and RabbitMQ with Testcontainers](spock/testcontainers/README.md) | Available |
 | TestNG | [PostgreSQL and RabbitMQ with Testcontainers](testng/testcontainers/README.md) | Available |
 

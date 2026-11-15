@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
 import static io.github.sjacek.shardpilot.SelectionDecision.*;
 import static io.github.sjacek.shardpilot.SelectionPolicy.*;
 
-/** Pure version-1 policy evaluation. No filesystem, Git, native discovery or test process is invoked. */
+/** Pure versioned policy evaluation. No filesystem, Git, native discovery or test process is invoked. */
 @NullMarked
 public final class SelectionEngine {
     private SelectionEngine() { }
@@ -47,6 +47,8 @@ public final class SelectionEngine {
             var mandatory = state.resolve(profile.mandatory());
             // Validate every configured target, even in a rule that does not match this particular diff.
             for (var rule : profile.rules()) state.resolve(rule.tests());
+            for (var module : profile.impact().modules()) state.resolve(module.tests());
+            for (var rule : profile.impact().contracts()) state.resolve(rule.tests());
             if (!state.invalidTargets.isEmpty()) return state.failed(Reason.INVALID_TARGET);
             mandatory.forEach(name -> state.node(name).require(Reason.MANDATORY, ""));
             if (profile.mode() == Mode.FULL) return state.full(Reason.FULL_PROFILE, Kind.FULL);
@@ -62,9 +64,21 @@ public final class SelectionEngine {
                 if (context.changes().availability() == SelectionContext.Availability.UNKNOWN) {
                     return state.fallback(profile.onUnknownChanges(), Reason.UNKNOWN_CHANGES);
                 }
+                var impact = SelectionImpact.analyze(profile.impact(), context, state.work);
+                state.matchedRules.addAll(impact.sources());
                 boolean full = false;
+                for (var effect : impact.effects()) {
+                    if (effect.action() == Action.FULL) {
+                        full = true; state.nodes.values().forEach(node -> node.rules.add(effect.source()));
+                    }
+                    for (String name : state.resolve(effect.tests())) {
+                        var node = state.node(name);
+                        if (effect.action() == Action.REQUIRE) node.require(effect.reason(), effect.source());
+                        if (effect.action() == Action.OPTIONAL) { node.optional(effect.source(), effect.priority()); node.reasons.add(effect.reason()); }
+                    }
+                }
                 for (String path : context.changes().paths()) {
-                    boolean matched = false;
+                    boolean matched = impact.classified().contains(path);
                     // Do not stop at the first matching rule: IGNORE classifies paths, never vetoes coverage.
                     for (var rule : profile.rules()) {
                         if (rule.changes().stream().noneMatch(pattern -> SelectionGlob.matches(pattern, path, "/", state.work))) continue;
@@ -81,6 +95,7 @@ public final class SelectionEngine {
                     if (!matched) state.unmatched.add(path);
                 }
                 if (full) return state.full(Reason.FULL_RULE, Kind.FULL_FALLBACK);
+                if (impact.unknown()) return state.fallback(profile.onUnknownImpact(), Reason.UNKNOWN_IMPACT);
                 if (!state.unmatched.isEmpty()) return state.fallback(profile.onUnmatchedChanges(), Reason.UNMATCHED_CHANGE);
             }
             return state.pack(profile);
@@ -287,6 +302,7 @@ public final class SelectionEngine {
             frame(output, context.changes().baseRevision());
             frame(output, context.changes().headRevision());
             names(output, context.changes().paths());
+            if (!context.changes().contracts().isEmpty()) frame(output, ImpactSnapshots.json(context.changes().contracts()));
             names(output, context.explicitClasses());
             // Bind complete history, including unrelated families, so a reused decision cannot hide input drift.
             output.writeInt(context.history().size());

@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import static io.github.sjacek.shardpilot.DiagnosticsFiles.object;
+import static io.github.sjacek.shardpilot.DocumentMaps.object;
 
 /**
  * Optional C4 supervisor and repeatable after-script verification. No test discovery, compilation,

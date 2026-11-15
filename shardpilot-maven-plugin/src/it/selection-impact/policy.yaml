@@ -1,0 +1,22 @@
+schemaVersion: 2
+profiles:
+  smoke-testdata:
+    mode: smoke
+    mandatory: {classes: [example.selection.AlphaTest, example.selection.BetaTest]}
+  impact-testdata:
+    mode: affected
+    onUnknownChanges: fail
+    onUnknownImpact: fail
+    onUnmatchedChanges: fail
+    onEmptySelection: fail
+    rules:
+      - {id: legacy-paths, changes: ['src/**', deleted.txt], action: ignore}
+    impact:
+      changedTests:
+        - {path: src/test/java}
+      modules:
+        - {id: library, changes: ['src/library/**']}
+        - {id: app, changes: ['src/app/**'], dependsOn: [library], tests: {classes: [example.selection.BetaTest]}}
+      contracts:
+        - {id: json-api, files: ['contracts/*.json'], format: json, pointers: ['/paths/~1payments'], action: require, tests: {classes: [example.selection.GammaTest]}}
+        - {id: yaml-api, files: ['contracts/*.yaml'], format: yaml, pointers: ['/paths/~1payments'], action: require, tests: {classes: [example.selection.GammaTest]}}

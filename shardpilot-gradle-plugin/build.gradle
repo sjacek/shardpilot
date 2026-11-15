@@ -161,6 +161,7 @@ test {
     }).withPropertyName('selectionConsumerExample')
     inputs.file(rootProject.file('shardpilot-core/src/test/resources/git-fixture/GitFixture.java')).withPropertyName('syntheticGitFixture')
     inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-profiles')).withPropertyName('profileSelectionConsumer')
+    inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-impact')).withPropertyName('impactSelectionConsumer')
     inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-profiles-kotlin')).withPropertyName('profileSelectionKotlinConsumer')
     inputs.files(rootProject.fileTree('testing/execution-equivalence')).withPropertyName('nativeExecutionFixtures')
     inputs.files(rootProject.fileTree('docs/examples/execution-evidence-testdata')).withPropertyName('executionEvidenceFixtures')

@@ -76,7 +76,7 @@ class SelectionPolicyYamlTest {
             "schemaVersion: 1\nprofiles: {daily-testdata: {mode: full, budget: {maxFamilies: '2'}}}",
             "schemaVersion: 1\nprofiles: {daily-testdata: {mode: affected, rules: [{id: x, changes: ['**'], action: optional, tests: {classes: [example.A]}, priority: 1.5}]}}",
             "schemaVersion: 1\nprofiles: {daily-testdata: {mode: smoke, mandatory: {classes: [example.A], extra: secret-sentinel}}}",
-            "schemaVersion: 2\nprofiles: {daily-testdata: {mode: full}}",
+            "schemaVersion: 3\nprofiles: {daily-testdata: {mode: full}}",
             "schemaVersion: 1\nprofiles: {}",
             "schemaVersion: 1.0\nprofiles: {daily-testdata: {mode: full}}",
             "schemaVersion: 1\nprofiles: {daily-testdata: {mode: full, extra: secret-sentinel}}",

@@ -12,6 +12,8 @@ test-runner replacement or telemetry. YAML manifests use SnakeYAML Engine in the
 
 Development checkout adds [configurable profiles and Git acquisition](https://github.com/sjacek/shardpilot/blob/main/docs/selection-policy.md)
 through both adapters; those additions are not in published 0.5.0.
+It also supports [changed tests, module dependencies and JSON/YAML contract rules](docs/selection-impact.md)
+through one shared configuration file.
 
 Optional [explicit selection](docs/test-selection.md) runs a consumer-owned YAML class subset with
 one or multiple shards, validates it against full eligibility and keeps separate selection reports.
