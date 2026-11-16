@@ -1,2 +1,9 @@
-pluginManagement { includeBuild('../../../..') }
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    // Keep repository configuration when replaying from a fresh copied fixture.
+    includeBuild(providers.gradleProperty('example.pluginSourceDirectory').getOrElse('../../../..'))
+}
 rootProject.name = 'selection-migration-testdata'

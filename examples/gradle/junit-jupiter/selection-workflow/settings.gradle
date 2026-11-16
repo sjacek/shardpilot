@@ -1,2 +1,10 @@
-pluginManagement { includeBuild('../../../..') }
+pluginManagement {
+    // Plugin runtime dependencies use the same Maven Central cache as dependency warmup.
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    // Fixture-only override lets the driver copy this project without rewriting its repositories.
+    includeBuild(providers.gradleProperty('example.pluginSourceDirectory').getOrElse('../../../..'))
+}
 rootProject.name = 'selection-workflow-testdata'

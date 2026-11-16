@@ -79,10 +79,11 @@ def run(tool, output, command, corrupt=None, repository=None):
     revision = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
     environment = None
     if tool == 'gradle':
-        (output / 'settings.gradle').write_text("pluginManagement { includeBuild('" + ROOT.as_posix() + "') }\nrootProject.name='workflow-testdata'\n")
         (output / 'gradle').mkdir(exist_ok=True)
         shutil.copyfile(ROOT / 'gradle/verification-metadata.xml', output / 'gradle/verification-metadata.xml')
-        common = ['-p', str(output), '--offline', '--console=plain', '--max-workers=1', '-Pshardpilot.count=2', '-Pshardpilot.executionRevision=' + revision]
+        # Preserve the checked-in plugin repositories; a plugin-only Portal cache is not warmed.
+        common = ['-p', str(output), '--offline', '--console=plain', '--max-workers=1',
+                  '-Pexample.pluginSourceDirectory=' + str(ROOT), '-Pshardpilot.count=2', '-Pshardpilot.executionRevision=' + revision]
         snapshot = output / 'build/shardpilot/test/selections' / SUITE / 'selection'
         plans = output / 'build/shardpilot/test/selections' / SUITE / 'plan'
         compile_goals = ['testClasses', 'prepareTestShardManifests']

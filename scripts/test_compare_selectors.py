@@ -150,6 +150,20 @@ profiles:
         for file in [left / 'policy.yaml', left / 'durations.tsv', *left.rglob('*.java')]:
             self.assertEqual(file.read_bytes(), (right / file.relative_to(left)).read_bytes())
 
+    def test_gradle_driver_preserves_plugin_repositories_in_the_copied_settings(self):
+        output = self.root / 'workflow'
+        source = workflow.ROOT / 'examples/gradle/junit-jupiter/selection-workflow/settings.gradle'
+        with patch.object(workflow.subprocess, 'check_output', return_value='a' * 40 + '\n'), \
+                patch.object(workflow, 'observe', return_value={'exitCode': 1}) as observe:
+            with self.assertRaisesRegex(RuntimeError, 'planning.log'):
+                workflow.run('gradle', output, ['reviewed-gradle-launcher'])
+        self.assertEqual(source.read_bytes(), (output / 'settings.gradle').read_bytes())
+        command = observe.call_args.args[0]
+        self.assertIn('-Pexample.pluginSourceDirectory=' + str(workflow.ROOT), command)
+        self.assertIn('--offline', command)
+        self.assertEqual((workflow.ROOT / 'gradle/verification-metadata.xml').read_bytes(),
+                         (output / 'gradle/verification-metadata.xml').read_bytes())
+
 
 if __name__ == '__main__':
     unittest.main()

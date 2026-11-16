@@ -150,6 +150,13 @@ On Windows use absolute `gradlew.bat` / `mvnw.cmd` paths in the JSON command arr
 and exact local-candidate baseline itself; pass the native launcher, not a second verification wrapper.
 Use `--repository` when candidates are installed outside the default local Maven repository.
 
+The Gradle fixtures declare Maven Central in `pluginManagement.repositories` as well as keeping
+Plugin Portal available. Plugin runtime dependencies must resolve through the repository warmed
+by CI; a cached Central artifact does not imply cached Portal metadata in offline mode. The
+drivers preserve the checked-in settings and pass the fixture-only `example.pluginSourceDirectory`
+property to relocate the included build. This is not a published plugin parameter. Strict checksum
+verification and offline execution remain enabled.
+
 Outputs include `evidence/report.json`, standalone `report.html`, retained C5/C2/C3 inputs, original
 node XML/evidence, command logs and `workflow.json` with observed exits/timestamps. Local job IDs
 are explicitly synthetic; they are not proof that a live CI provider ran these jobs. C3 is enabled

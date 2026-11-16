@@ -30,6 +30,7 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 ### Fixed
 
+- The Gradle workflow example runs offline using dependencies prepared by CI cache warmup.
 - Memory reports keep valid measurements when an optional OOM counter is unreadable.
 - Failed report generation no longer leaves an old JSON success report behind.
 - Repeating the Maven quick-test example no longer counts results from earlier runs.

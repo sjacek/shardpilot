@@ -765,7 +765,7 @@ python -B -m unittest discover -s scripts -p test_compare_selectors.py -v
 python -B scripts/maven_verification.py run -- -B -ntp verify -Dinvoker.test=selection-workflow
 ```
 
-The Gradle functional test supplies the actual development core/probe classpath to all eight
+The Gradle functional test supplies the actual development core/probe classpath to the
 Python regressions. Standalone Python execution skips only that real-core case when no classpath
 was supplied. Cases cover changed script/policy/history/baseline bytes, unsafe paths, output reuse,
 exact reviewed sets/statuses, deterministic replay/plans, sanitized legacy failures, original
@@ -798,4 +798,22 @@ nine existing operating-system-specific core tests are disabled on Windows and r
 Linux CI. Both native happy paths and both intentional C3 rejections passed. Six adapter comparisons,
 six format-contract tests, nine documentation-validator tests and strict dependency-policy checks
 also passed. The rendered Pages site validates its internal assets and repository links. This is
-local acceptance; the changed hosted workflow still needs the user's push.
+local acceptance; hosted CI must validate each pushed revision separately.
+
+### CI follow-up — 16 November 2026
+
+[Compatibility run 106](https://github.com/sjacek/shardpilot/actions/runs/43965904674) for `f4f79ae`
+passed 14 of 15 jobs. Selector replay passed in all eight Gradle/JDK cells; all three Maven cells,
+the native Maven happy path and its wrong-revision rejection also passed. The additional Gradle
+workflow failed before planning because offline plugin-classpath resolution searched Plugin Portal
+for `snakeyaml-engine`, while CI had warmed its Maven Central repository metadata.
+
+The follow-up fix declares Central in both Gradle fixtures' `pluginManagement.repositories` and
+preserves copied settings instead of replacing them. A fixture-only source-directory property
+relocates the included build. The Python regression checks preservation of those settings, strict
+verification metadata and offline invocation. A local Portal-only control reproduces the failure;
+the corrected two-shard flow and corrupted-byte rejection pass offline even with SnakeYAML
+excluded from Portal, so an older local Portal cache cannot conceal this dependency. The same
+restriction covers the artifact-only adapter comparison. These follow-up checks use local JDK 25;
+the corrected JDK-17 hosted step requires another push. Neither checksum enforcement nor offline
+mode is relaxed, and no dependency versions change.

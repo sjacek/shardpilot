@@ -23,14 +23,14 @@ def verify(case, output, gradle, maven, repository):
     fixture = ROOT / 'testing/selection-migration/adapters'
     for tool in ['gradle', 'maven']:
         shutil.copytree(fixture / tool, output / tool)
-    (output / 'gradle/settings.gradle').write_text("pluginManagement { includeBuild('" + ROOT.as_posix() + "') }\nrootProject.name='adapter-parity-testdata'\n")
     (output / 'gradle/gradle').mkdir()
     shutil.copyfile(ROOT / 'gradle/verification-metadata.xml', output / 'gradle/gradle/verification-metadata.xml')
     properties = {'selectionProfile': 'daily-testdata', 'selectionSuite': 'comparison-testdata', 'count': '2',
                   'executionRevision': revision, 'selectionSnapshotDirectory': str(case / 'native/snapshot'),
                   'selectionPolicyFile': str(case / 'policy.yaml'), 'executionEligibilityFile': str(case / 'eligibility.yaml'),
                   'executionHistoryFile': str(case / 'history.tsv')}
-    commands = {'gradle': [*gradle, '-p', str(output / 'gradle'), '--offline', '--console=plain', 'prepareSelection'],
+    commands = {'gradle': [*gradle, '-p', str(output / 'gradle'), '--offline', '--console=plain',
+                           '-Pexample.pluginSourceDirectory=' + str(ROOT), 'prepareSelection'],
                 'maven': [*maven, '-f', str(output / 'maven/pom.xml'), '-o', 'shardpilot:prepare-execution-selection',
                           '-Dmaven.repo.local=' + str(repository.resolve())]}
     verified = dict(os.environ) if os.environ.get('SHARDPILOT_MAVEN_VERIFICATION') == 'enforce' else maven_verification.environment(False)
