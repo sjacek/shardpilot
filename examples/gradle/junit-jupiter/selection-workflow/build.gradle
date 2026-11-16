@@ -1,0 +1,61 @@
+plugins { id 'java'; id 'io.github.sjacek.shardpilot' }
+repositories { mavenCentral() }
+dependencies {
+    testImplementation platform('org.junit:junit-bom:6.1.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+tasks.withType(JavaCompile).configureEach { options.release = 17 }
+def revision = providers.gradleProperty('shardpilot.executionRevision')
+def artifact = layout.projectDirectory.dir('evidence')
+def compiled = { options ->
+    options.baseDirectory = layout.projectDirectory
+    options.manifestFile = artifact.file('compiled.json')
+    options.revision = revision
+    options.expectedManifestSha256 = providers.gradleProperty('workflow.compiledPin').orElse('')
+    options.suite = 'profile-smoke-testdata'
+    options.roots = ['build/classes/java/test']
+    options.requiredDirectories = ['build/classes/java/test']
+}
+test {
+    useJUnitPlatform()
+    include '**/*Test.class'
+    exclude '**/*$*.class'
+    maxHeapSize = '192m'
+    shardPilot { enabled = true; durationsFile = layout.projectDirectory.file('durations.tsv') }
+}
+def pilot = tasks.named('test', Test).get().shardPilot
+def eligible = sourceSets.test.output.classesDirs.asFileTree.matching {
+    include '**/*Test.class'; exclude '**/*$*.class'
+}
+// Full native eligibility is independent of the selected candidate files.
+pilot.selection {
+    policyFile = layout.projectDirectory.file('policy.yaml')
+    profile.convention('smoke-testdata')
+    eligibleClasses.from(eligible)
+}
+pilot.verification { eligibleClasses.from(eligible) }
+pilot.compiledArtifacts { compiled(it) }
+pilot.executionSelection {
+    eligibilityFile = artifact.file('eligibility.yaml')
+    selectionFile = artifact.file('selection.json')
+    compiledArtifacts { compiled(it) }
+}
+pilot.executionEvidence {
+    expectedRequest = artifact.file('expected.json')
+    eligibilityFile = artifact.file('eligibility.yaml')
+    selectionFile = artifact.file('selection.json')
+    nodesDirectory = artifact.dir('nodes')
+    reportFile = artifact.file('report.json')
+    htmlReportFile = artifact.file('report.html')
+    compiledArtifacts { compiled(it) }
+}
+// An artifact-only worker cannot repair missing/corrupt input by recompiling it.
+def precompiled = providers.gradleProperty('precompiled').isPresent()
+tasks.withType(JavaCompile).configureEach { enabled = !precompiled }
+tasks.withType(ProcessResources).configureEach { enabled = !precompiled }
+def nodeIndex = providers.gradleProperty('shardpilot.index').orElse('1')
+def reportDirectory = layout.buildDirectory.zip(nodeIndex) { Directory base, String index ->
+    base.dir('native-results/' + index).asFile
+}
+test.reports.junitXml.outputLocation.fileProvider(reportDirectory)

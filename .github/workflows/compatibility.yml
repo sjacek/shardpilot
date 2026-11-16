@@ -204,6 +204,11 @@ jobs:
           bash ./gradlew check assemble
           -PtestGradleVersion=${{ matrix.gradle }} -PtestJavaVersion=${{ matrix.java }}
           --stacktrace --console=plain
+      - name: Verify complete Gradle selection and execution workflow
+        if: matrix.gradle == '9.9.1' && matrix.java == '17'
+        run: |
+          python3 -B scripts/run_selection_workflow.py --tool gradle --output build/selection-workflow-gradle --command-json '["bash", "./gradlew"]'
+          python3 -B scripts/run_selection_workflow.py --tool gradle --output build/selection-workflow-gradle-invalid --command-json '["bash", "./gradlew"]' --corrupt bytes
       - name: Retain test and validation reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -213,6 +218,7 @@ jobs:
             shardpilot-gradle-plugin/build/reports/
             shardpilot-gradle-plugin/build/test-results/test/
             shardpilot-core/build/reports/
+            build/selection-workflow-gradle*/
             shardpilot-core/build/test-results/test/
           if-no-files-found: warn
           retention-days: 14
@@ -300,6 +306,11 @@ jobs:
         run: python3 -B scripts/maven_verification.py prepare
       - name: Verify Maven core, adapter and real runner builds
         run: bash ./mvnw -B -ntp -Dmaven.repo.local="$GITHUB_WORKSPACE/build/ci-dependencies/maven" verify
+      - name: Verify complete Maven selection and execution workflow
+        if: matrix.java == '17'
+        run: |
+          python3 -B scripts/run_selection_workflow.py --tool maven --output build/selection-workflow-maven --repository shardpilot-maven-plugin/target/it-repository --command-json '["bash", "./mvnw", "-B", "-ntp"]'
+          python3 -B scripts/run_selection_workflow.py --tool maven --output build/selection-workflow-maven-invalid --repository shardpilot-maven-plugin/target/it-repository --command-json '["bash", "./mvnw", "-B", "-ntp"]' --corrupt revision
       - name: Retain Maven tests and Invoker evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -307,6 +318,7 @@ jobs:
           name: compatibility-maven-jdk-${{ matrix.java }}
           path: |
             shardpilot-core/target/surefire-reports/
+            build/selection-workflow-maven*/
             shardpilot-maven-plugin/target/surefire-reports/
             shardpilot-maven-plugin/target/invoker-reports/
             shardpilot-maven-plugin/target/it/**/build.log

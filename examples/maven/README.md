@@ -13,6 +13,7 @@ Runnable consumers: [Gradle Groovy](https://github.com/sjacek/shardpilot/blob/ma
 | [JUnit Jupiter](junit-jupiter/pom.xml) | Surefire and Failsafe, nested tests, custom `Spec` suffix, consumer exclusions, separate suite manifests/reports. |
 | [Explicit selection](test-selection/README.md) | A two-class smoke suite, separate native reports and verified two-node execution; prepared for 0.5.0. |
 | [Changed tests, modules and contracts](selection-impact/README.md) | Shared policy v2 source roots, transitive module consumers and JSON/YAML pointer rules; development checkout. |
+| [Complete selection workflow](selection-workflow/README.md) | Native two-shard execution with frozen decisions, compiled-artifact guards and result verification; development checkout. |
 | [Multi-module reactor](reactor/pom.xml) | Independent per-module plans and native test execution with `-T2`. POM-only aggregator modules are skipped. |
 
 From the repository root, install the Maven modules into your local repository first:

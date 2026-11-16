@@ -157,7 +157,9 @@ parameters and frozen worker cohorts are now implemented in the development adap
 [Policy v2](selection-impact.md) now adds conventional changed-test source mappings, explicit
 module dependencies and semantic JSON/YAML contract rules through that same configuration.
 It does not infer arbitrary source/package layouts or application dependencies. Working-tree
-impact and service migration comparisons remain separate follow-up work. Automatic-selection provenance
+impact remains separate work. The [frozen service comparison and complete workflow examples](selection-migration.md)
+now cover the daily selectors on bounded retained inputs; native service eligibility and production migration
+remain separate acceptance gates. Automatic-selection provenance
 binding is now implemented for both adapters. C2's offline execution validator and both adapter entry points are implemented in the
 development checkout; retain native CI gates alongside the new aggregate gate.
 

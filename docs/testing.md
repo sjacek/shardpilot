@@ -751,3 +751,51 @@ compatibility combinations before adding them to the supported scope.
 For documentation-only changes, validate relative links and regenerate affected diagrams using
 the [PlantUML workflow](diagrams/README.md). The rendered image must tell the same story as its
 editable source and the current implementation.
+
+## Frozen selector comparison and complete workflow
+
+The [migration guide](selection-migration.md) and
+[15 November service report](reports/selection-migration-2026-11-15.md) separate legacy planning,
+adapter parity and actual native execution. Replay inputs are immutable and hash-checked; an
+unreviewed difference fails. Generic fixtures contain no service-specific classes or source.
+
+```shell
+./gradlew :shardpilot-gradle-plugin:test --tests '*SelectorComparisonFunctionalTest'
+python -B -m unittest discover -s scripts -p test_compare_selectors.py -v
+python -B scripts/maven_verification.py run -- -B -ntp verify -Dinvoker.test=selection-workflow
+```
+
+The Gradle functional test supplies the actual development core/probe classpath to all eight
+Python regressions. Standalone Python execution skips only that real-core case when no classpath
+was supplied. Cases cover changed script/policy/history/baseline bytes, unsafe paths, output reuse,
+exact reviewed sets/statuses, deterministic replay/plans, sanitized legacy failures, original
+native exits, XML hashes and DTD rejection. Optional cost ordering and required changed-nightly
+coverage must remain distinguishable; do not force equality by weakening the policy.
+
+The service replay has 19 scenarios, including both complete recorded Git diffs, 15 matching
+decisions and four precisely explained differences. It uses compiled-name inventories (285/92),
+not accepted native full-service discovery. Six representative retained cases are also rebound
+through the real Gradle and Maven artifact-only entry points, requiring identical canonical
+selection-v2 bytes. Consumer code, copied selectors and inputs remain in ignored private output.
+
+The compatibility workflow additionally runs the complete native examples on JDK 17: Gradle's
+latest supported matrix cell and Maven's JDK-17 cell. Each compiles three fixture tests, selects
+two, freezes a separate snapshot, seals bytecode and independently pins that manifest, runs both
+native workers, and requires the C2 report to pass with C5/C3 provenance. Configuration and native
+test sources are equal between the examples. The local driver observes real subprocess exits and
+timestamps but uses explicitly synthetic local job IDs; hosted-provider identity is a separate
+consumer integration boundary.
+
+Negative runs alter Gradle bytecode or Maven's expected revision after sealing. Both workers must
+fail specifically at the C3 guard, leave no native XML, and fail aggregation. Expected rejection
+is a harness assertion, never a successful native process. The original frozen snapshot must remain
+unchanged throughout. CI retains native XML, request/node metadata, logs and JSON/HTML reports for
+both successful and rejected cases. Benchmarking and service rollout remain deferred.
+
+Local acceptance on Windows/JDK 25: 19 focused Gradle tests (including the real-core Python replay),
+781 core tests and 212 Maven-adapter tests, plus the new Invoker example. No failures/errors;
+nine existing operating-system-specific core tests are disabled on Windows and remain covered by
+Linux CI. Both native happy paths and both intentional C3 rejections passed. Six adapter comparisons,
+six format-contract tests, nine documentation-validator tests and strict dependency-policy checks
+also passed. The rendered Pages site validates its internal assets and repository links. This is
+local acceptance; the changed hosted workflow still needs the user's push.

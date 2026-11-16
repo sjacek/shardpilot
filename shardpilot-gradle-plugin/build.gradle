@@ -162,6 +162,10 @@ test {
     inputs.file(rootProject.file('shardpilot-core/src/test/resources/git-fixture/GitFixture.java')).withPropertyName('syntheticGitFixture')
     inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-profiles')).withPropertyName('profileSelectionConsumer')
     inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-impact')).withPropertyName('impactSelectionConsumer')
+    inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-workflow'),
+            rootProject.fileTree('examples/maven/selection-workflow'),
+            rootProject.file('scripts/compare_selectors.py'), rootProject.file('scripts/test_compare_selectors.py'),
+            rootProject.file('scripts/run_selection_workflow.py')).withPropertyName('selectorMigrationAndWorkflow')
     inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-profiles-kotlin')).withPropertyName('profileSelectionKotlinConsumer')
     inputs.files(rootProject.fileTree('testing/execution-equivalence')).withPropertyName('nativeExecutionFixtures')
     inputs.files(rootProject.fileTree('docs/examples/execution-evidence-testdata')).withPropertyName('executionEvidenceFixtures')

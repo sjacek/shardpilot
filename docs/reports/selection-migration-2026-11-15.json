@@ -1,0 +1,520 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-15",
+  "coreSourceBase": "fc393964b274ea1b0a92ea0a572ba3945643a604",
+  "scope": "compiled-name-inventory-not-native-discovery",
+  "provesServiceExecution": false,
+  "benchmark": false,
+  "consumers": [
+    {
+      "consumer": "tichodroma-svc",
+      "baseRevision": "16ec904e9237ed17de11a59478ba0fdb80f9bf7e",
+      "headRevision": "980e6bdc43beb8e210b923e59637c48e98d28398",
+      "snapshotManifestSha256": "b73620b750737f6045906ed3a2b0b85e9b14e4ef8516b3acc5d6a617655b3680",
+      "files": {
+        "compiled-inventory.json": "acfbbde20b5759bfb14f31ace4984139013c4b103837e17be3fca56a931472e2",
+        "eligibility.yaml": "13cb8b14679dffe82e63ed1d39f995a36aaa7a7a374de7434de5e65a1b94444f",
+        "history.tsv": "dcf05c61b86d8661084639d12e539eb47f962dbd9f71df91891648db19c206c1",
+        "legacy/integration-smoke-classes.txt": "d27b58368ee9b789478a758d8b4c9500a31d50ccce0aac01443d2ee82bbdccc9",
+        "legacy/integration_short.py": "793a6d8e8ef0ff5a90b08a25bcbd6b634376a218175b479792dee3ffd2ca170d",
+        "legacy/integration_test_durations.py": "9a4324f30f7167f1d57c75e57998322c2f861a932d96b22a7f4b2324a4ac8b06",
+        "policy.yaml": "6330bf976bc8744cfa270a6826d1ccd9ff818cfb3f5244c9c89dd385936712ee",
+        "scenarios.json": "dd83ad79f89cee9f38bda14e150a84a6360557a1c68943715090d04cbcce28fc"
+      },
+      "coreArtifacts": [
+        {
+          "name": "shardpilot-core-0.5.0.jar",
+          "sha256": "96288e636dfa8a44fb9eca511a82ca62e25053c8f3751c7cd2196f2f302bf983"
+        },
+        {
+          "name": "snakeyaml-engine-3.2.jar",
+          "sha256": "88d816316a19c6e7c48b04dc7374522ad436fa51ab105407e95b991f86d21167"
+        }
+      ],
+      "scenarios": [
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "actual-diff-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "committed-diff",
+          "pathsSha256": "f4f0b4a93c215fbff211155f63f739235db451b2f66ee063818a5b4ee8a616ea",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "PASSED",
+          "status": "MATCH",
+          "legacySelected": 12,
+          "shardPilotSelected": 12,
+          "legacyEstimatedSeconds": 215.9,
+          "shardPilotEstimatedSeconds": 215.9,
+          "mandatoryMissing": []
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "documentation-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "5c26f44d9506be917bbcee6b67f12d7cb2e8625c9710667f57c17e2a8a841aa8",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "PASSED",
+          "status": "MATCH",
+          "legacySelected": 8,
+          "shardPilotSelected": 8,
+          "legacyEstimatedSeconds": 88.1,
+          "shardPilotEstimatedSeconds": 88.1,
+          "mandatoryMissing": []
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "build-guards-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "e0f57ae09277f4ec6d0ff5e4ca6eee67bc52220778c67e64ee3ac6b78d5fd2d1",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "PASSED",
+          "status": "MATCH",
+          "legacySelected": 12,
+          "shardPilotSelected": 12,
+          "legacyEstimatedSeconds": 215.9,
+          "shardPilotEstimatedSeconds": 215.9,
+          "mandatoryMissing": []
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "domain-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "dbb8f53551e4f06b024761204b7fd9663dc2f5326e3281c026216f5d95fe69aa",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "PASSED",
+          "status": "MATCH",
+          "legacySelected": 9,
+          "shardPilotSelected": 9,
+          "legacyEstimatedSeconds": 148.1,
+          "shardPilotEstimatedSeconds": 148.1,
+          "mandatoryMissing": []
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "changed-test-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "30322ee0b13d6b356280f5ef81ac3d7d7cc5dce28596f5ba6033ac0d4ab218d7",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "PASSED",
+          "status": "MATCH",
+          "legacySelected": 9,
+          "shardPilotSelected": 9,
+          "legacyEstimatedSeconds": 114.1,
+          "shardPilotEstimatedSeconds": 114.1,
+          "mandatoryMissing": []
+        },
+        {
+          "explanation": "Protected changed test overrides the consumer nightly-only deferral; no mandatory family is removed.",
+          "id": "changed-nightly-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "0929a5926b6d6c75b714b4fbcbd64249123fd156d79751bcdfc23443ecbf58c6",
+          "shardPilotOnly": [
+            "com.grinnotech.tichodroma.operations.testdata.TestDataBasicSubaccountsExecutionIT"
+          ],
+          "shardPilotStatus": "PASSED",
+          "status": "EXPLAINED",
+          "legacySelected": 8,
+          "shardPilotSelected": 9,
+          "legacyEstimatedSeconds": 88.1,
+          "shardPilotEstimatedSeconds": 148.1,
+          "mandatoryMissing": []
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "unknown-path-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "FAILED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "c9ce0785d838fc5b72beaccbe3a79f947a588ddb7b9f0072d88f403c26f29895",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "FAILED",
+          "status": "MATCH",
+          "legacySelected": 0,
+          "shardPilotSelected": 0,
+          "legacyEstimatedSeconds": null,
+          "shardPilotEstimatedSeconds": null,
+          "mandatoryMissing": null
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "rename-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "FAILED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "91495f485f281e1efe19618f09dc1ccbdcabc4a5051814b4563390fadf6872c7",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "FAILED",
+          "status": "MATCH",
+          "legacySelected": 0,
+          "shardPilotSelected": 0,
+          "legacyEstimatedSeconds": null,
+          "shardPilotEstimatedSeconds": null,
+          "mandatoryMissing": null
+        },
+        {
+          "explanation": "Equal-priority optional probes are packed by measured cost then name, rather than alphabetical name alone. All eight mandatory families remain. This changes optional coverage and requires consumer policy review, not automatic adoption.",
+          "id": "budget-testdata",
+          "legacyOnly": [
+            "com.grinnotech.tichodroma.assistant.internal.AssistantPersistenceIT",
+            "com.grinnotech.tichodroma.communication.announcement.AnnouncementSchemaIT",
+            "com.grinnotech.tichodroma.communication.browserpush.api.PushContentResolverIT",
+            "com.grinnotech.tichodroma.communication.task.TaskResolverIT",
+            "com.grinnotech.tichodroma.document.dpo.DpoQuestionnairePersistenceIT",
+            "com.grinnotech.tichodroma.document.generated.service.GeneratedDocumentServiceIT",
+            "com.grinnotech.tichodroma.document.malware.internal.ClamAvDocumentMalwareScannerIT",
+            "com.grinnotech.tichodroma.finance.invoice.KsefInvoiceResolverIT",
+            "com.grinnotech.tichodroma.finance.invoicesubmission.internal.InvoiceSubmissionEligibilityIT",
+            "com.grinnotech.tichodroma.finance.reporting.service.ReportStateStoreIT"
+          ],
+          "legacyStatus": "PASSED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "b60500834c78ec4693e3e6d357ed19709d0c6941cd0a9ba857f3f578e89042bd",
+          "shardPilotOnly": [
+            "com.grinnotech.tichodroma.finance.subaccount.PatientSubaccountSliceIT",
+            "com.grinnotech.tichodroma.identity.preferences.PortalPreferencesRepositoryIT",
+            "com.grinnotech.tichodroma.identity.user.lldap.LldapDirectoryUserClientIT",
+            "com.grinnotech.tichodroma.operations.audit.AuditRevisionActorIT",
+            "com.grinnotech.tichodroma.operations.grpc.FeatureCatalogGrpcIT",
+            "com.grinnotech.tichodroma.operations.testdata.TestDataExecutionRepositoryIT",
+            "com.grinnotech.tichodroma.patient.disability.DisabilityCertificateResolverIT",
+            "com.grinnotech.tichodroma.patient.disability.process.CertificateReviewQueuePersistenceIT",
+            "com.grinnotech.tichodroma.patient.document.PatientContractDocumentPersistenceIT",
+            "com.grinnotech.tichodroma.reference.dictionary.DictionaryResolverIT"
+          ],
+          "shardPilotStatus": "PASSED",
+          "status": "EXPLAINED",
+          "legacySelected": 24,
+          "shardPilotSelected": 24,
+          "legacyEstimatedSeconds": 599.1,
+          "shardPilotEstimatedSeconds": 240.8,
+          "mandatoryMissing": []
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "module-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "57744625f2a791ca818e07cb690895f59adec858a4b9ed7cbb86c6cd835dcc57",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "PASSED",
+          "status": "MATCH",
+          "legacySelected": 9,
+          "shardPilotSelected": 9,
+          "legacyEstimatedSeconds": 100.4,
+          "shardPilotEstimatedSeconds": 100.4,
+          "mandatoryMissing": []
+        }
+      ],
+      "adapterParity": [
+        {
+          "scenario": "actual-diff-testdata",
+          "status": "PASSED",
+          "selectionSha256": "d17af3d091897658a95d80427320e665ebd2af7d899d288f70cc30782cd60348",
+          "decisionIdentity": "43729bc09059819c7c4539a7346e803dc1fe5cc5877a39e952ec00f1177498cb",
+          "nativeTestsRun": false,
+          "benchmark": false
+        },
+        {
+          "scenario": "budget-testdata",
+          "status": "PASSED",
+          "selectionSha256": "5c614dac3c430e35e3911f8c5edef2e1c6375f3b14a420dbbcd64f4ab75807b1",
+          "decisionIdentity": "0a076f97306a4c477d4b86081cf59c2e878d82f06073229010a9204ade884e97",
+          "nativeTestsRun": false,
+          "benchmark": false
+        },
+        {
+          "scenario": "changed-nightly-testdata",
+          "status": "PASSED",
+          "selectionSha256": "6df8cfb73c92834aa5652faf433549fdac9abc689df5bf856167dc0e274cf37f",
+          "decisionIdentity": "90d25f92dfa00900ad3ecc4d462d7bb73e1f2766cbdc370eea94e24684f53e37",
+          "nativeTestsRun": false,
+          "benchmark": false
+        }
+      ]
+    },
+    {
+      "consumer": "ops-svc",
+      "baseRevision": "65ef67904e46f7ca13fe8f4be125cf601af4d99e",
+      "headRevision": "c3c4a6b776251d6deba6e00a3424537b8f026a27",
+      "snapshotManifestSha256": "ebe659b669b97713b948ecf1da1db272fce9c315801f5c87e32e1ff8d179de1b",
+      "files": {
+        "compiled-inventory.json": "9db2eddaf4bc944d5ea8f8bb263685c2b279a0f6eb32c6854ad9cf6894744b03",
+        "eligibility.yaml": "85d38a60d180cc9d4ccbf431ef9f072c07fc6f2c0a897a1ec29e6c2116a8834e",
+        "history.tsv": "2b9a8f7e1987ab71d9bcc676e59f87ed3a83a8b0939a89e9fa2e42b87f56b062",
+        "legacy/integration-smoke-classes.txt": "759e1533cc87441208e9483bc3979f70ef8f95c152c073defaeee9880e85d20b",
+        "legacy/integration_short.py": "5db765a0e127ec5b2ed12ad5b8a548094b69d86b1b4516c8e8f8ddb21dac9b3b",
+        "legacy/integration_test_durations.py": "9a4324f30f7167f1d57c75e57998322c2f861a932d96b22a7f4b2324a4ac8b06",
+        "policy.yaml": "e72f16f0a282234bb1106f69884948e8e7e11d1e76a89c8e6a97960a665aa447",
+        "scenarios.json": "f5094a16b506276a7bf71f90d99da0837a8f53605f072c2daec457f18c6d7794"
+      },
+      "coreArtifacts": [
+        {
+          "name": "shardpilot-core-0.5.0.jar",
+          "sha256": "96288e636dfa8a44fb9eca511a82ca62e25053c8f3751c7cd2196f2f302bf983"
+        },
+        {
+          "name": "snakeyaml-engine-3.2.jar",
+          "sha256": "88d816316a19c6e7c48b04dc7374522ad436fa51ab105407e95b991f86d21167"
+        }
+      ],
+      "scenarios": [
+        {
+          "explanation": "Protected changed test overrides the consumer nightly-only deferral; no mandatory family is removed.",
+          "id": "actual-diff-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "committed-diff",
+          "pathsSha256": "d8f801046931730c9c20b6727fe4b22569bbd4c4a54c96fd8a7c988cfb519639",
+          "shardPilotOnly": [
+            "com.grinnotech.tichodroma.ops.testdata.TestDataExecutionRegressionIT"
+          ],
+          "shardPilotStatus": "PASSED",
+          "status": "EXPLAINED",
+          "legacySelected": 9,
+          "shardPilotSelected": 10,
+          "legacyEstimatedSeconds": 540,
+          "shardPilotEstimatedSeconds": 600.0,
+          "mandatoryMissing": []
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "documentation-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "5c26f44d9506be917bbcee6b67f12d7cb2e8625c9710667f57c17e2a8a841aa8",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "PASSED",
+          "status": "MATCH",
+          "legacySelected": 4,
+          "shardPilotSelected": 4,
+          "legacyEstimatedSeconds": 240,
+          "shardPilotEstimatedSeconds": 240.0,
+          "mandatoryMissing": []
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "build-guards-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "e0f57ae09277f4ec6d0ff5e4ca6eee67bc52220778c67e64ee3ac6b78d5fd2d1",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "PASSED",
+          "status": "MATCH",
+          "legacySelected": 7,
+          "shardPilotSelected": 7,
+          "legacyEstimatedSeconds": 420,
+          "shardPilotEstimatedSeconds": 420.0,
+          "mandatoryMissing": []
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "domain-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "0a00847912d3b85fa2e012b9fe915ebb2f2c4fc8c74861f5dc685ac190f832eb",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "PASSED",
+          "status": "MATCH",
+          "legacySelected": 5,
+          "shardPilotSelected": 5,
+          "legacyEstimatedSeconds": 300,
+          "shardPilotEstimatedSeconds": 300.0,
+          "mandatoryMissing": []
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "changed-test-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "97c080191b8499bf0e833427f0e7b8b3ae897abf616ef2fcba16e65fda668070",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "PASSED",
+          "status": "MATCH",
+          "legacySelected": 5,
+          "shardPilotSelected": 5,
+          "legacyEstimatedSeconds": 300,
+          "shardPilotEstimatedSeconds": 300.0,
+          "mandatoryMissing": []
+        },
+        {
+          "explanation": "Protected changed test overrides the consumer nightly-only deferral; no mandatory family is removed.",
+          "id": "changed-nightly-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "3e6ed21826930f922a01475328eb4718b1f3cc55dac81299d4384a15a2e11a4e",
+          "shardPilotOnly": [
+            "com.grinnotech.tichodroma.ops.testdata.TestDataExecutionRegressionIT"
+          ],
+          "shardPilotStatus": "PASSED",
+          "status": "EXPLAINED",
+          "legacySelected": 4,
+          "shardPilotSelected": 5,
+          "legacyEstimatedSeconds": 240,
+          "shardPilotEstimatedSeconds": 300.0,
+          "mandatoryMissing": []
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "unknown-path-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "FAILED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "c9ce0785d838fc5b72beaccbe3a79f947a588ddb7b9f0072d88f403c26f29895",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "FAILED",
+          "status": "MATCH",
+          "legacySelected": 0,
+          "shardPilotSelected": 0,
+          "legacyEstimatedSeconds": null,
+          "shardPilotEstimatedSeconds": null,
+          "mandatoryMissing": null
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "rename-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "FAILED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "ab78bf47cab76a1154e875a8ebc6ef7037806a871d7c8ec7fe67be5257194121",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "FAILED",
+          "status": "MATCH",
+          "legacySelected": 0,
+          "shardPilotSelected": 0,
+          "legacyEstimatedSeconds": null,
+          "shardPilotEstimatedSeconds": null,
+          "mandatoryMissing": null
+        },
+        {
+          "explanation": "Same accepted class set and planning status.",
+          "id": "budget-testdata",
+          "legacyOnly": [],
+          "legacyStatus": "PASSED",
+          "origin": "synthetic-boundary",
+          "pathsSha256": "38a025ed6365b13516b0d007096562e4aa6f3a98db006c7d732e8ee38093d85e",
+          "shardPilotOnly": [],
+          "shardPilotStatus": "PASSED",
+          "status": "MATCH",
+          "legacySelected": 12,
+          "shardPilotSelected": 12,
+          "legacyEstimatedSeconds": 720,
+          "shardPilotEstimatedSeconds": 720.0,
+          "mandatoryMissing": []
+        }
+      ],
+      "adapterParity": [
+        {
+          "scenario": "actual-diff-testdata",
+          "status": "PASSED",
+          "selectionSha256": "732984490eac953228102b263ba24f5d8311c82f494ed4f572f3ae0e653298ed",
+          "decisionIdentity": "d6ca308aa20057aa69b5ae5277332d91dc9e9ea315c0848c68ea546ad3d18b58",
+          "nativeTestsRun": false,
+          "benchmark": false
+        },
+        {
+          "scenario": "budget-testdata",
+          "status": "PASSED",
+          "selectionSha256": "e09b36efd89db5eb89daa6243abbe0f226ffb91e143974be0d87200f4802e3ee",
+          "decisionIdentity": "caa77e00d85f01b6a4614f7162efbfa82d24ef9bfa38ab9a8f868528423f2b2d",
+          "nativeTestsRun": false,
+          "benchmark": false
+        },
+        {
+          "scenario": "changed-nightly-testdata",
+          "status": "PASSED",
+          "selectionSha256": "bccc799feaec44b0f5a676fd5f93a91b38e062809d709a6b13aca003312b14fb",
+          "decisionIdentity": "449aba7cefbf130e620268687366819af0bc96a17786f026236c0c2f3610231e",
+          "nativeTestsRun": false,
+          "benchmark": false
+        }
+      ]
+    }
+  ],
+  "genericWorkflowChecks": [
+    {
+      "tool": "gradle",
+      "corruption": null,
+      "harnessStatus": "PASSED",
+      "nativeExitCodes": [
+        0,
+        0
+      ],
+      "aggregateExitCode": 0,
+      "evidenceStatus": "PASSED",
+      "evidenceReasons": [],
+      "totals": {
+        "tests": 2,
+        "executed": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "tool": "gradle",
+      "corruption": "bytes",
+      "harnessStatus": "EXPECTED_REJECTION",
+      "nativeExitCodes": [
+        1,
+        1
+      ],
+      "aggregateExitCode": 1,
+      "evidenceStatus": "FAILED",
+      "evidenceReasons": [
+        "COMPILED_ARTIFACT_MISMATCH"
+      ],
+      "totals": null
+    },
+    {
+      "tool": "maven",
+      "corruption": null,
+      "harnessStatus": "PASSED",
+      "nativeExitCodes": [
+        0,
+        0
+      ],
+      "aggregateExitCode": 0,
+      "evidenceStatus": "PASSED",
+      "evidenceReasons": [],
+      "totals": {
+        "tests": 2,
+        "executed": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "tool": "maven",
+      "corruption": "revision",
+      "harnessStatus": "EXPECTED_REJECTION",
+      "nativeExitCodes": [
+        1,
+        1
+      ],
+      "aggregateExitCode": 1,
+      "evidenceStatus": "FAILED",
+      "evidenceReasons": [
+        "COMPILED_ARTIFACT_MISMATCH"
+      ],
+      "totals": null
+    }
+  ]
+}

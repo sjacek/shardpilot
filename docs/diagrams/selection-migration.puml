@@ -1,0 +1,30 @@
+@startuml
+title Frozen selector comparison and complete native execution
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName SansSerif
+rectangle "Freeze once\nGit revisions + paths + E + history\nreviewed policy + legacy bytes" as frozen
+rectangle "Legacy daily selector\nretained Python" as legacy
+rectangle "Shared ShardPilot engine\nGradle / Maven parameters" as core
+rectangle "Review exact sets and statuses\nMATCH / EXPLAINED / REVIEW_REQUIRED" as review
+rectangle "Compile once + optional C3 seal\nretained revision and SHA-256 pin" as compile
+rectangle "Frozen C5 decision + two plans\ncanonical C2 selection v2" as plan
+rectangle "Native worker 1\nC3 guard + original XML / exit" as one
+rectangle "Native worker 2\nC3 guard + original XML / exit" as two
+rectangle "Artifact-only C2 aggregate\nJSON + HTML\nno regeneration or test reruns" as aggregate
+frozen --> legacy
+frozen --> core
+legacy --> review
+core --> review
+compile --> plan
+core --> plan
+plan --> one
+plan --> two
+one --> aggregate
+two --> aggregate
+note bottom of review
+Local compiled-name inventories are diagnostic.
+Production migration needs native eligibility.
+No benchmark or automatic service migration.
+end note
+@enduml

@@ -1,0 +1,19 @@
+schemaVersion: 2
+profiles:
+  smoke-testdata:
+    mode: smoke
+    mandatory: {classes: [example.workflow.LoginTest, example.workflow.PaymentTest]}
+  affected-testdata:
+    mode: affected
+    mandatory: {classes: [example.workflow.LoginTest]}
+    budget: {maxFamilies: 3, maxSeconds: 120, unknownSeconds: 30, overflow: fail}
+    onUnmatchedChanges: fail
+    rules:
+      - {id: docs, changes: ['**/*.md'], action: ignore}
+    impact:
+      changedTests: [{path: src/test/java}]
+      modules:
+        - {id: pricing, changes: ['src/pricing/**']}
+        - {id: checkout, changes: ['src/checkout/**'], dependsOn: [pricing], tests: {classes: [example.workflow.PaymentTest]}}
+      contracts:
+        - {id: payment-api, files: ['contracts/*.json'], format: json, pointers: ['/paths/~1payments'], action: require, tests: {classes: [example.workflow.PaymentTest]}}
