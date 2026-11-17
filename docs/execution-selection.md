@@ -1,5 +1,7 @@
 # Bind selection to execution evidence
 
+Prepared for [0.6.0](releases/0.6.0.md); publication and registry acceptance are pending.
+
 **Development feature, 15 November 2026. Not available in published 0.5.0.**
 
 An automatic selection can choose the same classes for different reasons. Class coverage alone cannot

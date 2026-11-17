@@ -23,7 +23,7 @@ The consumer decides when a short suite is sufficient; native test results remai
 
 Plugin ID: `io.github.sjacek.shardpilot` · License: [MIT](LICENSE).
 
-Maven coordinates: `io.github.sjacek:shardpilot-maven-plugin:0.5.0`. See the
+Maven coordinates: `io.github.sjacek:shardpilot-maven-plugin:0.6.0`. See the
 [Maven setup guide](docs/maven.md) and [example POMs](examples/maven/README.md). Gradle users retain
 the same plugin ID, public DSL, implementation coordinates and included-build entry point.
 
@@ -84,7 +84,7 @@ collects the results. It does not create CI jobs or coordinate their completion.
 
 **[0.5.0](docs/releases/0.5.0.md)** is published in Gradle Plugin Portal and Maven Central, with opt-in
 [explicit test selection](docs/test-selection.md) for Gradle and Maven. Installation snippets
-target this release; the [local development setup](#local-plugin-development) supports source changes.
+target the prepared [0.6.0 candidate](docs/releases/0.6.0.md); 0.5.0 remains the public release. The [local development setup](#local-plugin-development) supports source changes.
 The default [published-artifact audit](docs/published-artifact-audit.md#published-050-baseline-13-november-2026)
 now uses **0.5.0**, bound to its signed tag and retained registry/isolation evidence.
 The [audit follow-up](docs/security-review-2026-11-12.md#current-status-13-november-2026)
@@ -143,7 +143,7 @@ In the consumer's `build.gradle`:
 ```groovy
 plugins {
     id 'java'
-    id 'io.github.sjacek.shardpilot' version '0.5.0'
+    id 'io.github.sjacek.shardpilot' version '0.6.0'
 }
 ```
 
@@ -152,7 +152,7 @@ Or, in `build.gradle.kts`:
 ```kotlin
 plugins {
     java
-    id("io.github.sjacek.shardpilot") version "0.5.0"
+    id("io.github.sjacek.shardpilot") version "0.6.0"
 }
 ```
 
@@ -203,7 +203,7 @@ import io.github.sjacek.shardpilot.ShardPilotExtension
 
 plugins {
     java
-    id("io.github.sjacek.shardpilot") version "0.5.0"
+    id("io.github.sjacek.shardpilot") version "0.6.0"
 }
 
 tasks.test {
@@ -229,7 +229,7 @@ The `shardPilot` extension belongs to each `Test` task, not to the root project.
 ### Optional test-process settings
 
 Version **0.5.0** retains the explicit `testProcesses` block for Gradle's existing worker JVMs.
-Set the plugin version in the installation examples above to `0.5.0`, or use the
+Use the prepared `0.6.0` candidate in the installation examples above, or use the
 [local development override](#local-plugin-development) to verify this checkout:
 
 ```groovy
@@ -574,7 +574,7 @@ include the adapter and core. The plugin ID `io.github.sjacek.shardpilot` and im
 
 For Maven, run `python3 -B scripts/maven_verification.py run -- -B -ntp install -DskipITs`
 at the repository root, then build a consuming
-POM with `io.github.sjacek:shardpilot-maven-plugin:0.5.0`. This installs the Maven parent, core and
+POM with `io.github.sjacek:shardpilot-maven-plugin:0.6.0`. This installs the Maven parent, core and
 adapter locally; it does not publish remotely. Maven does not use Gradle's `includeBuild`.
 See the [runnable Maven commands](examples/maven/README.md) for both runners and the reactor.
 

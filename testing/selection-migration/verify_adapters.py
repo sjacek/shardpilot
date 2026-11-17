@@ -34,7 +34,7 @@ def verify(case, output, gradle, maven, repository):
                 'maven': [*maven, '-f', str(output / 'maven/pom.xml'), '-o', 'shardpilot:prepare-execution-selection',
                           '-Dmaven.repo.local=' + str(repository.resolve())]}
     verified = dict(os.environ) if os.environ.get('SHARDPILOT_MAVEN_VERIFICATION') == 'enforce' else maven_verification.environment(False)
-    environment = maven_verification.consumer_environment(repository, '0.5.0', verified)
+    environment = maven_verification.consumer_environment(repository, '0.6.0', verified)
     for tool in ['gradle', 'maven']:
         prefix = '-P' if tool == 'gradle' else '-D'
         arguments = [prefix + 'shardpilot.' + name + '=' + value for name, value in properties.items()]

@@ -1,5 +1,7 @@
 # Changed tests, modules and structured contracts
 
+Prepared for [0.6.0](releases/0.6.0.md); publication and registry acceptance are pending.
+
 [Documentation index](README.md) · [Profiles and plugin parameters](selection-policy.md)
 
 **Development checkout, 14 November 2026.** These additions are not in published 0.5.0.

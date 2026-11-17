@@ -1,5 +1,7 @@
 # Configuration
 
+Installation snippets target the prepared [0.6.0 candidate](releases/0.6.0.md); registry publication is pending.
+
 Development checkout: [configurable profiles and Git acquisition](selection-policy.md#gradle-and-maven-parameters-development-checkout)
 are now available through both adapters. Published 0.5.0 supports the explicit-manifest feature below.
 
@@ -91,7 +93,7 @@ There is no automatic memory detection, memory-driven scheduling, retry or failu
 ```groovy
 plugins {
     id 'java'
-    id 'io.github.sjacek.shardpilot' version '0.5.0'
+    id 'io.github.sjacek.shardpilot' version '0.6.0'
 }
 
 tasks.named('test', Test) {
@@ -124,7 +126,7 @@ import io.github.sjacek.shardpilot.ShardPilotExtension
 
 plugins {
     java
-    id("io.github.sjacek.shardpilot") version "0.5.0"
+    id("io.github.sjacek.shardpilot") version "0.6.0"
 }
 
 tasks.test {

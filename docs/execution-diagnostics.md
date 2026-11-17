@@ -1,5 +1,7 @@
 # Optional execution diagnostics
 
+Prepared for [0.6.0](releases/0.6.0.md); publication and registry acceptance are pending.
+
 Diagnose test timeouts, interrupted builds, memory pressure and containers left on a dedicated
 Docker daemon. This is a **development feature**, absent from the published 0.5.0 release. Use
 the [local development setup](https://github.com/sjacek/shardpilot/blob/main/README.md#local-plugin-development)

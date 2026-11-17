@@ -1,5 +1,7 @@
 # Configurable selection: shared policy contract
 
+Prepared for [0.6.0](releases/0.6.0.md); publication and registry acceptance are pending.
+
 [Documentation index](README.md)
 
 **Development checkout, 14 November 2026.** The shared Java engine is implemented in

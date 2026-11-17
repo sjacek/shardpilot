@@ -1,5 +1,7 @@
 # Refresh duration history
 
+Installation snippets target the prepared [0.6.0 candidate](releases/0.6.0.md); registry publication is pending.
+
 [Documentation index](README.md) · [CI collection](ci.md#refresh-history-from-collected-reports) ·
 [Gradle example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/duration-history/README.md) ·
 [Maven example](https://github.com/sjacek/shardpilot/blob/main/examples/maven/README.md#refresh-both-suite-histories)
@@ -84,7 +86,7 @@ unchanged request can be up-to-date or restored from the build cache; failed exe
 
 ## Maven configuration
 
-Declare `io.github.sjacek:shardpilot-maven-plugin:0.5.0` in the consuming POM; retain the
+Declare `io.github.sjacek:shardpilot-maven-plugin:0.6.0` in the consuming POM; retain the
 [native runner wiring](maven.md#configure-a-native-runner). Invoke only the standalone goal:
 
 ```shell

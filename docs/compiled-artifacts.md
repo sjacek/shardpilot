@@ -1,5 +1,7 @@
 # C3: compiled artifact integrity
 
+Prepared for [0.6.0](releases/0.6.0.md); publication and registry acceptance are pending.
+
 **Development feature. Not included in the published 0.5.0 release.** Build/install the current
 development source using the [local development setup](https://github.com/sjacek/shardpilot/blob/main/README.md#local-plugin-development).
 

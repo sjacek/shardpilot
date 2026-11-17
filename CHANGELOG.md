@@ -1,15 +1,19 @@
 # Changelog
 
 ShardPilot splits test suites across parallel Gradle or Maven jobs to shorten CI runs.
-Changes under **Unreleased** require the development version and are not yet published.
+Version **0.6.0** is being prepared and is not yet published.
 Release dates follow the version creation dates recorded by the Gradle Plugin Portal.
 
 For build, CI and publication details, see the [maintainer documentation](docs/README.md).
 
 ## Unreleased
 
+## [0.6.0](docs/releases/0.6.0.md) — Unreleased
+
 ### Added
 
+- Try packaged Gradle and Maven examples for smoke, full and affected test runs, with input and result checks.
+  [Guide](docs/release-consumers.md).
 - Check a service's selection policy against its full CI test baseline and compiled files before migration.
   [Guide](docs/consumer-ci-baseline.md).
 - Follow complete Gradle and Maven examples from choosing tests to checking parallel results.

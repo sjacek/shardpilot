@@ -2,9 +2,9 @@
 
 [Maven examples](../README.md) · [Selection guide](../../../docs/test-selection.md)
 
-Uses **0.5.0**, available in Maven Central. Java 17+ is required; Docker is not.
+Uses the prepared **0.6.0** candidate; registry publication is pending. Java 17+ is required; Docker is not.
 From the repository root, install the checkout with `./mvnw -B -ntp install -DskipITs` first.
-The POM pins 0.5.0; the local installation above exercises changes from this checkout.
+The POM pins 0.6.0; the local installation above exercises changes from this checkout.
 Three classes are eligible; `selection.yaml` selects only
 Alpha and Beta. A one-node run is:
 

@@ -1,5 +1,8 @@
 # ShardPilot documentation
 
+Prepared release: **[0.6.0 candidate](releases/0.6.0.md)**, with
+[fresh Gradle/Maven consumer acceptance](release-consumers.md). Publication is pending.
+
 [![ShardPilot avatar: three parallel green shard towers and a mint fan-out arrow.](assets/branding/shardpilot-avatar-256.png)](assets/branding/README.md)
 
 ShardPilot splits the classes of an opted-in Gradle `Test` task between independent executions.

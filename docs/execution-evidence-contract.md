@@ -1,5 +1,7 @@
 # C2: execution evidence contract
 
+Prepared for [0.6.0](releases/0.6.0.md); publication and registry acceptance are pending.
+
 **Implemented in the development checkout, 14 November 2026. Not available in published ShardPilot 0.5.0.**
 The shared core validator powers the opt-in Gradle task and Maven goal described below. It does not change the existing
 `verify`/manifest or history-refresh contracts. The [C1 comparison](history-migration.md)

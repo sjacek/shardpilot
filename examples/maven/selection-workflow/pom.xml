@@ -5,7 +5,7 @@
   <groupId>example.shardpilot</groupId><artifactId>selection-workflow-testdata</artifactId><version>1</version>
   <properties>
     <maven.compiler.release>17</maven.compiler.release><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <shardpilot.version>0.5.0</shardpilot.version><shardpilot.index>1</shardpilot.index>
+    <shardpilot.version>0.6.0</shardpilot.version><shardpilot.index>1</shardpilot.index>
     <workflow.compiledPin/>
     <shardpilot.selectionProfile>smoke-testdata</shardpilot.selectionProfile>
   </properties>
@@ -23,7 +23,7 @@
         <durationsFile>${project.basedir}/durations.tsv</durationsFile>
         <directory>${project.build.directory}/pilot</directory>
         <compiledBaseDirectory>${project.basedir}</compiledBaseDirectory><compiledManifestFile>${project.basedir}/evidence/compiled.json</compiledManifestFile>
-        <compiledRevision>${shardpilot.executionRevision}</compiledRevision><compiledSuite>profile-smoke-testdata</compiledSuite>
+        <compiledRevision>${shardpilot.executionRevision}</compiledRevision><compiledSuite>profile-${shardpilot.selectionProfile}</compiledSuite>
         <compiledManifestSha256>${workflow.compiledPin}</compiledManifestSha256>
         <compiledRoots><root>target/test-classes</root></compiledRoots>
         <compiledRequiredDirectories><directory>target/test-classes</directory></compiledRequiredDirectories>

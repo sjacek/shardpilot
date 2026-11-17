@@ -2,10 +2,11 @@
 
 [Documentation index](README.md)
 
-**Development checkout, 15 November 2026.** Profile selection, execution-selection v2 and
-compiled-artifact guards described here are not part of published 0.5.0. Use the current
-checkout's included Gradle build and locally installed Maven candidate; do not substitute
-the registry's 0.5.0 artifact just because the development version has the same number.
+**Prepared for [0.6.0](releases/0.6.0.md); publication is pending.** The profiles,
+execution-selection v2 and compiled-artifact guards below require the candidate. Source-mode
+examples use an explicit included build/local Maven installation; the
+[fresh-consumer release gate](release-consumers.md) instead resolves packaged artifacts.
+Published 0.5.0 remains the historical audited baseline.
 
 Before replacing an existing selector, compare it with a reviewed declarative policy on the
 same changes, complete eligibility and history. Matching plans establish selection compatibility;
