@@ -3,3 +3,7 @@ mvnw text eol=lf
 *.sh text eol=lf
 *.bat text eol=crlf
 *.cmd text eol=crlf
+docs/examples/execution-evidence-testdata/** text eol=lf
+shardpilot-maven-plugin/src/it/execution-evidence/** text eol=lf
+docs/examples/execution-selection-testdata/** text eol=lf
+shardpilot-maven-plugin/src/it/execution-selection/** text eol=lf

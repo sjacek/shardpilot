@@ -32,8 +32,8 @@ public final class SelectMojo extends AbstractShardMojo {
         if (skipAggregator()) return;
         try {
             var candidates = new RunnerConfiguration(this).scan();
-            var explicit = explicitSelection(candidates.eligible());
             String history = history();
+            var explicit = configuredSelection(candidates.eligible(), history, false);
             Set<String> selected;
             if (explicit == null) selected = ShardManifests.select(candidates.eligible(), history, shardCount, shardIndex);
             else {

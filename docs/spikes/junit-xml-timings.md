@@ -14,9 +14,9 @@ Production duration refresh is still unimplemented. F0.5/M5 and F0.6 remain open
 
 ## Experiment and reproduction
 
-The standalone fixtures comprise a [Gradle TestKit build](../../spikes/junit-xml-timings/gradle-testkit/build.gradle),
-a [Maven Invoker project](../../spikes/junit-xml-timings/maven-invoker/pom.xml)
-and a [metadata exporter](../../spikes/junit-xml-timings/summarize.py).
+The standalone fixtures comprise a [Gradle TestKit build](https://github.com/sjacek/shardpilot/blob/main/spikes/junit-xml-timings/gradle-testkit/build.gradle),
+a [Maven Invoker project](https://github.com/sjacek/shardpilot/blob/main/spikes/junit-xml-timings/maven-invoker/pom.xml)
+and a [metadata exporter](https://github.com/sjacek/shardpilot/blob/main/spikes/junit-xml-timings/summarize.py).
 They are deliberately outside the production modules and the ordinary release builds.
 Generated builds remain under ignored `target/` and `build/` directories.
 TestKit materializes `*.template` files as sources in the generated fixture project;

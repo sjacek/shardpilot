@@ -1,6 +1,6 @@
 # Security and trust boundaries
 
-[Security policy](../SECURITY.md) | [Review follow-up](security-review-2026-11-12.md) |
+[Security policy](https://github.com/sjacek/shardpilot/blob/main/SECURITY.md) | [Review follow-up](security-review-2026-11-12.md) |
 [CI integration](ci.md) | [Release guide](releases.md)
 
 This guide describes implementation boundaries and deployment responsibilities. It is not a
@@ -56,6 +56,15 @@ Do not attribute every build connection to ShardPilot or infer absence of all ne
 from a source search. The [published 0.5.0 artifact audit](published-artifact-audit.md#published-050-baseline-13-november-2026) records
 bounded Linux-container observations for the authored Gradle/Jupiter and Maven Surefire/Failsafe
 consumers, including a blocked positive control. It does not cover every code path or consumer.
+
+Development profile selection adds a separate, explicit Git boundary. `affected` invokes local Git
+reads; full/smoke/explicit modes do not require Git. Default acquisition never fetches. Setting
+`gitFetch=true` authorizes a bounded fetch through the consumer's configured remote and ordinary
+Git transport/credentials; Gradle/Maven offline mode disables it. Refs are validated and commands
+use argument arrays, bounded output/time and discarded stderr. Git acquisition evidence retains
+sanitized outcome codes, revisions and changed paths. A frozen worker performs local checkout
+validation only, and aggregation runs no Git command. See the [parameter contract](selection-policy.md).
+These development paths are not covered by the historical published-0.5.0 dynamic audit.
 
 ## Publication boundaries
 

@@ -2,7 +2,7 @@
 
 [Gradle examples](../../README.md) Â· [Selection guide](../../../../docs/test-selection.md)
 
-Uses **0.5.0**. Run from the repository root with Java 17+ and the
+Uses **0.6.0**. Run from the repository root with Java 17+ and the
 Wrapper. The composite resolves this checkout; Docker and a published plugin are not required.
 Three classes are eligible. `selection.yaml` chooses Alpha and Beta, leaving Gamma out.
 
@@ -31,4 +31,4 @@ workspaces and downloads the original cohort before verification; never clean du
 This example uses normal Jupiter discovery. It does not infer tests from source changes or prove
 that smoke tests are sufficient. Keep manifest/history/count fixed across jobs. See the guide for
 nested eligibility, focused-filter rejection and cohort mismatch handling. To use the published release,
-external consumers can replace `includeBuild` with plugin version `0.5.0`.
+external consumers can replace `includeBuild` with plugin version `0.6.0`.

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example.shardpilot</groupId><artifactId>selection-workflow-testdata</artifactId><version>1</version>
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <shardpilot.version>0.6.0</shardpilot.version><shardpilot.index>1</shardpilot.index>
+    <workflow.compiledPin/>
+    <shardpilot.selectionProfile>smoke-testdata</shardpilot.selectionProfile>
+  </properties>
+  <dependencies>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>6.1.3</version><scope>test</scope></dependency>
+    <dependency><groupId>org.junit.platform</groupId><artifactId>junit-platform-launcher</artifactId><version>6.1.3</version><scope>test</scope></dependency>
+  </dependencies>
+  <build><plugins>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.16.0</version></plugin>
+    <plugin>
+      <groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>${shardpilot.version}</version>
+      <!-- No lifecycle binding: workers call direct goals over the retained compiled tree. -->
+      <configuration>
+        <selectionPolicyFile>${project.basedir}/policy.yaml</selectionPolicyFile><selectionProfile>${shardpilot.selectionProfile}</selectionProfile>
+        <durationsFile>${project.basedir}/durations.tsv</durationsFile>
+        <directory>${project.build.directory}/pilot</directory>
+        <compiledBaseDirectory>${project.basedir}</compiledBaseDirectory><compiledManifestFile>${project.basedir}/evidence/compiled.json</compiledManifestFile>
+        <compiledRevision>${shardpilot.executionRevision}</compiledRevision><compiledSuite>profile-${shardpilot.selectionProfile}</compiledSuite>
+        <compiledManifestSha256>${workflow.compiledPin}</compiledManifestSha256>
+        <compiledRoots><root>target/test-classes</root></compiledRoots>
+        <compiledRequiredDirectories><directory>target/test-classes</directory></compiledRequiredDirectories>
+      </configuration>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>3.6.1</version>
+      <configuration>
+        <excludesFile>${project.build.directory}/pilot/selections/profile-${shardpilot.selectionProfile}/excludes.txt</excludesFile>
+        <reportsDirectory>${project.build.directory}/pilot/selections/profile-${shardpilot.selectionProfile}/test-results/${shardpilot.index}</reportsDirectory>
+      </configuration>
+      <dependencies><dependency><groupId>org.apache.maven.surefire</groupId><artifactId>surefire-junit-platform</artifactId><version>3.6.1</version></dependency></dependencies>
+    </plugin>
+  </plugins></build>
+</project>

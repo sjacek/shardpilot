@@ -25,6 +25,35 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class PublicationWorkflowTest {
     @Test
+    void completeSelectionWorkflowsRunInExistingCellsAndRetainNativeFailureEvidence() throws IOException {
+        var jobs = mapping(workflow("compatibility").get("jobs"));
+        var gradle = mapping(jobs.get("compatibility"));
+        var maven = mapping(jobs.get("maven"));
+        var gradleFlow = stepNamed(gradle, "Verify complete Gradle selection and execution workflow");
+        var mavenFlow = stepNamed(maven, "Verify complete Maven selection and execution workflow");
+        var matrix = mapping(mapping(gradle.get("strategy")).get("matrix"));
+        String condition = assertInstanceOf(String.class, gradleFlow.get("if"));
+        assertTrue(sequence(matrix.get("gradle")).stream().anyMatch(version ->
+                condition.equals("matrix.gradle == '" + version + "' && matrix.java == '17'")),
+                "The required example must not silently stop running after a matrix version update");
+        assertTrue(sequence(matrix.get("java")).contains("17"));
+        assertEquals("matrix.java == '17'", mavenFlow.get("if"));
+        assertTrue(sequence(mapping(mapping(maven.get("strategy")).get("matrix")).get("java")).contains("17"));
+        for (var pair : Map.of(gradle, gradleFlow, maven, mavenFlow).entrySet()) {
+            String command = assertInstanceOf(String.class, pair.getValue().get("run"));
+            String tool = pair.getKey() == gradle ? "gradle" : "maven";
+            assertTrue(command.contains("scripts/run_selection_workflow.py --tool " + tool));
+            assertTrue(command.contains("--corrupt " + (tool.equals("gradle") ? "bytes" : "revision")));
+            assertFalse(command.contains("||"));
+            assertNull(pair.getValue().get("continue-on-error"));
+            var retained = stepUsing(pair.getKey(), "actions/upload-artifact@");
+            assertEquals("always()", retained.get("if"));
+            assertTrue(assertInstanceOf(String.class, mapping(retained.get("with")).get("path"))
+                    .contains("build/selection-workflow-" + tool + "*/"));
+        }
+    }
+
+    @Test
     void mavenVerificationStartsBeforeWarmupTestsScansAndCredentialedPublication() throws IOException {
         var compatibility = mapping(workflow("compatibility").get("jobs"));
         for (var pair : Map.of("warm-cache", "Warm Maven reactor and native fixture dependencies without running tests",

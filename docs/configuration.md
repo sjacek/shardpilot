@@ -1,5 +1,16 @@
 # Configuration
 
+Installation snippets target the prepared [0.6.0 candidate](releases/0.6.0.md); registry publication is pending.
+
+Development checkout: [configurable profiles and Git acquisition](selection-policy.md#gradle-and-maven-parameters-development-checkout)
+are now available through both adapters. Published 0.5.0 supports the explicit-manifest feature below.
+
+Development policy v2 adds [changed tests, module dependencies and JSON/YAML contracts](selection-impact.md)
+using the same `selectionPolicyFile` and `selectionProfile` parameters.
+
+Development also provides [optional execution diagnostics](execution-diagnostics.md), configured
+through `shardPilot.diagnostics { }` for each observed task, independently of sharding opt-in.
+
 For a consumer-supplied subset, see [explicit test selection](test-selection.md). The optional
 `selection { manifestFile = ...; suite = ...; eligibleClasses.from(...) }` block applies before
 assignment, including at count one, and leaves full-suite configuration unchanged when absent.
@@ -29,13 +40,13 @@ the [Maven guide](maven.md); the following map identifies shared and adapter-spe
 
 The ownership algorithm, nested-class families, YAML schema and report semantics are shared.
 DSL opt-in, lifecycle phases and build-cache behavior are adapter-specific. A Gradle configuration
-cannot be pasted into a POM; use the [runnable POMs](../examples/maven/README.md) for native wiring.
+cannot be pasted into a POM; use the [runnable POMs](https://github.com/sjacek/shardpilot/blob/main/examples/maven/README.md) for native wiring.
 All jobs in one artifact cohort must use the same adapter/version, project/suite and selection inputs.
 
 ## Apply the Gradle adapter
 
-First apply the published plugin as described in [Getting started](../README.md#getting-started).
-An included build is only needed for [local plugin development](../README.md#local-plugin-development).
+First apply the published plugin as described in [Getting started](https://github.com/sjacek/shardpilot/blob/main/README.md#getting-started).
+An included build is only needed for [local plugin development](https://github.com/sjacek/shardpilot/blob/main/README.md#local-plugin-development).
 The plugin ID is `io.github.sjacek.shardpilot`. Applying it adds a `shardPilot` extension to every
 standard Gradle `Test` task, including tasks registered later. It does not apply a JVM plugin or
 create a test task.
@@ -60,7 +71,7 @@ but changing those inputs can still affect Gradle's up-to-date/cache checks.
 
 An explicit `shardPilot.testProcesses { ... }` block sets `maxHeapSize`, `maxParallelForks`
 and/or `forkEvery` on the owning Gradle `Test` task. See the
-[Groovy and Kotlin examples](../README.md#optional-test-process-settings).
+[Groovy and Kotlin examples](https://github.com/sjacek/shardpilot/blob/main/README.md#optional-test-process-settings).
 Version 0.1.0 does not provide this API; it is available in
 [0.2.1](https://plugins.gradle.org/plugin/io.github.sjacek.shardpilot/0.2.1) and retained by 0.5.0.
 
@@ -82,7 +93,7 @@ There is no automatic memory detection, memory-driven scheduling, retry or failu
 ```groovy
 plugins {
     id 'java'
-    id 'io.github.sjacek.shardpilot' version '0.5.0'
+    id 'io.github.sjacek.shardpilot' version '0.6.0'
 }
 
 tasks.named('test', Test) {
@@ -115,7 +126,7 @@ import io.github.sjacek.shardpilot.ShardPilotExtension
 
 plugins {
     java
-    id("io.github.sjacek.shardpilot") version "0.5.0"
+    id("io.github.sjacek.shardpilot") version "0.6.0"
 }
 
 tasks.test {
@@ -186,7 +197,7 @@ independently of the current CI index. See the [complete option reference](shard
 
 For lazily declared tasks, call `tasks.named('integrationTest', Test).get().shardPilot.verification`
 from project configuration, outside the owner's deferred registration/configuration action. Register
-this API once per owner. The [Groovy/Kotlin examples](../README.md#optional-class-manifest-verification)
+this API once per owner. The [Groovy/Kotlin examples](https://github.com/sjacek/shardpilot/blob/main/README.md#optional-class-manifest-verification)
 show both forms and layout-provider overrides.
 
 ![Tasks and dependencies for optional verification](diagrams/manifest-tasks.svg)

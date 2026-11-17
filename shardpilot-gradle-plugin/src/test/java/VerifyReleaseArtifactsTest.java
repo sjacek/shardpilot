@@ -38,7 +38,9 @@ class VerifyReleaseArtifactsTest {
                 if (!core) binary.put("META-INF/maven/plugin.xml", bytes("""
                         <plugin><version>0.3.0</version><goalPrefix>shardpilot</goalPrefix><mojos>
                           <mojo><goal>prepare</goal></mojo><mojo><goal>select</goal></mojo><mojo><goal>verify</goal></mojo>
-                          <mojo><goal>refresh-durations</goal></mojo>
+                          <mojo><goal>refresh-durations</goal></mojo><mojo><goal>verify-executions</goal></mojo><mojo><goal>prepare-execution-selection</goal></mojo>
+                          <mojo><goal>seal-compiled-artifacts</goal></mojo><mojo><goal>verify-compiled-artifacts</goal></mojo>
+                          <mojo><goal>prepare-diagnostics</goal></mojo><mojo><goal>verify-diagnostics</goal></mojo>
                         </mojos></plugin>
                         """));
                 attach(prefix + ".jar", zip(binary));
@@ -55,18 +57,21 @@ class VerifyReleaseArtifactsTest {
         assertEquals(9, bundle.keySet().stream().filter(name -> name.endsWith(".asc")).count());
     }
 
-    @Test
-    void releaseWithoutHistoryRefreshGoalCannotPass() throws Exception {
-        String path = prefix("shardpilot-maven-plugin") + ".jar";
-        var binary = VerifyReleaseArtifacts.readArchive(bundle.get(path));
-        var incomplete = new LinkedHashMap<>(binary);
-        String descriptor = new String(binary.get("META-INF/maven/plugin.xml"), StandardCharsets.UTF_8)
-                .replace("<mojo><goal>refresh-durations</goal></mojo>", "");
-        incomplete.put("META-INF/maven/plugin.xml", bytes(descriptor));
-        attach(path, zip(incomplete)); // Valid checksums isolate the descriptor contract.
+    @ParameterizedTest
+    @ValueSource(strings = {"prepare", "select", "verify", "refresh-durations", "verify-executions", "prepare-execution-selection", "seal-compiled-artifacts", "verify-compiled-artifacts", "prepare-diagnostics", "verify-diagnostics"})
+    void releaseWithoutARequiredGoalCannotPass(String goal) throws Exception {
+        replacePluginDescriptor("<mojo><goal>" + goal + "</goal></mojo>", "");
         var failure = assertThrows(IllegalArgumentException.class,
                 () -> VerifyReleaseArtifacts.verify(bundle, VERSION, effective));
-        assertEquals("Missing Maven plugin goals", failure.getMessage());
+        assertEquals("Incorrect Maven plugin goals", failure.getMessage());
+    }
+
+    @Test
+    void unexpectedGoalCannotPassAlongsideAllRequiredGoals() throws Exception {
+        replacePluginDescriptor("</mojos>", "<mojo><goal>unexpected</goal></mojo></mojos>");
+        var failure = assertThrows(IllegalArgumentException.class,
+                () -> VerifyReleaseArtifacts.verify(bundle, VERSION, effective));
+        assertEquals("Incorrect Maven plugin goals", failure.getMessage());
     }
 
     @ParameterizedTest
@@ -142,6 +147,16 @@ class VerifyReleaseArtifactsTest {
     void doctypesCannotResolveExternalFilesInPublicationMetadata() {
         byte[] unsafe = bytes("<!DOCTYPE projects [<!ENTITY secret SYSTEM 'file:///not-readable'>]><projects>&secret;</projects>");
         assertThrows(Exception.class, () -> VerifyReleaseArtifacts.xml(unsafe));
+    }
+
+    /** Recompute valid hashes so goal tests fail on the descriptor contract, not artifact corruption. */
+    private void replacePluginDescriptor(String original, String replacement) throws Exception {
+        String path = prefix("shardpilot-maven-plugin") + ".jar";
+        var binary = VerifyReleaseArtifacts.readArchive(bundle.get(path));
+        String descriptor = new String(binary.get("META-INF/maven/plugin.xml"), StandardCharsets.UTF_8)
+                .replace(original, replacement);
+        binary.put("META-INF/maven/plugin.xml", bytes(descriptor));
+        attach(path, zip(binary));
     }
 
     /** Placeholder signatures test shape only; the real CI fixture verifies cryptography with GnuPG. */

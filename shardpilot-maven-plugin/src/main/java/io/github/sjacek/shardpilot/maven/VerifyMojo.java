@@ -46,7 +46,7 @@ public final class VerifyMojo extends AbstractShardMojo {
                             : selectedNamespace(reportFile.toPath().toAbsolutePath().getParent()).resolve(reportFile.getName()),
                     htmlReportFile == null ? namespace().resolve("coverage.html")
                             : selectedNamespace(htmlReportFile.toPath().toAbsolutePath().getParent()).resolve(htmlReportFile.getName()),
-                    selectionManifestFile != null);
+                    selectionActive());
             if (result.failure() != null) throw new MojoFailureException("ShardPilot coverage verification failed: " + result.failure().getMessage(), result.failure());
             getLog().info("ShardPilot coverage verified: " + result.json().trim());
         } catch (IllegalArgumentException exception) {

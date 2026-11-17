@@ -66,7 +66,7 @@ final class RunnerConfiguration {
         if (wired == null || !resolve(wired).toAbsolutePath().normalize().equals(mojo.exclusions().toAbsolutePath().normalize())) {
             throw new IllegalArgumentException("Configure " + mojo.runner.artifactId + ".excludesFile to " + mojo.exclusions());
         }
-        if (mojo.selectionManifestFile != null) {
+        if (mojo.selectionActive()) {
             String reports = scalar("reportsDirectory", null);
             if (reports == null || !resolve(reports).toAbsolutePath().normalize()
                     .startsWith(mojo.namespace().toAbsolutePath().normalize().resolve("test-results"))) {

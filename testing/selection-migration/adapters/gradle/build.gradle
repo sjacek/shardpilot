@@ -1,0 +1,8 @@
+plugins { id 'io.github.sjacek.shardpilot' }
+
+// All inputs are retained files supplied through PrepareExecutionSelection's normal CLI parameters.
+// No Java plugin, native runner, Git acquisition, planning or compilation producer is registered.
+tasks.register('prepareSelection', io.github.sjacek.shardpilot.PrepareExecutionSelection) {
+    // Output location is fixture-owned DSL configuration, not a production plugin CLI option.
+    selectionFile.fileProvider(providers.gradleProperty('comparison.output').map { String path -> new File(path) })
+}

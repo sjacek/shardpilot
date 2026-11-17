@@ -1,8 +1,10 @@
 # Refresh duration history
 
+Installation snippets target the prepared [0.6.0 candidate](releases/0.6.0.md); registry publication is pending.
+
 [Documentation index](README.md) · [CI collection](ci.md#refresh-history-from-collected-reports) ·
-[Gradle example](../examples/gradle/junit-jupiter/duration-history/README.md) ·
-[Maven example](../examples/maven/README.md#refresh-both-suite-histories)
+[Gradle example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/duration-history/README.md) ·
+[Maven example](https://github.com/sjacek/shardpilot/blob/main/examples/maven/README.md#refresh-both-suite-histories)
 
 Since 0.4.0, ShardPilot can read **existing** JUnit XML and create a candidate UTF-8 TSV plus diagnostic JSON.
 It never runs tests, compiles classes, fetches remote artifacts or overwrites maintained history.
@@ -84,7 +86,7 @@ unchanged request can be up-to-date or restored from the build cache; failed exe
 
 ## Maven configuration
 
-Declare `io.github.sjacek:shardpilot-maven-plugin:0.5.0` in the consuming POM; retain the
+Declare `io.github.sjacek:shardpilot-maven-plugin:0.6.0` in the consuming POM; retain the
 [native runner wiring](maven.md#configure-a-native-runner). Invoke only the standalone goal:
 
 ```shell
@@ -99,6 +101,9 @@ Gradle task or build cache. Explicit goals use plugin-level configuration, not a
 execution. Keep runner/suite overrides consistent for preparation and refresh.
 
 Every parameter below has the CLI prefix `shardpilot.` (for example `-Dshardpilot.precision=3`):
+
+The count CLI property is `shardpilot.count`; its POM configuration element is
+`<shardCount>`, not `<count>`. Maven's plugin descriptor defines these names separately.
 
 | Parameter | Default / contract |
 | --- | --- |
@@ -242,7 +247,7 @@ There are three independent outcomes to inspect before adopting a candidate:
 | Selection verification | Baseline, planned partitions and actual selections agree. | Whether all selected tests executed successfully or their XML arrived. |
 | History refresh | Accepted measurements meet the configured family policies and coverage threshold. | Native success, artifact provenance or reviewed adoption. |
 
-In the [two-node Gradle example](../examples/gradle/junit-jupiter/duration-history/README.md),
+In the [two-node Gradle example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/duration-history/README.md),
 `minimumCoverage=1.0`. Removing one node's XML after a successful run leaves its actual manifest
 intact: selection verification still passes, but refresh fails with `MINIMUM_COVERAGE`, writes
 FAILED JSON and removes the old successful candidate TSV. This is covered by the automated

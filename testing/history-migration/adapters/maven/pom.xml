@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example.shardpilot</groupId><artifactId>history-migration-testdata</artifactId><version>1.0-SNAPSHOT</version>
+  <build><plugins><plugin>
+    <groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>0.5.0</version>
+    <!-- Standalone refresh only: no lifecycle binding or test dependencies. -->
+    <configuration>
+      <runner>FAILSAFE</runner><suite>integration</suite><shardCount>2</shardCount>
+      <durationsFile>${env.HISTORY_SNAPSHOT}/previous.tsv</durationsFile>
+      <reports><report>${env.HISTORY_SNAPSHOT}/reports</report></reports>
+      <pruning>BASELINE</pruning><baselineFile>${env.HISTORY_BASELINE}</baselineFile>
+      <outputFile>${env.HISTORY_OUTPUT}/durations.tsv</outputFile>
+      <reportFile>${env.HISTORY_OUTPUT}/durations.json</reportFile>
+      <minimumSeconds>0.1</minimumSeconds><precision>1</precision><minimumCoverage>0.0</minimumCoverage>
+      <duplicates>FAIL</duplicates>
+    </configuration>
+  </plugin></plugins></build>
+</project>

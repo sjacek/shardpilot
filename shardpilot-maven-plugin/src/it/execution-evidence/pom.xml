@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example.shardpilot</groupId><artifactId>execution-evidence</artifactId><version>1</version>
+  <properties><execution.case>surefire</execution.case><execution.outputCase>${execution.case}</execution.outputCase></properties>
+  <build><plugins><plugin>
+    <groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>@project.version@</version>
+    <!-- Artifact-only aggregation: no runner, sources or lifecycle execution are configured. -->
+    <configuration>
+      <expectedRequest>${project.basedir}/${execution.case}/expected.json</expectedRequest>
+      <eligibilityFile>${project.basedir}/${execution.case}/baseline.yaml</eligibilityFile>
+      <selectionFile>${project.basedir}/${execution.case}/selection.json</selectionFile>
+      <nodesDirectory>${project.basedir}/${execution.case}/nodes</nodesDirectory>
+      <reportFile>${project.build.directory}/${execution.outputCase}.json</reportFile>
+      <htmlReportFile>${project.build.directory}/${execution.outputCase}.html</htmlReportFile>
+    </configuration>
+  </plugin></plugins></build>
+</project>

@@ -14,7 +14,7 @@ plugins {
 
 allprojects {
     group = 'io.github.sjacek'
-    version = '0.5.0'
+    version = '0.6.0'
 }
 
 // The Gradle adapter uses this text for both its Portal listing and publication POMs.
@@ -28,7 +28,8 @@ project.setDescription('ShardPilot helps shorten CI feedback for large JVM unit 
         'Opt-in YAML class manifests and standalone JSON and HTML reports compare planned assignments with class selections collected from CI jobs. ' +
         'Opt-in history refresh creates candidate TSV and JSON from existing JUnit XML without rerunning tests or modifying maintained history. ' +
         'Supports Gradle Configuration Cache and any CI provider without a coordinator, replacement test runner or telemetry. ' +
-        'Your CI launches every shard and collects the results; class-selection verification complements normal test result checks.')
+        'Your CI launches every shard and collects the results; class-selection verification complements normal test result checks. ' +
+        'Configuration profiles choose full, smoke or affected tests from committed Git changes, module dependencies and JSON/YAML contracts. Execution evidence checks native results and processes, while compiled-artifact manifests verify SHA-256 and source revision. Optional diagnostics report memory, timeouts, interruptions and leftover containers without deleting them.')
 
 apply from: 'gradle/release-verification.gradle'
 apply from: 'gradle/verification-fixtures.gradle'

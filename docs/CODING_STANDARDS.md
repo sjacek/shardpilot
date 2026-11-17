@@ -1,7 +1,7 @@
 # Coding Standards
 
 These rules supplement the architecture, verification and release requirements in
-[Contributing](../CONTRIBUTING.md).
+[Contributing](https://github.com/sjacek/shardpilot/blob/main/CONTRIBUTING.md).
 
 ## Declaration Spacing
 
@@ -18,12 +18,24 @@ These rules supplement the architecture, verification and release requirements i
 - `CI-02`: Parse the actual example files in structural tests, rejecting duplicate YAML keys. Verify job references, required native test gates, shard count, artifact dependencies and aggregation commands. Declare these files as build inputs so editing an example invalidates cached verification results.
 - `CI-03`: Preserve native test failures and required verification gates. Diagnostic scheduling and artifact retention after failure are separate settings; neither may turn a failed test into success or make a required gate optional.
 - `CI-04`: Keep each shard's extracted reports in a distinct directory. Aggregation reads the original collected evidence and must not run `clean`, rerun tests or regenerate missing plans. Class-selection manifests establish candidate ownership; normal test results and CI establish execution success.
-- `CI-05`: Validate the parsed configuration independently of IDE inspection results. Structural tests do not establish successful execution on a live CI provider; report that distinction explicitly. See the [consumer CI examples](../examples/ci/README.md).
+- `CI-05`: Validate the parsed configuration independently of IDE inspection results. Structural tests do not establish successful execution on a live CI provider; report that distinction explicitly. See the [consumer CI examples](https://github.com/sjacek/shardpilot/blob/main/examples/ci/README.md).
+
+## Published Documentation Links
+
+- `DOCS-01`: GitHub Pages publishes only `docs/`. Keep links to pages and assets inside that directory relative. Link to repository files outside it with full `https://github.com/sjacek/shardpilot/blob/main/...` URLs; a relative `../README.md` works in GitHub's source viewer but escapes the published site.
+- `DOCS-02`: Validate the actual Jekyll output, including generated anchors, site-prefix URLs and assets. The offline validator also checks main-branch repository links and their Markdown heading anchors against the current checkout. Other external URLs are inventoried separately; an offline pass does not establish their remote availability.
+
+After building the Pages source into `build/docs-link-check`, run from the repository root:
+
+```shell
+python -B -m unittest discover -s scripts -p test_validate_docs.py -v
+python -B scripts/validate_docs.py build/docs-link-check --report build/docs-link-check/links.json
+```
 
 ## IDE Diagnostics And Inspection Suppressions
 
 - `IDE-01`: Investigate unresolved build-tool types by checking the imported Gradle/Maven model, selected distribution, JVM and synchronization errors. Link independent examples separately when needed. Preserve correct API usage; remove imports only when they are redundant, rather than to conceal a missing IDE model.
 - `IDE-02`: Distinguish live editor diagnostics, batch/pre-commit analysis and command-line validation. Reproduce the reported analysis mode where possible. A clean editor view or an old Code Analysis snapshot does not prove that the current pre-commit inspection passes.
 - `IDE-03`: Fix genuine defects before considering suppression. For a confirmed false positive, use the smallest applicable suppression with the exact inspection ID, immediately before the affected element. Explain the reason and identify the independent validation that covers the affected contract. Do not disable an inspection project-wide to silence an isolated example warning.
-- `IDE-04`: In the standalone GitLab examples, `#noinspection UndefinedJob` may be used immediately before an affected `needs` key for the observed pre-commit false positive. Keep `HistoryRefreshCiExamplesTest` checking every referenced job. The comment must not conceal a missing job or replace YAML/CI validation; see the [documented workaround](../examples/ci/README.md).
+- `IDE-04`: In the standalone GitLab examples, `#noinspection UndefinedJob` may be used immediately before an affected `needs` key for the observed pre-commit false positive. Keep `HistoryRefreshCiExamplesTest` checking every referenced job. The comment must not conceal a missing job or replace YAML/CI validation; see the [documented workaround](https://github.com/sjacek/shardpilot/blob/main/examples/ci/README.md).
 - `IDE-05`: Keep local IDE paths and machine-specific settings outside version control. Record verification limits honestly when the IDE or runner is unavailable. Review a workaround after upgrading the IDE/plugin and remove it once the affected analysis mode passes without it.

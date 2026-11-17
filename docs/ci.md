@@ -1,5 +1,15 @@
 # CI integration
 
+The development-only [execution diagnostics](execution-diagnostics.md) supervise a native build
+from an external JDK runner. Prepare settings first, retain scoped memory/timeout evidence and
+run the independent final check even after interruption. Docker inspection requires an explicit
+dedicated daemon and never removes containers; diagnostics do not replace native or C2 gates.
+
+The development-only [C3 compiled-artifact gate](compiled-artifacts.md) can seal compiled outputs
+in the producer job and verify SHA-256, revision/suite and the complete restored inventory before
+native workers. Keep frozen inputs separate from mutable worker reports. This is opt-in and does
+not replace native results or the separate [C2 execution gate](execution-evidence-contract.md).
+
 [Documentation index](README.md)
 
 Treat every shard as an ordinary invocation of the same Gradle task or Maven lifecycle in an isolated workspace.
@@ -119,7 +129,7 @@ before Surefire and writes evidence before workers. A node recomputes ownership 
 filters/history; it does not read a downloaded plan to force its selection. Aggregation compares
 that selection against the common plan, so immutable inputs remain necessary.
 
-For a POM containing both Surefire and Failsafe, as in the [Jupiter example](../examples/maven/README.md),
+For a POM containing both Surefire and Failsafe, as in the [Jupiter example](https://github.com/sjacek/shardpilot/blob/main/examples/maven/README.md),
 add a second preparation command with `-Dshardpilot.runner=FAILSAFE`. Run each node through
 `./mvnw verify -Dshardpilot.count=2 -Dshardpilot.index=I` to include both suites and Failsafe's
 normal result gate. Aggregate each suite separately: the ordinary `shardpilot:verify` command
@@ -173,8 +183,8 @@ failed native-test gate, even if other families supplied enough measurements for
 
 ## Refresh history from collected reports
 
-The [complete Gradle](../examples/ci/gradle/.gitlab-ci.yml) and
-[Maven](../examples/ci/maven/.gitlab-ci.yml) GitLab examples implement this three-node flow:
+The [complete Gradle](https://github.com/sjacek/shardpilot/blob/main/examples/ci/gradle/.gitlab-ci.yml) and
+[Maven](https://github.com/sjacek/shardpilot/blob/main/examples/ci/maven/.gitlab-ci.yml) GitLab examples implement this three-node flow:
 
 | Stage / required job | Evidence consumed | Action / retained evidence |
 | --- | --- | --- |
@@ -228,7 +238,7 @@ as a substitute for a build cache.
 
 CI job parallelism and Gradle/framework parallelism multiply resource use. Since 0.2.1,
 ShardPilot can explicitly configure per-task `maxHeapSize`, `maxParallelForks` and `forkEvery`
-through the optional [test-process block](../README.md#optional-test-process-settings).
+through the optional [test-process block](https://github.com/sjacek/shardpilot/blob/main/README.md#optional-test-process-settings).
 Without that block, native process settings remain unchanged. Framework threads, retry plugins,
 container limits and the total runner budget remain consumer/CI responsibilities. Size the complete
 matrix against available CPU, memory, database capacity and container startup cost; a per-JVM

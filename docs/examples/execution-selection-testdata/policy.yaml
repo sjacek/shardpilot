@@ -1,0 +1,5 @@
+schemaVersion: 1
+profiles:
+  smoke-testdata:
+    mode: smoke
+    mandatory: {classes: [example.AlphaIT, example.BetaIT]}

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sjacek.github.io/shardpilot/schemas/invocation-ledger-v1.schema.json",
+  "title": "ShardPilot native invocation ledger v1 (development API)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runner",
+    "invocations"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "runner": {
+      "enum": [
+        "junit-platform",
+        "testng"
+      ]
+    },
+    "invocations": {
+      "type": "array",
+      "maxItems": 2000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "className",
+          "outcome"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "execution-evidence-v1.schema.json#/$defs/sha256"
+          },
+          "className": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "outcome": {
+            "enum": [
+              "passed",
+              "failed",
+              "error",
+              "skipped"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

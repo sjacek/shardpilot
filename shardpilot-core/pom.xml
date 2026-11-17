@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <parent><groupId>io.github.sjacek</groupId><artifactId>shardpilot-parent</artifactId><version>0.5.0</version></parent>
+  <parent><groupId>io.github.sjacek</groupId><artifactId>shardpilot-parent</artifactId><version>0.6.0</version></parent>
   <artifactId>shardpilot-core</artifactId>
   <name>ShardPilot core</name>
   <description>Shared Java core used by the ShardPilot Gradle and Maven adapters for deterministic JVM
@@ -12,10 +12,11 @@
     planning and reporting logic without Gradle or Maven APIs; test execution and process settings
     belong to the build-tool adapters and native runners. Includes secure JUnit XML timing import,
     complete-family history refresh and diagnostic JSON for candidate histories. Strict explicit selection
-    validates chosen classes against complete eligibility and preserves eligible class families.</description>
+    validates chosen classes against complete eligibility and preserves eligible class families. Configuration profiles choose full, smoke or affected tests from committed Git changes, module dependencies and JSON/YAML contracts. Execution evidence checks native results and processes, while compiled-artifact manifests verify SHA-256 and source revision. Optional diagnostics report memory, timeouts, interruptions and leftover containers without deleting them.</description>
   <url>https://github.com/sjacek/shardpilot</url>
   <dependencies>
     <dependency><groupId>org.snakeyaml</groupId><artifactId>snakeyaml-engine</artifactId><version>3.2</version></dependency>
+    <dependency><groupId>org.jspecify</groupId><artifactId>jspecify</artifactId><version>1.0.0</version><scope>provided</scope></dependency>
     <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
   </dependencies>
   <build><resources><resource><directory>..</directory><includes><include>LICENSE</include></includes><targetPath>META-INF</targetPath></resource></resources></build>

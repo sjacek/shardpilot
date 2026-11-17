@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sjacek.github.io/shardpilot/schemas/compiled-artifacts-v1.schema.json",
+  "title": "ShardPilot C3 compiled artifacts v1 (development API)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "revision", "suite", "roots", "requiredDirectories", "requiredFiles", "directories", "files"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "revision": {"type": "string", "pattern": "^([a-f0-9]{40}|[a-f0-9]{64})$"},
+    "suite": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"},
+    "roots": {"type": "array", "minItems": 1, "maxItems": 256, "uniqueItems": true, "items": {"$ref": "#/$defs/path"}},
+    "requiredDirectories": {"type": "array", "maxItems": 200000, "uniqueItems": true, "items": {"$ref": "#/$defs/path"}},
+    "requiredFiles": {"type": "array", "maxItems": 100000, "uniqueItems": true, "items": {"$ref": "#/$defs/path"}},
+    "directories": {"type": "array", "minItems": 1, "maxItems": 200000, "uniqueItems": true, "items": {"$ref": "#/$defs/path"}},
+    "files": {
+      "type": "object", "minProperties": 1, "maxProperties": 100000,
+      "propertyNames": {"$ref": "#/$defs/path"},
+      "additionalProperties": {
+        "type": "object", "additionalProperties": false, "required": ["bytes", "sha256"],
+        "properties": {
+          "bytes": {"type": "integer", "minimum": 0, "maximum": 1073741824},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "path": {"type": "string", "minLength": 1, "maxLength": 1024, "description": "Portable root-relative path; semantic traversal, overlap, alias and containment checks are enforced by core."}
+  }
+}

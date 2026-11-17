@@ -19,6 +19,10 @@ public abstract class ShardPilotExtension {
     private boolean verificationConfigured;
     private boolean historyConfigured;
     private boolean selectionConfigured;
+    private boolean executionEvidenceConfigured;
+    private boolean executionSelectionConfigured;
+    private boolean compiledArtifactsConfigured;
+    private boolean diagnosticsConfigured;
     private final ShardSelectionOptions selection;
     private final RegularFileProperty selectedManifest;
     private final RegularFileProperty verificationBaseline;
@@ -38,28 +42,73 @@ public abstract class ShardPilotExtension {
         this.verificationShardCount = objects.property(Integer.class);
         this.selection = objects.newInstance(ShardSelectionOptions.class);
         this.selection.getClassDirectories().from(task.getTestClassesDirs());
+        this.selection.getSuite().convention(selection.getProfile().map(ProfileSelection::defaultSuite));
+        this.selection.getGitDirectory().convention(task.getProject().getLayout().getProjectDirectory());
+        this.selection.getGitBase().convention("");
+        this.selection.getGitHead().convention("HEAD");
+        this.selection.getGitMergeBase().convention(true);
+        this.selection.getGitFetch().convention(false);
+        this.selection.getGitRemote().convention("origin");
+        this.selection.getGitFetchDepth().convention(256);
+        this.selection.getGitTimeoutSeconds().convention(30);
         this.selectedManifest = objects.fileProperty();
         this.selectionEnabled = objects.property(Boolean.class).convention(false);
     }
 
     /**
-     * Enables a consumer-supplied subset, including for a single shard. Configure once outside
+     * Enables an explicit manifest or configured profile, including for a single shard. Configure once outside
      * deferred task configuration, like verification(). Eligibility must not use the already
      * filtered candidate tree. Explicit selection requires enabled=true on the owning task.
-     * @param action manifest, separate suite identity and full eligible bytecode
+     * @param action manifest or policy/profile, suite options and independent full eligible bytecode
      */
     public void selection(Action<? super ShardSelectionOptions> action) {
         if (selectionConfigured) throw new IllegalStateException("ShardPilot selection is already configured for " + task.getName());
         selectionConfigured = true;
         selectionEnabled.set(true);
         action.execute(selection);
+        commandLineSelection();
         var project = task.getProject();
         String taskName = task.getName();
         String suffix = Character.toUpperCase(taskName.charAt(0)) + taskName.substring(1);
+        boolean profile = selection.getPolicyFile().isPresent() || selection.getProfile().isPresent();
+        boolean frozen = selection.getSnapshotDirectory().isPresent();
+        if (selection.getPolicyFile().isPresent() != selection.getProfile().isPresent()) {
+            throw new IllegalArgumentException("selectionPolicyFile and selectionProfile must be supplied together");
+        }
+        if (frozen && !profile) throw new IllegalArgumentException("selectionSnapshotDirectory requires profile selection");
+        org.gradle.api.tasks.TaskProvider<AcquireGitChanges> acquisition = null;
+        if (profile && !frozen) {
+            acquisition = project.getTasks().register("acquire" + suffix + "GitChanges", AcquireGitChanges.class, producer -> {
+                producer.setGroup("verification");
+                producer.setDescription("Captures committed Git changes for the selected profile at execution time.");
+                producer.getPolicyFile().set(selection.getPolicyFile());
+                producer.getProfile().set(selection.getProfile());
+                producer.getCheckout().set(selection.getGitDirectory());
+                producer.getBase().set(selection.getGitBase());
+                producer.getHead().set(selection.getGitHead());
+                producer.getMergeBase().set(selection.getGitMergeBase());
+                producer.getFetch().set(selection.getGitFetch());
+                producer.getOffline().set(project.getGradle().getStartParameter().isOffline());
+                producer.getRemote().set(selection.getGitRemote());
+                producer.getFetchDepth().set(selection.getGitFetchDepth());
+                producer.getTimeoutSeconds().set(selection.getGitTimeoutSeconds());
+                producer.getSnapshot().set(project.getLayout().getBuildDirectory().file(selection.getSuite()
+                        .map(suite -> {
+                            TestSelection.validateSuite(suite);
+                            return "shardpilot/" + taskName + "/selections/" + suite + "/git/changes.json";
+                        })));
+            });
+        }
+        var gitAcquisition = acquisition;
         var prepare = project.getTasks().register("prepare" + suffix + "Selection", PrepareTestSelection.class, producer -> {
             producer.setGroup("verification");
-            producer.setDescription("Validates the explicit selection and records both eligibility baselines.");
+            producer.setDescription("Validates configured selection and records both eligibility baselines.");
             producer.getManifestFile().set(selection.getManifestFile());
+            producer.getPolicyFile().set(selection.getPolicyFile());
+            producer.getProfile().set(selection.getProfile());
+            producer.getSnapshotDirectory().set(selection.getSnapshotDirectory());
+            producer.getCheckout().set(selection.getGitDirectory());
+            if (gitAcquisition != null) producer.getChangesFile().set(gitAcquisition.flatMap(AcquireGitChanges::getSnapshot));
             producer.getSuite().set(selection.getSuite());
             producer.getClasses().from(selection.getEligibleClasses());
             producer.getClassDirectories().from(selection.getClassDirectories());
@@ -81,6 +130,8 @@ public abstract class ShardPilotExtension {
             guard.getSelectionManifest().set(selectedManifest);
             guard.getShardCount().set(getShardCount());
             guard.getShardIndex().set(getShardIndex());
+            guard.getProfileSelection().set(profile);
+            guard.getFrozenSelection().set(frozen);
             guard.getHistory().set(project.getProviders().fileContents(getDurationsFile()).getAsText().orElse(""));
         });
         task.dependsOn(validate);
@@ -88,6 +139,49 @@ public abstract class ShardPilotExtension {
                 .dir(outputNamespace().map(path -> path + "/test-results")));
         task.getReports().getHtml().getOutputLocation().set(project.getLayout().getBuildDirectory()
                 .dir(outputNamespace().map(path -> path + "/test-report")));
+    }
+
+    private static File resolve(File base, String path) {
+        File file = new File(path);
+        return (file.isAbsolute() ? file : new File(base, path)).toPath().toAbsolutePath().normalize().toFile();
+    }
+
+    private static boolean booleanValue(String value) {
+        if (!value.equals("true") && !value.equals("false")) throw new IllegalArgumentException("ShardPilot boolean parameters require true or false");
+        return Boolean.parseBoolean(value);
+    }
+
+    private void commandLineSelection() {
+        // Global CLI parameters override each explicitly opted-in task's DSL defaults/settings.
+        var providers = task.getProject().getProviders();
+        var layout = task.getProject().getLayout();
+        File base = layout.getProjectDirectory().getAsFile();
+        var policy = providers.gradleProperty("shardpilot.selectionPolicyFile");
+        if (policy.isPresent()) selection.getPolicyFile().set(layout.file(policy.map(path -> resolve(base, path))));
+        var manifest = providers.gradleProperty("shardpilot.selectionManifestFile");
+        if (manifest.isPresent()) selection.getManifestFile().set(layout.file(manifest.map(path -> resolve(base, path))));
+        var profile = providers.gradleProperty("shardpilot.selectionProfile");
+        if (profile.isPresent()) selection.getProfile().set(profile);
+        var suite = providers.gradleProperty("shardpilot.selectionSuite");
+        if (suite.isPresent()) selection.getSuite().set(suite);
+        var snapshot = providers.gradleProperty("shardpilot.selectionSnapshotDirectory");
+        if (snapshot.isPresent()) selection.getSnapshotDirectory().set(layout.dir(snapshot.map(path -> resolve(base, path))));
+        var checkout = providers.gradleProperty("shardpilot.gitDirectory");
+        if (checkout.isPresent()) selection.getGitDirectory().set(layout.dir(checkout.map(path -> resolve(base, path))));
+        var gitBase = providers.gradleProperty("shardpilot.gitBase");
+        if (gitBase.isPresent()) selection.getGitBase().set(gitBase);
+        var head = providers.gradleProperty("shardpilot.gitHead");
+        if (head.isPresent()) selection.getGitHead().set(head);
+        var merge = providers.gradleProperty("shardpilot.gitMergeBase");
+        if (merge.isPresent()) selection.getGitMergeBase().set(merge.map(ShardPilotExtension::booleanValue));
+        var fetch = providers.gradleProperty("shardpilot.gitFetch");
+        if (fetch.isPresent()) selection.getGitFetch().set(fetch.map(ShardPilotExtension::booleanValue));
+        var remote = providers.gradleProperty("shardpilot.gitRemote");
+        if (remote.isPresent()) selection.getGitRemote().set(remote);
+        var depth = providers.gradleProperty("shardpilot.gitFetchDepth");
+        if (depth.isPresent()) selection.getGitFetchDepth().set(depth.map(Integer::parseInt));
+        var timeout = providers.gradleProperty("shardpilot.gitTimeoutSeconds");
+        if (timeout.isPresent()) selection.getGitTimeoutSeconds().set(timeout.map(Integer::parseInt));
     }
 
     // Internal adapter wiring. Providers keep configuration order independent and cache-safe.
@@ -193,6 +287,117 @@ public abstract class ShardPilotExtension {
         options.getPruning().convention(ShardHistoryOptions.Pruning.AUTO);
         action.execute(options);
         ShardHistory.configure(task, this, options, verificationBaseline, verificationShardCount);
+    }
+
+    /**
+     * Registers an opt-in artifact-only C5/C2 bridge. Call after selection() to inherit its profile,
+     * policy and timing conventions. A retained baseline/snapshot and trusted revision are still required;
+     * this task never schedules Test, Git, compilation, planning or C3 sealing.
+     * @param action frozen inputs, canonical output and optional independent C3 verification
+     */
+    @SuppressWarnings("unused") // Public managed Groovy/Kotlin DSL, exercised by TestKit.
+    public void executionSelection(@org.jspecify.annotations.NonNull Action<? super PrepareExecutionSelection> action) {
+        if (executionSelectionConfigured) throw new IllegalStateException("Execution selection is already configured");
+        executionSelectionConfigured = true;
+        String name = task.getName();
+        String suffix = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        var layout = task.getProject().getLayout();
+        task.getProject().getTasks().register("prepare" + suffix + "ExecutionSelection", PrepareExecutionSelection.class, producer -> {
+            producer.setGroup("verification"); producer.setDescription("Binds a frozen C5 decision and optional compiled inputs to C2 selection identity.");
+            // Empty owner selection properties must not erase standalone CLI/default conventions.
+            if (selectionConfigured) {
+                producer.getPolicyFile().convention(selection.getPolicyFile()); producer.getProfile().convention(selection.getProfile());
+                producer.getSuite().convention(selection.getSuite()); producer.getHistoryFile().convention(getDurationsFile());
+                producer.getSnapshotDirectory().convention(selection.getSnapshotDirectory());
+                producer.getExplicitManifestFile().convention(selection.getManifestFile());
+            }
+            producer.getShardCount().convention(getShardCount());
+            producer.getSelectionFile().convention(layout.getBuildDirectory().file("shardpilot/" + name + "/execution-selection.json"));
+            action.execute(producer);
+        });
+    }
+
+    /**
+     * Registers one explicit, artifact-only C2 gate named verify&lt;Task&gt;ExecutionEvidence.
+     * Configure once outside a deferred TaskProvider.configure action. The action supplies trusted
+     * request/eligibility/selection and downloaded nodes; this task never depends on Test, compile,
+     * prepare or Git acquisition tasks. Missing inputs fail with fresh JSON/HTML diagnostics.
+     * @param action retained evidence, output paths and optional lowered resource limits
+     */
+    @SuppressWarnings("unused") // Public Groovy/Kotlin DSL entry point; invoked dynamically in TestKit builds.
+    public void executionEvidence(@org.jspecify.annotations.NonNull Action<? super VerifyExecutionEvidence> action) {
+        if (executionEvidenceConfigured) throw new IllegalStateException("ShardPilot execution evidence is already configured for " + task.getName());
+        executionEvidenceConfigured = true;
+        String name = task.getName();
+        String suffix = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        var layout = task.getProject().getLayout();
+        task.getProject().getTasks().register("verify" + suffix + "ExecutionEvidence", VerifyExecutionEvidence.class, verifier -> {
+            verifier.setGroup("verification");
+            verifier.setDescription("Validates retained native execution evidence without running producers.");
+            verifier.getReportFile().convention(layout.getBuildDirectory().file(outputNamespace().map(path -> path + "/execution-evidence.json")));
+            verifier.getHtmlReportFile().convention(layout.getBuildDirectory().file(outputNamespace().map(path -> path + "/execution-evidence.html")));
+            action.execute(verifier);
+        });
+    }
+
+    /**
+     * Opts this Test task into C3 without enabling sharding. Registers seal&lt;Task&gt;CompiledArtifacts
+     * and verify&lt;Task&gt;CompiledArtifacts; verification is a Test dependency and a final pre-worker
+     * check. Neither C3 task schedules compilation, planning or dependency resolution. Native Test
+     * dependencies remain consumer-owned; artifact-only CI workers must still disable producers.
+     * @param action trusted cohort, root-relative paths and optional lowered resource limits
+     */
+    @SuppressWarnings("unused") // Public Groovy/Kotlin DSL, exercised through real TestKit consumers.
+    public void compiledArtifacts(@org.jspecify.annotations.NonNull Action<? super CompiledArtifactOptions> action) {
+        if (compiledArtifactsConfigured) throw new IllegalStateException("ShardPilot compiled artifacts are already configured for " + task.getName());
+        compiledArtifactsConfigured = true;
+        var options = objects.newInstance(CompiledArtifactOptions.class);
+        var layout = task.getProject().getLayout();
+        options.getBaseDirectory().convention(layout.getProjectDirectory());
+        options.getManifestFile().convention(layout.getBuildDirectory().file("shardpilot/" + task.getName() + "/compiled-artifacts.json"));
+        options.getSuite().convention(task.getName());
+        options.getRevision().convention(task.getProject().getProviders().gradleProperty("shardpilot.compiledRevision"));
+        options.getExpectedManifestSha256().convention(task.getProject().getProviders().gradleProperty("shardpilot.compiledManifestSha256").orElse(""));
+        action.execute(options);
+        String name = task.getName(); String suffix = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        task.getProject().getTasks().register("seal" + suffix + "CompiledArtifacts", SealCompiledArtifacts.class, producer -> {
+            producer.setGroup("build"); producer.setDescription("Seals already compiled artifacts without running producers."); producer.setOptions(options);
+        });
+        var verifier = task.getProject().getTasks().register("verify" + suffix + "CompiledArtifacts", VerifyCompiledArtifacts.class, gate -> {
+            gate.setGroup("verification"); gate.setDescription("Verifies retained compiled artifacts without rebuilding them."); gate.setOptions(options);
+        });
+        // Keep this gate independent of sharding opt-in and of Test's NO-SOURCE/cache outcome.
+        // Never depend on the sealer here: a worker must not regenerate its own expected evidence.
+        task.dependsOn(verifier);
+        task.doFirst(new CompiledArtifactGuard(options));
+    }
+
+    /**
+     * Prepares external C4 supervision and an independent final check; never wraps this Test in
+     * a nested Gradle invocation or assumes a finalizer can survive SIGKILL.
+     * @param action expected CI identity, bounded sampling and optional dedicated Docker endpoint
+     */
+    @SuppressWarnings("unused") // Public Groovy/Kotlin DSL.
+    public void diagnostics(@org.jspecify.annotations.NonNull Action<? super DiagnosticsOptions> action) {
+        if (diagnosticsConfigured) throw new IllegalStateException("ShardPilot diagnostics are already configured for " + task.getName());
+        diagnosticsConfigured = true;
+        var options = objects.newInstance(DiagnosticsOptions.class);
+        var project = task.getProject(); var layout = project.getLayout();
+        options.getDirectory().convention(layout.getBuildDirectory().dir("shardpilot/" + task.getName() + "/diagnostics"));
+        options.getConfigurationFile().convention(layout.getBuildDirectory().file("shardpilot/" + task.getName() + "/diagnostics-config.json"));
+        options.getSuite().convention(task.getName());
+        options.getRevision().convention(project.getProviders().gradleProperty("shardpilot.diagnosticsRevision"));
+        options.getRunId().convention(project.getProviders().gradleProperty("shardpilot.diagnosticsRunId"));
+        options.getAttempt().convention(project.getProviders().gradleProperty("shardpilot.diagnosticsAttempt").map(Integer::valueOf));
+        options.getNode().convention(project.getProviders().gradleProperty("shardpilot.diagnosticsNode"));
+        action.execute(options);
+        String name = task.getName(); String suffix = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        project.getTasks().register("prepare" + suffix + "Diagnostics", PrepareDiagnostics.class, configuration -> {
+            configuration.setGroup("verification"); configuration.setDescription("Prepares opt-in external diagnostics without starting tests."); configuration.setOptions(options);
+        });
+        project.getTasks().register("verify" + suffix + "Diagnostics", VerifyDiagnostics.class, verifier -> {
+            verifier.setGroup("verification"); verifier.setDescription("Checks retained process diagnostics and final container state."); verifier.setOptions(options);
+        });
     }
 
     /**

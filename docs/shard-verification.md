@@ -1,6 +1,6 @@
 # Class manifests and coverage verification
 
-[Documentation index](README.md) · [Configuration examples](../README.md#optional-class-manifest-verification)
+[Documentation index](README.md) · [Configuration examples](https://github.com/sjacek/shardpilot/blob/main/README.md#optional-class-manifest-verification)
 
 The optional `shardPilot.verification` API records class selection and verifies artifacts collected
 from every CI shard. The consumer supplies unsharded eligibility and owns CI scheduling, artifact
@@ -31,7 +31,7 @@ For `test`, the corresponding names are `prepareTestShardManifests`,
 
 Register verification once, outside a deferred `TaskProvider.configure`/`tasks.register` action:
 realize the owner explicitly, then configure its task extension. See the
-[Groovy and Kotlin examples](../README.md#optional-class-manifest-verification). This makes sibling
+[Groovy and Kotlin examples](https://github.com/sjacek/shardpilot/blob/main/README.md#optional-class-manifest-verification). This makes sibling
 task names available during selection without creating workers or realizing unrelated test tasks.
 
 `mustRunAfter` orders producers before verification when explicitly requested together locally.

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "cohort": {
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "runId": "example-run",
+    "attempt": 1,
+    "project": "example-project",
+    "suite": "integration",
+    "tool": "gradle",
+    "runner": "gradle-test"
+  },
+  "producer": {
+    "jobId": "example-job-1",
+    "toolVersion": "9.9.1",
+    "adapterVersion": "future-c2"
+  },
+  "shard": {
+    "index": 1,
+    "count": 2
+  },
+  "selection": {
+    "mode": "full",
+    "sha256": "378c7e92e5bf41d57ac14b4dabaebddc06183700181613194fd8d610986468ef",
+    "eligibilitySha256": "12f26e622b762e051c5b0be256162f710bfe8fbf723a0f5002467b94c8a2090c",
+    "planSha256": "9101d844765f323ebe2b0e4f25a55948467dd68f4fc8c4f757d1d119658b9504"
+  },
+  "process": {
+    "state": "completed",
+    "exitCode": 0,
+    "startedAt": "2026-11-14T09:00:00Z",
+    "finishedAt": "2026-11-14T09:00:01Z"
+  },
+  "reports": [
+    {
+      "path": "reports/TEST-example.AlphaIT.xml",
+      "sha256": "8287cebd763d8f8338e13291c4d1551a8dd9798816da7b3c4646d5c18cd166f9",
+      "bytes": 169
+    }
+  ],
+  "observed": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

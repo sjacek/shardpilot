@@ -1,5 +1,8 @@
 # ShardPilot documentation
 
+Prepared release: **[0.6.0 candidate](releases/0.6.0.md)**, with
+[fresh Gradle/Maven consumer acceptance](release-consumers.md). Publication is pending.
+
 [![ShardPilot avatar: three parallel green shard towers and a mint fan-out arrow.](assets/branding/shardpilot-avatar-256.png)](assets/branding/README.md)
 
 ShardPilot splits the classes of an opted-in Gradle `Test` task between independent executions.
@@ -14,6 +17,8 @@ The default [published/audited baseline is 0.5.0](published-artifact-audit.md#pu
 [Current audit status](security-review-2026-11-12.md#current-status-13-november-2026)
 distinguishes registry evidence, source CI checks and remaining assurance work.
 
+![Coding agents choose relevant tests from a growing suite and distribute classes across three balanced parallel CI shards. The screen reads: Too many tests? Choose relevant tests. Run balanced shards.](assets/illustrations/shardpilot-agent-team.png)
+
 ## Guides
 
 | Guide | Read it when you need to… |
@@ -23,10 +28,19 @@ distinguishes registry evidence, source CI checks and remaining assurance work.
 | <img src="assets/branding/guide-icons/configuration-map.svg" width="32" height="32" alt=""> [Gradle/Maven configuration map](configuration.md#gradle-and-maven-configuration-map) | Translate count/index, eligibility, output paths and process controls between adapters. |
 | <img src="assets/branding/guide-icons/architecture.svg" width="32" height="32" alt=""> [Architecture and assignment](architecture.md) | Understand components, class-family ownership, balancing and task inputs. |
 | <img src="assets/branding/guide-icons/history-refresh.svg" width="32" height="32" alt=""> [History refresh](history-refresh.md) | Generate candidate TSV/JSON, choose pruning, interpret coverage and review timing policies. |
+| <img src="assets/branding/guide-icons/history-refresh.svg" width="32" height="32" alt=""> [Compare a legacy history script](history-migration.md) | Freeze shared XML, review candidate TSV and policy differences before migrating a consumer. |
+| <img src="assets/branding/guide-icons/execution-equivalence.svg" width="32" height="32" alt=""> [C2 execution evidence](execution-evidence-contract.md) | Validate retained native execution with independent gates, bounded JSON/XML input and Gradle/Maven configuration; development feature. |
+| <img src="assets/branding/guide-icons/test-selection.svg" width="32" height="32" alt=""> [Selection and execution evidence](execution-selection.md) | Bind a frozen selection decision and optional compiled inputs to native test results in Gradle and Maven; development feature. |
+| <img src="assets/branding/guide-icons/test-selection.svg" width="32" height="32" alt=""> [Compare selectors and run the complete flow](selection-migration.md) | Review frozen consumer decisions and follow native two-shard Gradle/Maven examples through result and artifact checks. |
+| <img src="assets/branding/guide-icons/coverage.svg" width="32" height="32" alt=""> [C3 compiled artifacts](compiled-artifacts.md) | Seal complete file inventories and check SHA-256, revision and required runtime inputs before test workers start; development feature. |
+| <img src="assets/branding/guide-icons/coverage.svg" width="32" height="32" alt=""> [Optional execution diagnostics](execution-diagnostics.md) | Diagnose timeouts, interruptions and memory use, then detect leftover containers without removing them; development feature. |
 | <img src="assets/branding/guide-icons/history-recovery.svg" width="32" height="32" alt=""> [History recovery](history-refresh.md#recover-a-missing-shard-download) | Diagnose missing shard XML, distinguish the three outcome gates and restore the original report cohort. |
 | <img src="assets/branding/guide-icons/ci-integration.svg" width="32" height="32" alt=""> [CI integration](ci.md) | Run all shards with consistent inputs, isolated workspaces and separate reports. |
 | <img src="assets/branding/guide-icons/coverage.svg" width="32" height="32" alt=""> [Class manifests and coverage](shard-verification.md) | Configure artifact gates, read HTML assignment statuses, expose a GitLab MR link and distinguish selection from test completion. |
 | <img src="assets/branding/guide-icons/test-selection.svg" width="32" height="32" alt=""> [Explicit test selection](test-selection.md) | Validate a consumer-owned subset, expand eligible families and run one/many shards with separate reports. |
+| <img src="assets/branding/guide-icons/test-selection.svg" width="32" height="32" alt=""> [Configurable selection profiles](selection-policy.md) | Configure Gradle/Maven profiles, Git acquisition, path rules, mandatory tests and budgets; freeze a common decision for all shards. |
+| <img src="assets/branding/guide-icons/test-selection.svg" width="32" height="32" alt=""> [Changed tests, modules and contracts](selection-impact.md) | Include changed tests, propagate module impact and match JSON/YAML contract changes with shared Gradle/Maven configuration; development feature. |
+| <img src="assets/branding/guide-icons/test-selection.svg" width="32" height="32" alt=""> [Configurable selection: target design](configurable-selection-design.md) | Review the planned complete selector driven by plugin parameters: profiles, Git changes, rules, mandatory tests, budgets and evidence. |
 | <img src="assets/branding/guide-icons/junit-containers.svg" width="32" height="32" alt=""> [PostgreSQL and RabbitMQ example](testcontainers-example.md) | Run a JUnit Jupiter integration suite with shared worker-local Testcontainers fixtures and isolated test data. |
 | <img src="assets/branding/guide-icons/spock-containers.svg" width="32" height="32" alt=""> [Spock with PostgreSQL and RabbitMQ](spock-testcontainers-example.md) | Run specifications and data-table iterations with worker-local containers and specification-local databases. |
 | <img src="assets/branding/guide-icons/testng-containers.svg" width="32" height="32" alt=""> [TestNG with PostgreSQL and RabbitMQ](testng-testcontainers-example.md) | Run class fixtures and data-provider rows with the native TestNG adapter and worker-local containers. |
@@ -45,6 +59,9 @@ distinguishes registry evidence, source CI checks and remaining assurance work.
 | <img src="assets/branding/guide-icons/diagrams.svg" width="32" height="32" alt=""> [PlantUML diagrams](diagrams/README.md) | Find editable diagram sources and regenerate the committed previews. |
 
 ## Boundaries
+
+For service adoption, see [full CI baseline and policy acceptance](consumer-ci-baseline.md)
+and the [17 November evidence report](reports/consumer-ci-baseline-2026-11-17.md).
 
 ShardPilot owns class assignment and candidate exclusion, and can optionally configure Gradle's
 test-process heap, parallelism and replacement limits. Opt-in manifest tasks prepare and verify

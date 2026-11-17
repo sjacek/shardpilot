@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example.shardpilot</groupId><artifactId>execution-selection</artifactId><version>1</version>
+  <build><plugins><plugin>
+    <groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId><version>@project.version@</version>
+    <!-- Shared frozen fixture is intentionally artifact-only: no lifecycle, compiler or runner. -->
+    <configuration>
+      <snapshotDirectory>${project.basedir}/retained/snapshot</snapshotDirectory>
+      <policyFile>${project.basedir}/retained/policy.yaml</policyFile>
+      <eligibilityFile>${project.basedir}/retained/baseline.yaml</eligibilityFile>
+      <historyFile>${project.basedir}/retained/history.tsv</historyFile>
+      <profile>smoke-testdata</profile><suite>profile-smoke-testdata</suite>
+      <revision>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</revision><shardCount>2</shardCount>
+      <selectionFile>${project.build.directory}/execution-selection.json</selectionFile>
+      <expectedRequest>${project.basedir}/retained/expected.json</expectedRequest>
+      <nodesDirectory>${project.basedir}/retained/nodes</nodesDirectory>
+      <reportFile>${project.build.directory}/execution-evidence.json</reportFile>
+      <htmlReportFile>${project.build.directory}/execution-evidence.html</htmlReportFile>
+      <compiledBaseDirectory>${project.basedir}/retained/compiled</compiledBaseDirectory>
+      <compiledManifestFile>${project.basedir}/retained/compiled-manifest.json</compiledManifestFile>
+      <compiledRevision>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</compiledRevision><compiledSuite>profile-smoke-testdata</compiledSuite>
+      <compiledRoots><root>classes</root></compiledRoots>
+      <compiledRequiredDirectories><directory>classes</directory></compiledRequiredDirectories>
+      <compiledRequiredFiles><file>classes/synthetic-testdata.txt</file></compiledRequiredFiles>
+    </configuration>
+  </plugin></plugins></build>
+  <!-- Override configuration in the filtered root POM: nested alternate POMs are not Invoker-filtered. -->
+  <profiles><profile><id>no-c3</id><build><plugins><plugin>
+    <groupId>io.github.sjacek</groupId><artifactId>shardpilot-maven-plugin</artifactId>
+    <configuration combine.self="override"/>
+  </plugin></plugins></build></profile></profiles>
+</project>

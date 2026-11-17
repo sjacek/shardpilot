@@ -149,12 +149,18 @@ public final class JUnitXmlTimings {
         return name.startsWith("TEST-") && name.endsWith(".xml");
     }
 
-    private static void parse(Path path, String source, List<Suite> result) throws ReadFailure {
+    /** One hardened factory for timing import and C2's stricter execution dialect reader. */
+    static XMLInputFactory xmlFactory() {
         var factory = XMLInputFactory.newFactory();
         factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
         factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
         factory.setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, false);
         factory.setXMLResolver((publicId, systemId, base, namespace) -> { throw new XMLStreamException("External entities forbidden"); });
+        return factory;
+    }
+
+    private static void parse(Path path, String source, List<Suite> result) throws ReadFailure {
+        var factory = xmlFactory();
         XMLStreamReader reader = null;
         String element = "document";
         try (var input = Files.newInputStream(path)) {

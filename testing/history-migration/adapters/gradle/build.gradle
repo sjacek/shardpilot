@@ -1,0 +1,43 @@
+import io.github.sjacek.shardpilot.DurationHistoryRefresh
+import io.github.sjacek.shardpilot.ShardHistoryOptions
+import io.github.sjacek.shardpilot.ShardPilotExtension
+
+plugins {
+    id 'java'
+    id 'io.github.sjacek.shardpilot' version '0.5.0'
+}
+
+// Existing frozen inputs only. The caller provides a source-derived diagnostic baseline;
+// it must not be mistaken for the consumer's native eligibility manifest.
+// Keep paths lazy: Gradle/IDE model import must work before comparison inputs are supplied.
+def snapshot = providers.environmentVariable('HISTORY_SNAPSHOT').map { String path -> layout.projectDirectory.dir(path) }
+def output = providers.environmentVariable('HISTORY_OUTPUT').map { String path -> layout.projectDirectory.dir(path) }
+// IDEA's Groovy model loses Provider covariance at map(); bind the API's upper bound explicitly.
+// Offline help/refresh checks cover these casts and preserve the candidate TSV/JSON.
+Provider<? extends RegularFile> baseline = providers.environmentVariable('HISTORY_BASELINE')
+        .map { String path -> layout.projectDirectory.file(path) } as Provider<? extends RegularFile>
+Provider<? extends RegularFile> previous = snapshot.map { directory -> directory.file('previous.tsv') } as Provider<? extends RegularFile>
+Provider<? extends RegularFile> candidate = output.map { directory -> directory.file('durations.tsv') } as Provider<? extends RegularFile>
+Provider<? extends RegularFile> diagnostic = output.map { directory -> directory.file('durations.json') } as Provider<? extends RegularFile>
+def owner = tasks.register('integrationTest', Test).get()
+// Typed extension access also gives batch inspections the DSL's actual property types.
+ShardPilotExtension shardPilot = owner.extensions.getByType(ShardPilotExtension)
+shardPilot.durationsFile.set(previous)
+shardPilot.history { ShardHistoryOptions history ->
+    history.reports.setFrom(snapshot.map { directory -> directory.dir('reports') })
+    history.pruning.set(ShardHistoryOptions.Pruning.BASELINE)
+    history.baselineFile.set(baseline)
+    history.outputFile.set(candidate)
+    history.reportFile.set(diagnostic)
+    history.minimumSeconds.set(0.1d)
+    history.precision.set(1)
+    history.minimumCoverage.set(0.0d)
+    history.duplicates.set(DurationHistoryRefresh.Duplicates.FAIL)
+}
+
+// A refresh-only comparison must never accidentally launch a test/compilation producer.
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it instanceof Test || it instanceof JavaCompile }) {
+        throw new GradleException('History comparison scheduled a producer')
+    }
+}

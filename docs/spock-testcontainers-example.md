@@ -1,8 +1,8 @@
 # Spock with PostgreSQL and RabbitMQ
 
-[Documentation index](README.md) · [Runnable example](../examples/gradle/spock/testcontainers/README.md)
+[Documentation index](README.md) · [Runnable example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/spock/testcontainers/README.md)
 
-The [Spock example](../examples/gradle/spock/testcontainers/build.gradle) is an independent Groovy consumer
+The [Spock example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/spock/testcontainers/build.gradle) is an independent Groovy consumer
 build with four specifications against real PostgreSQL and RabbitMQ. It mirrors the JDBC/AMQP
 scenarios in the [JUnit Jupiter example](testcontainers-example.md), but uses Spock fixture methods,
 conditions, exception expectations and a two-row data table.
@@ -18,12 +18,12 @@ engine; the Jupiter engine is not required. These dependencies are confined to t
 
 | File or class | Responsibility |
 | --- | --- |
-| [build.gradle](../examples/gradle/spock/testcontainers/build.gradle) | Groovy compilation, Spock engine selection, task registration, sharding and live-test cache policy. |
-| [SpockConfig.groovy](../examples/gradle/spock/testcontainers/src/integrationTest/resources/SpockConfig.groovy) | Sequential execution inside the worker and individual reporting of table iterations. |
-| [TestInfrastructure](../examples/gradle/spock/testcontainers/src/integrationTest/groovy/example/shardpilot/TestInfrastructure.groovy) | Lazy worker-local PostgreSQL/RabbitMQ startup and generated databases. |
-| [AbstractInfrastructureSpec](../examples/gradle/spock/testcontainers/src/integrationTest/groovy/example/shardpilot/AbstractInfrastructureSpec.groovy) | `setupSpec()`, the specification's `@Shared` database URL and feature-owned clients. |
-| [IntegrationTestImages](../examples/gradle/spock/testcontainers/src/integrationTest/groovy/example/shardpilot/IntegrationTestImages.groovy) | Public image defaults and explicit test-JVM overrides. |
-| [Timing history](../examples/gradle/spock/testcontainers/integration-test-durations.tsv) | Illustrative specification-level weights, not measured runtimes. |
+| [build.gradle](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/spock/testcontainers/build.gradle) | Groovy compilation, Spock engine selection, task registration, sharding and live-test cache policy. |
+| [SpockConfig.groovy](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/spock/testcontainers/src/integrationTest/resources/SpockConfig.groovy) | Sequential execution inside the worker and individual reporting of table iterations. |
+| [TestInfrastructure](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/spock/testcontainers/src/integrationTest/groovy/example/shardpilot/TestInfrastructure.groovy) | Lazy worker-local PostgreSQL/RabbitMQ startup and generated databases. |
+| [AbstractInfrastructureSpec](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/spock/testcontainers/src/integrationTest/groovy/example/shardpilot/AbstractInfrastructureSpec.groovy) | `setupSpec()`, the specification's `@Shared` database URL and feature-owned clients. |
+| [IntegrationTestImages](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/spock/testcontainers/src/integrationTest/groovy/example/shardpilot/IntegrationTestImages.groovy) | Public image defaults and explicit test-JVM overrides. |
+| [Timing history](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/spock/testcontainers/integration-test-durations.tsv) | Illustrative specification-level weights, not measured runtimes. |
 
 The task includes concrete outer `*Spec.class` candidates and explicitly excludes the abstract base
 from that selection. Otherwise a shard retaining only the abstract helper could fail Gradle's
@@ -141,4 +141,4 @@ Use separate writable workspaces for concurrent jobs. See [CI integration](ci.md
 
 - [Spock primer](https://spockframework.org/spock/docs/2.5/spock_primer.html): fixture methods, shared state and conditions.
 - [Data-driven testing](https://spockframework.org/spock/docs/2.5/data_driven_testing.html): table iterations and reporting.
-- [Spock reference](https://spockframework.org/spock/docs/2.5/all_in_one.html#_parallel_execution): framework parallel execution.
+- [Spock reference](https://spockframework.org/spock/docs/2.5/all_in_one.html#parallel-execution): framework parallel execution.

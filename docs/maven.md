@@ -1,12 +1,24 @@
 # Maven adapter
 
+Installation snippets target the prepared [0.6.0 candidate](releases/0.6.0.md); registry publication is pending.
+
+Development checkout: [configurable profiles and Git acquisition](selection-policy.md#gradle-and-maven-parameters-development-checkout)
+are now available through both adapters. Published 0.5.0 supports the explicit-manifest feature below.
+
+Development policy v2 adds [changed tests, module dependencies and JSON/YAML contracts](selection-impact.md)
+using the same `selectionPolicyFile` and `selectionProfile` parameters for Surefire or Failsafe.
+
+Development also adds optional [execution diagnostics](execution-diagnostics.md):
+`prepare-diagnostics` exports external-runner settings and `verify-diagnostics` rechecks retained
+process evidence and an explicitly configured dedicated Docker daemon. Neither goal runs tests.
+
 Optional [explicit test selection](test-selection.md#maven-surefire-and-failsafe) adds
 `selectionManifestFile` and `selectionSuite` to the existing goals. It preserves the native test
 runner and requires selection-specific exclusions and report paths, including for a single node.
 
-[Documentation index](README.md) · [Runnable POMs](../examples/maven/README.md)
+[Documentation index](README.md) · [Runnable POMs](https://github.com/sjacek/shardpilot/blob/main/examples/maven/README.md)
 
-`io.github.sjacek:shardpilot-maven-plugin:0.5.0` provides class sharding, YAML manifests and
+`io.github.sjacek:shardpilot-maven-plugin:0.6.0` provides class sharding, YAML manifests and
 JSON/HTML coverage reports for native Maven Surefire and Failsafe executions. It uses the same
 Java 17 core and assignment algorithm as the Gradle adapter. No coordinator or replacement test
 runner is introduced. Maven owns test discovery, JVMs, dependencies and normal result handling.
@@ -48,7 +60,7 @@ Add the adapter and wire Surefire's `excludesFile` to its generated output:
 <plugin>
   <groupId>io.github.sjacek</groupId>
   <artifactId>shardpilot-maven-plugin</artifactId>
-  <version>0.5.0</version>
+  <version>0.6.0</version>
   <executions>
     <execution>
       <id>select-unit</id>
@@ -70,7 +82,7 @@ Add the adapter and wire Surefire's `excludesFile` to its generated output:
 Failsafe, add a separate adapter execution with `<runner>FAILSAFE</runner>` bound to
 `pre-integration-test`, and configure Failsafe's generated path as
 `${project.build.directory}/shardpilot/integration/excludes.txt`. Retain Failsafe's normal
-`integration-test` and `verify` goals. The [complete Jupiter POM](../examples/maven/junit-jupiter/pom.xml)
+`integration-test` and `verify` goals. The [complete Jupiter POM](https://github.com/sjacek/shardpilot/blob/main/examples/maven/junit-jupiter/pom.xml)
 shows both runners, independent suites and index-specific test report directories.
 
 Put parameters shared by explicit goals (for example `durationsFile` and maintained exclusions)
@@ -120,7 +132,7 @@ For one suite, a two-node flow is:
 Run these commands in a consuming project containing the configured plugin, not the repository's
 POM-only parent. Use `verify` instead of `test` for the complete Surefire/Failsafe example, then
 verify each suite separately with the corresponding `shardpilot.runner`. See the
-[example commands](../examples/maven/README.md). Always preserve the normal native test failures;
+[example commands](https://github.com/sjacek/shardpilot/blob/main/examples/maven/README.md). Always preserve the normal native test failures;
 selection coverage can pass even when an assertion failed. A worker failure leaves its actual
 manifest when the job workspace survives.
 
@@ -157,7 +169,7 @@ evidence to merge. Normal Surefire/Failsafe XML remains outside this directory.
 Each reactor module owns this layout under its own build directory, even if two modules contain
 the same binary class names. Preserve module and suite paths when collecting artifacts. `-T2`
 parallelizes reactor projects; it does not create shard jobs or select a shard index. POM-only
-aggregators produce no plan/report. See the [reactor example](../examples/maven/reactor/pom.xml).
+aggregators produce no plan/report. See the [reactor example](https://github.com/sjacek/shardpilot/blob/main/examples/maven/reactor/pom.xml).
 
 ## Parameters
 
@@ -205,7 +217,7 @@ AUTO's baseline default, explicit class-directory pruning, failed-data JSON and 
 `reportFile` / `shardpilot.reportFile` means `durations.json` for this goal and `coverage.json`
 for `verify`: avoid a plugin-level explicit report path shared by these independent goals.
 Do not prepend `clean`, `test`, `verify` or `prepare` to an artifact-only refresh invocation.
-The [runnable Jupiter example](../examples/maven/README.md#refresh-both-suite-histories)
+The [runnable Jupiter example](https://github.com/sjacek/shardpilot/blob/main/examples/maven/README.md#refresh-both-suite-histories)
 refreshes both Surefire and Failsafe after its two-node execution.
 
 ## Boundaries and unsupported overrides
@@ -248,7 +260,7 @@ separate CI decisions. Keep every native test job and coverage validation requir
 | Symptom | Check |
 | --- | --- |
 | Plugin/core cannot be resolved | Install the root Maven reactor locally for development, or configure a repository containing the parent, core and adapter. Gradle Portal publication/composite substitution does not install Maven artifacts. |
-| No plugin found for prefix `shardpilot` | Declare the adapter/version in the consumer's build plugins. A fully qualified invocation such as `io.github.sjacek:shardpilot-maven-plugin:0.5.0:verify` bypasses prefix lookup but still requires resolvable artifacts. |
+| No plugin found for prefix `shardpilot` | Declare the adapter/version in the consumer's build plugins. A fully qualified invocation such as `io.github.sjacek:shardpilot-maven-plugin:0.6.0:verify` bypasses prefix lookup but still requires resolvable artifacts. |
 | Missing compiled test directory | Run `test-compile` before explicit preparation/selection. Standalone verification never compiles missing evidence. |
 | Runner `excludesFile` wiring error | Match the configured native output path to `shardpilot.excludesFile`, including suite/directory overrides. |
 | All classes disappeared on a later node | Ensure a generated file was not configured as a maintained input; the adapter intentionally ignores its own previous output. |

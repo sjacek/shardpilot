@@ -1,0 +1,26 @@
+@startuml
+title Accept a consumer policy against pinned CI evidence
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+rectangle "Authenticated full CI cohort\nproject + pipeline + revision + jobs" as ci
+artifact "Private original artifacts\ncompile ZIP, plans, actuals, XML\nAPI reports, measured history" as artifacts
+component "Offline cohort validation\nSHA-256, native ownership\ncomplete disjoint shards" as validate
+artifact "Accepted baseline + compiled tree\nC3 retention seal + report" as baseline
+artifact "Service-owned policy\nprofiles, guards, modules, contracts" as policy
+component "Actual ShardPilot core\nall tracked paths + changed tests\nfull / smoke / fallback / overflow" as core
+artifact "Private JSON / HTML / TSV\ninput and runtime hashes" as evidence
+rectangle "Later: published candidate\nservice migration + native C2/C3\nBenchmark deferred" as later
+ci --> artifacts
+artifacts --> validate
+validate --> baseline
+baseline --> core
+policy --> core
+core --> evidence
+evidence --> later
+note bottom of validate
+Never execute consumer bytecode.
+XML multiplicity differs from
+GitLab display-name deduplication.
+end note
+@enduml

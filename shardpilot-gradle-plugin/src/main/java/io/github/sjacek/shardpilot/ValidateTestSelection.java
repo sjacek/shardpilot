@@ -25,6 +25,20 @@ public abstract class ValidateTestSelection extends DefaultTask {
     public ValidateTestSelection() { }
 
     /**
+     * Supplies whether profile execution must use a frozen common planning snapshot.
+     * @return the configured value
+     */
+    @Input
+    public abstract Property<Boolean> getProfileSelection();
+
+    /**
+     * Supplies whether a read-only planning snapshot was configured.
+     * @return the configured value
+     */
+    @Input
+    public abstract Property<Boolean> getFrozenSelection();
+
+    /**
      * Supplies candidates after subset and ownership exclusions.
      * @return candidate bytecode; empty input must still be checked
      */
@@ -75,6 +89,9 @@ public abstract class ValidateTestSelection extends DefaultTask {
      */
     @TaskAction
     public void validate() throws IOException {
+        if (getProfileSelection().get() && getShardCount().get() > 1 && !getFrozenSelection().get()) {
+            throw new GradleException("Multi-shard profile execution requires selectionSnapshotDirectory from one planning job");
+        }
         ShardPlan.validateShard(getShardCount().get(), getShardIndex().get());
         var selected = ClassManifest.read(getSelectionManifest().get().getAsFile().toPath(), false);
         var plan = ShardPlan.create(TestSelection.history(getHistory().get(), selected), getShardCount().get());

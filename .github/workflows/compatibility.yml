@@ -46,6 +46,10 @@ jobs:
         run: python3 -B scripts/dependency_policy.py
       - name: Verify published artifact audit guards
         run: python3 -B -m unittest discover -s testing/published-artifacts -p 'test_*.py' -v
+      - name: Verify offline history comparison and execution-evidence contract fixtures
+        run: |
+          python3 -B -m unittest discover -s scripts -p 'test_compare_duration_history.py' -v
+          python3 -B -m unittest discover -s testing/contracts -p 'test_*.py' -v
       - name: Enable Maven dependency verification
         run: python3 -B scripts/maven_verification.py prepare
       - name: Restore downloaded dependencies
@@ -174,6 +178,8 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ github.sha }}
+          # Fresh affected-profile consumers use a clean clone of an actual committed diff.
+          fetch-depth: 2
       - name: Set up the matrix JDK
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
@@ -200,6 +206,22 @@ jobs:
           bash ./gradlew check assemble
           -PtestGradleVersion=${{ matrix.gradle }} -PtestJavaVersion=${{ matrix.java }}
           --stacktrace --console=plain
+      - name: Verify complete Gradle selection and execution workflow
+        if: matrix.gradle == '9.9.1' && matrix.java == '17'
+        run: |
+          python3 -B scripts/run_selection_workflow.py --tool gradle --output build/selection-workflow-gradle --command-json '["bash", "./gradlew"]'
+          python3 -B scripts/run_selection_workflow.py --tool gradle --output build/selection-workflow-gradle-invalid --command-json '["bash", "./gradlew"]' --corrupt bytes
+      - name: Download Maven dependencies for packaged release consumers
+        if: matrix.gradle == '9.9.1' && matrix.java == '17'
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: maven-dependencies
+          path: build
+      - name: Verify fresh packaged Gradle and Maven consumers
+        if: matrix.gradle == '9.9.1' && matrix.java == '17'
+        run: |
+          python3 -B scripts/ci_dependency_cache.py restore maven
+          python3 -B scripts/release_consumers.py --output build/release-consumers --gradle-command-json '["bash", "./gradlew"]' --maven-command-json '["bash", "./mvnw"]' --maven-repository "$GITHUB_WORKSPACE/build/ci-dependencies/maven"
       - name: Retain test and validation reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -209,6 +231,16 @@ jobs:
             shardpilot-gradle-plugin/build/reports/
             shardpilot-gradle-plugin/build/test-results/test/
             shardpilot-core/build/reports/
+            build/selection-workflow-gradle*/
+            build/release-consumers/report.json
+            build/release-consumers/publication.json
+            build/release-consumers/*-testdata/workflow.json
+            build/release-consumers/*-testdata/evidence/
+            build/release-consumers/*-testdata/*.log
+            build/release-consumers/*-invalid-*/workflow.json
+            build/release-consumers/*-invalid-*/evidence/
+            build/release-consumers/*-invalid-*/*.log
+            build/release-consumers/*.log
             shardpilot-core/build/test-results/test/
           if-no-files-found: warn
           retention-days: 14
@@ -296,6 +328,11 @@ jobs:
         run: python3 -B scripts/maven_verification.py prepare
       - name: Verify Maven core, adapter and real runner builds
         run: bash ./mvnw -B -ntp -Dmaven.repo.local="$GITHUB_WORKSPACE/build/ci-dependencies/maven" verify
+      - name: Verify complete Maven selection and execution workflow
+        if: matrix.java == '17'
+        run: |
+          python3 -B scripts/run_selection_workflow.py --tool maven --output build/selection-workflow-maven --repository shardpilot-maven-plugin/target/it-repository --command-json '["bash", "./mvnw", "-B", "-ntp"]'
+          python3 -B scripts/run_selection_workflow.py --tool maven --output build/selection-workflow-maven-invalid --repository shardpilot-maven-plugin/target/it-repository --command-json '["bash", "./mvnw", "-B", "-ntp"]' --corrupt revision
       - name: Retain Maven tests and Invoker evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -303,11 +340,23 @@ jobs:
           name: compatibility-maven-jdk-${{ matrix.java }}
           path: |
             shardpilot-core/target/surefire-reports/
+            build/selection-workflow-maven*/
             shardpilot-maven-plugin/target/surefire-reports/
             shardpilot-maven-plugin/target/invoker-reports/
             shardpilot-maven-plugin/target/it/**/build.log
             shardpilot-maven-plugin/target/it/execution-equivalence-*/target/executions/
             shardpilot-maven-plugin/target/it/execution-equivalence-*/build*.log
+            shardpilot-maven-plugin/target/it/execution-evidence/target/*.json
+            shardpilot-maven-plugin/target/it/execution-evidence/target/*.html
+            shardpilot-maven-plugin/target/it/execution-selection/target/*.json
+            shardpilot-maven-plugin/target/it/execution-selection/target/*.html
+            shardpilot-maven-plugin/target/it/selection-impact/target/**/decision/*.json
+            shardpilot-maven-plugin/target/it/selection-impact/target/**/decision/*.html
+            shardpilot-maven-plugin/target/it/selection-impact/target/**/test-results/**/*.xml
+            shardpilot-maven-plugin/target/it/selection-impact/target/**/coverage.html
+            shardpilot-maven-plugin/target/it/diagnostics/target/diagnostics/**/report.json
+            shardpilot-maven-plugin/target/it/diagnostics/target/diagnostics/**/report.html
+            shardpilot-maven-plugin/target/it/diagnostics/target/diagnostics/**/samples.jsonl
             shardpilot-maven-plugin/target/examples/**/build.log
             shardpilot-maven-plugin/target/examples/**/coverage.html
           if-no-files-found: warn

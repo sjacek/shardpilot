@@ -114,12 +114,17 @@ public final class ClassManifest {
      */
     public static void write(Path file, Set<String> names) throws IOException {
         Files.createDirectories(file.toAbsolutePath().getParent());
+        Files.writeString(file, format(names), StandardCharsets.UTF_8);
+    }
+
+    /** Exact v1 bytes shared by plan writers and the execution-selection digest; no I/O or discovery. */
+    static String format(Set<String> names) {
         var document = new LinkedHashMap<String, Object>();
         document.put(SCHEMA_VERSION, VERSION);
         document.put(CLASSES, new ArrayList<>(new TreeSet<>(names)));
         var settings = DumpSettings.builder().setDefaultFlowStyle(FlowStyle.BLOCK)
                 .setIndent(2).setIndicatorIndent(2).setIndentWithIndicator(true).setSplitLines(false).build();
-        Files.writeString(file, new Dump(settings).dumpToString(document), StandardCharsets.UTF_8);
+        return new Dump(settings).dumpToString(document);
     }
 
     private static void validateName(String name) {

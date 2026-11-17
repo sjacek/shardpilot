@@ -5,6 +5,23 @@
 Run checks from the ShardPilot repository, not a consuming application's build. The Wrapper pins
 the Gradle version; use a JDK supported by that Gradle runtime.
 
+## Development profile-selection regression
+
+- `GitChangesTest` uses isolated synthetic Git objects to check multi-commit diffs, rename paths,
+  whitespace/Unicode parsing, missing/shallow history, opt-in local fetching, CI inference and
+  dirty-worktree fallback. No developer-repository history is changed.
+- `ProfileSelectionTest` validates frozen cohorts, altered policy/history/count/eligibility,
+  corrupt/missing artifacts, read-only input protection and native identity binding.
+- `ProfileSelectionFunctionalTest` runs the actual Groovy and Kotlin examples through TestKit,
+  including CLI overrides, strict configuration cache, live refs, two frozen workers and native
+  failures. Native XML is checked independently of selection manifests.
+- `MavenAdapterTest` exercises the same policy/Git support, offline fetch suppression and
+  frozen-worker gates. Descriptor tests check actual generated property injection. The runnable
+  Maven profile example executes a full profile and two smoke nodes, then verifies original XML.
+
+These checks complement the existing full-versus-2/4-shards execution-equivalence fixtures.
+Local validation does not establish the hosted Gradle/JDK and Maven/JDK compatibility matrices.
+
 ## 0.5.0 release verification
 
 **[0.5.0](releases/0.5.0.md)** is published in both registries. Gradle and the Maven
@@ -12,10 +29,10 @@ reactor/example pins share this version. `verifyReleaseTag -PreleaseTag=v0.5.0` 
 without creating a tag. Historical sections below retain the toolchains and results recorded
 for their original revisions.
 
-The Docker-free [Gradle selection example](../examples/gradle/junit-jupiter/test-selection/README.md)
+The Docker-free [Gradle selection example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/test-selection/README.md)
 is copied from the actual repository inputs into TestKit. Its regression compares native identities
 for one node and the union of two nodes, preserving per-node XML and rejecting duplicates or Gamma
-execution. The [Maven selection example](../examples/maven/test-selection/README.md) is a third
+execution. The [Maven selection example](https://github.com/sjacek/shardpilot/blob/main/examples/maven/test-selection/README.md) is a third
 runnable Invoker consumer; its post-build hook verifies the original two-node XML, exact class
 identities, execution counts, successful outcomes and selection coverage. Existing negative selection
 fixtures and native full-versus-2/4-shard equivalence checks remain required.
@@ -196,10 +213,10 @@ events for an unsharded reference and two/four nodes. They preserve expected nat
 failures and check invocation identities, multiplicities and skip outcomes with the shared
 [execution oracle](execution-equivalence.md).
 
-- The [Jupiter POM](../examples/maven/junit-jupiter/pom.xml) prepares separate unit/integration plans,
+- The [Jupiter POM](https://github.com/sjacek/shardpilot/blob/main/examples/maven/junit-jupiter/pom.xml) prepares separate unit/integration plans,
   runs two nodes through real Surefire/Failsafe, checks nested methods and a custom `Spec` suffix,
   preserves a deliberately failing consumer exclusion and verifies both JSON/HTML reports.
-- The [reactor POM](../examples/maven/reactor/pom.xml) runs two modules with `-T2`; identical class
+- The [reactor POM](https://github.com/sjacek/shardpilot/blob/main/examples/maven/reactor/pom.xml) runs two modules with `-T2`; identical class
   names remain isolated by module and each receives a complete/disjoint two-node partition.
 - Negative fixtures prove rejection of focused class overrides, missing evidence with failure
   reports, actual evidence surviving a failed assertion, and a deny-all empty shard that cannot
@@ -226,7 +243,7 @@ The Jupiter example additionally refreshes both suite histories through its Invo
 hook checks every candidate value against native XML (including inclusive nested timing, the
 default floor/precision), merge/coverage counters, suite isolation and unchanged maintained weights.
 
-The [Docker-free Gradle example](../examples/gradle/junit-jupiter/duration-history/README.md)
+The [Docker-free Gradle example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/duration-history/README.md)
 demonstrates native outer/nested execution, two-node YAML/HTML verification and candidate TSV/JSON.
 Its four-step sequence is also exercised automatically by `HistoryRefreshExampleFunctionalTest`,
 which copies the actual example inputs and substitutes only plugin resolution through TestKit.
@@ -364,7 +381,7 @@ Provided Maven API dependencies and the declared minimum version are unchanged.
 
 ## Gradle and JDK matrix
 
-The [compatibility workflow](../.github/workflows/compatibility.yml) runs on branch pushes, pull
+The [compatibility workflow](https://github.com/sjacek/shardpilot/blob/main/.github/workflows/compatibility.yml) runs on branch pushes, pull
 requests, manual dispatch and calls from the tag-publication workflow. Every cell runs the complete
 Docker-free `check assemble`, not only plugin application or a compilation smoke test. All cells
 are required; failures do not cancel the others.
@@ -499,7 +516,7 @@ Run both suites locally with:
 python3 -B -m unittest discover -s scripts -p 'test_central_publication*.py' -v
 ```
 
-The [publication workflow](../.github/workflows/publish.yml) calls this same matrix at the tagged
+The [publication workflow](https://github.com/sjacek/shardpilot/blob/main/.github/workflows/publish.yml) calls this same matrix at the tagged
 commit, after checking its version, and publishes only if the entire call succeeds. Workflow
 regressions are checked by parsing YAML 1.2 with SnakeYAML Engine, also used for manifest transport. Release
 guard fixtures use the fixed publishing Wrapper; consumer fixtures use `testGradleVersion`.
@@ -626,6 +643,101 @@ failures rather than accepting a successful build containing only skipped depend
 
 ## Extending coverage
 
+Policy v2 has a [shared impact guide](selection-impact.md). Focused verification:
+
+```shell
+./gradlew :shardpilot-core:test :shardpilot-gradle-plugin:test --tests '*ProfileSelectionFunctionalTest' :shardpilot-gradle-plugin:validatePlugins
+python3 -B scripts/maven_verification.py run -- -B -ntp verify '-Dtest=*Selection*Test,*Impact*Test,StructuredContractsTest' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dinvoker.test=selection-impact'
+```
+
+Core tests cover protected changed/nested families, module graph validation and transitive reverse
+impact, contract priorities/budgets, pointer coverage, decimal precision, arrays, malformed inputs,
+bounded parsing and immutable snapshot identity. Real Git fixtures read exact committed JSON/YAML
+blobs from repository-root paths, including acquisition from a subdirectory. Restored workers
+reuse frozen impact after a base ref moves; tampered observations invalidate executable output.
+TestKit checks native Gradle XML across two nodes. The Maven impact fixture repeats this with
+Surefire and Failsafe in separate namespaces and independently requires exactly the three
+affected test invocations once per runner, excluding the unrelated eligible test. These are
+synthetic acceptance fixtures, not evidence of migration of a real service's selector.
+
+Additional C5 regressions exercise the exact 32-file/8-MiB acquisition boundaries, the final
+allowed pointer and byte/depth limits, and corrupt downloaded observations. Tampering with either
+raw SHA-256, pointer sets, formats or failure codes must revoke executable selection. A semantic
+no-op differs from an unreadable observation, and a root `ignore` cannot veto required targets.
+Gradle also exercises v2 with Kotlin DSL, both `full`/`fail` on malformed committed contracts and
+strict Configuration Cache reuse; inactive profiles cannot add formats or targets to the active
+suite. Model-level Maven tests check the same fallback before native exclusions are written.
+
+C4 has an [execution diagnostics guide](execution-diagnostics.md). Run its focused tests with:
+
+```shell
+./gradlew :shardpilot-core:test --tests '*Diagnostics*Test' :shardpilot-gradle-plugin:test --tests '*DiagnosticsFunctionalTest' --tests VerifyReleaseArtifactsTest :shardpilot-gradle-plugin:validatePlugins
+python3 -B scripts/maven_verification.py run -- -B -ntp verify '-Dtest=*Diagnostics*Test' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dinvoker.test=diagnostics'
+```
+
+Real JVM fixtures exercise native exit, timeout, interruption and forcibly killed supervisors.
+Counter fixtures cover cgroup v1/v2, missing/invalid counters, resets and separate memory scopes.
+A controlled Docker CLI double checks only `info`/`ps --all`, initial/final leftovers, daemon
+identity and unavailable/malformed output; it does not establish real remote DinD acceptance.
+Additional regressions exercise a hung/interrupted Docker client, full versus truncated/duplicate
+inventories, literal CLI argument forwarding, private error redaction, damaged/missing result files,
+every identity component and revocation of stale JSON when an HTML destination becomes unsafe.
+Unreadable optional OOM counters must preserve otherwise valid usage/limit measurements.
+The native CLI runs without a build-tool classpath. Gradle tests exercise both DSLs and strict
+configuration cache without scheduling producers. Maven's Invoker fixture verifies a successful
+process, rejects another attempt, rejects native exit 7, rejects invalid prepare limits without
+replacing valid settings and rechecks the original cohort. Both
+diagnostic goals are required by the release-descriptor validator. Linux additionally exercises
+the `/proc` collector and symlink path checks; Windows reports process RSS as unavailable.
+
+C3 has a dedicated [compiled-artifact integrity guide](compiled-artifacts.md). Run its focused
+core and Gradle regression suites with:
+
+```shell
+./gradlew :shardpilot-core:test --tests '*CompiledArtifactsTest' :shardpilot-gradle-plugin:test --tests '*CompiledArtifactsFunctionalTest' --tests VerifyReleaseArtifactsTest
+python3 -B scripts/maven_verification.py run -- -B -ntp verify
+```
+
+The Maven invocation includes `CompiledArtifactsMojoTest`, generated-descriptor assertions and
+the `compiled-artifacts` Invoker project. Its native marker must contain exactly one Surefire and
+one Failsafe execution despite intervening rejected revision/digest invocations. The release-bundle
+gate requires both new goals too. Core regressions also relocate the sealed cohort to another worker,
+change bytes around stream-buffer boundaries and verify that only restoring the original bytes
+recovers a failed check. Gradle regressions reject a bad digest supplied through project properties,
+an empty compiled test tree and duplicate DSL declarations before a native worker can start.
+Linux CI additionally runs symlink, FIFO and case-collision controls that are platform-restricted
+locally. The Maven fixture resolves its provider before sealing, then runs verification and native
+workers offline without compilation. A green local run does not replace the hosted compatibility matrix.
+
+The [selection-to-evidence bridge](execution-selection.md) has focused checks for both generations of C2:
+
+```shell
+./gradlew :shardpilot-core:test --tests '*ExecutionSelectionTest' :shardpilot-gradle-plugin:test --tests '*ExecutionSelectionFunctionalTest' --tests '*NativeExecutionEvidenceFunctionalTest'
+python3 -B scripts/maven_verification.py run -- -B -ntp verify '-Dinvoker.test=execution-selection,execution-evidence'
+python3 -B -m unittest discover -s testing/contracts -p 'test_*.py'
+```
+
+The shared core checks same-family/different-input decisions, exact per-node plans, old v1 golden reports,
+optional C3 byte checks, malformed/oversized snapshots, aliases and stale-output revocation. TestKit covers
+Groovy/Kotlin, standalone CLI configuration and Configuration Cache reuse. Real JUnit, Spock and TestNG
+XML/ledgers also pass through the bound gate. Maven checks inherited descriptor parameters and actual offline
+goal invocation. The signed Maven bundle validator requires `prepare-execution-selection` alongside the
+existing nine goals. Source fixtures contain synthetic identities and file contents only.
+
+Additional regressions cover four-node cohorts with empty plans, exact restoration after C3 byte failures,
+SHA-256 Git revisions and JSON/YAML blob changes that keep the same pointers and selected families.
+TestKit also enables broad build caching deliberately, then changes compiled bytes or raw timing inputs;
+neither an old cache entry nor a repeated DSL declaration may bypass the gate. Maven checks independently
+supplied aggregate identity, lowered C3 limits, private I/O-error redaction and Surefire/Failsafe isolation.
+The two artifact-only Invoker fixtures first resolve the reviewed plugin/POM graph without a lifecycle,
+then require subsequent calls to succeed or fail as expected offline. This bootstrap makes focused runs
+independent of earlier native fixtures and preserves strict checksum verification on every resolution.
+
+The reviewed bridge example can be regenerated by running test helper `ExecutionSelectionFixture` from
+the compiled core test classpath with `docs/examples/execution-selection-testdata` as its sole argument.
+Copy its files to `shardpilot-maven-plugin/src/it/execution-selection/retained` together. Contract tests reject
+drift between the two fixtures. Keep their exact LF bytes; `.gitattributes` pins their line endings.
+
 For assignment changes, preserve determinism across input orders and prove exactly one owner per
 family across all indices. Include equal weights, missing measurements, nested classes, negative
 hashes, zero durations and arithmetic overflow. Check changes against an unsharded baseline rather
@@ -639,3 +751,69 @@ compatibility combinations before adding them to the supported scope.
 For documentation-only changes, validate relative links and regenerate affected diagrams using
 the [PlantUML workflow](diagrams/README.md). The rendered image must tell the same story as its
 editable source and the current implementation.
+
+## Frozen selector comparison and complete workflow
+
+The [migration guide](selection-migration.md) and
+[15 November service report](reports/selection-migration-2026-11-15.md) separate legacy planning,
+adapter parity and actual native execution. Replay inputs are immutable and hash-checked; an
+unreviewed difference fails. Generic fixtures contain no service-specific classes or source.
+
+```shell
+./gradlew :shardpilot-gradle-plugin:test --tests '*SelectorComparisonFunctionalTest'
+python -B -m unittest discover -s scripts -p test_compare_selectors.py -v
+python -B scripts/maven_verification.py run -- -B -ntp verify -Dinvoker.test=selection-workflow
+```
+
+The Gradle functional test supplies the actual development core/probe classpath to the
+Python regressions. Standalone Python execution skips only that real-core case when no classpath
+was supplied. Cases cover changed script/policy/history/baseline bytes, unsafe paths, output reuse,
+exact reviewed sets/statuses, deterministic replay/plans, sanitized legacy failures, original
+native exits, XML hashes and DTD rejection. Optional cost ordering and required changed-nightly
+coverage must remain distinguishable; do not force equality by weakening the policy.
+
+The service replay has 19 scenarios, including both complete recorded Git diffs, 15 matching
+decisions and four precisely explained differences. It uses compiled-name inventories (285/92),
+not accepted native full-service discovery. Six representative retained cases are also rebound
+through the real Gradle and Maven artifact-only entry points, requiring identical canonical
+selection-v2 bytes. Consumer code, copied selectors and inputs remain in ignored private output.
+
+The compatibility workflow additionally runs the complete native examples on JDK 17: Gradle's
+latest supported matrix cell and Maven's JDK-17 cell. Each compiles three fixture tests, selects
+two, freezes a separate snapshot, seals bytecode and independently pins that manifest, runs both
+native workers, and requires the C2 report to pass with C5/C3 provenance. Configuration and native
+test sources are equal between the examples. The local driver observes real subprocess exits and
+timestamps but uses explicitly synthetic local job IDs; hosted-provider identity is a separate
+consumer integration boundary.
+
+Negative runs alter Gradle bytecode or Maven's expected revision after sealing. Both workers must
+fail specifically at the C3 guard, leave no native XML, and fail aggregation. Expected rejection
+is a harness assertion, never a successful native process. The original frozen snapshot must remain
+unchanged throughout. CI retains native XML, request/node metadata, logs and JSON/HTML reports for
+both successful and rejected cases. Benchmarking and service rollout remain deferred.
+
+Local acceptance on Windows/JDK 25: 19 focused Gradle tests (including the real-core Python replay),
+781 core tests and 212 Maven-adapter tests, plus the new Invoker example. No failures/errors;
+nine existing operating-system-specific core tests are disabled on Windows and remain covered by
+Linux CI. Both native happy paths and both intentional C3 rejections passed. Six adapter comparisons,
+six format-contract tests, nine documentation-validator tests and strict dependency-policy checks
+also passed. The rendered Pages site validates its internal assets and repository links. This is
+local acceptance; hosted CI must validate each pushed revision separately.
+
+### CI follow-up — 16 November 2026
+
+[Compatibility run 106](https://github.com/sjacek/shardpilot/actions/runs/43965904674) for `f4f79ae`
+passed 14 of 15 jobs. Selector replay passed in all eight Gradle/JDK cells; all three Maven cells,
+the native Maven happy path and its wrong-revision rejection also passed. The additional Gradle
+workflow failed before planning because offline plugin-classpath resolution searched Plugin Portal
+for `snakeyaml-engine`, while CI had warmed its Maven Central repository metadata.
+
+The follow-up fix declares Central in both Gradle fixtures' `pluginManagement.repositories` and
+preserves copied settings instead of replacing them. A fixture-only source-directory property
+relocates the included build. The Python regression checks preservation of those settings, strict
+verification metadata and offline invocation. A local Portal-only control reproduces the failure;
+the corrected two-shard flow and corrupted-byte rejection pass offline even with SnakeYAML
+excluded from Portal, so an older local Portal cache cannot conceal this dependency. The same
+restriction covers the artifact-only adapter comparison. These follow-up checks use local JDK 25;
+the corrected JDK-17 hosted step requires another push. Neither checksum enforcement nor offline
+mode is relaxed, and no dependency versions change.

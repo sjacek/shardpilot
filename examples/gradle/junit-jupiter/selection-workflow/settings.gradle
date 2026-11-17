@@ -1,0 +1,13 @@
+pluginManagement {
+    // Plugin runtime dependencies use the same Maven Central cache as dependency warmup.
+    repositories {
+        def candidate = providers.gradleProperty('example.pluginRepository')
+        if (candidate.isPresent()) maven { url = uri(candidate.get()) }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    // Source substitution is explicit. Fresh-consumer acceptance supplies only published coordinates.
+    def source = providers.gradleProperty('example.pluginSourceDirectory')
+    if (source.isPresent()) includeBuild(source.get())
+}
+rootProject.name = 'selection-workflow-testdata'

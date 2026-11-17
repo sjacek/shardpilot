@@ -8,7 +8,7 @@ namespace registration is needed for ShardPilot. Namespace ownership, a publishi
 PGP signing key are separate prerequisites. Existing publisher keys can be reused if still valid
 and available; this guide also covers creating a key.
 
-The [publication workflow](../.github/workflows/publish.yml) publishes Gradle automatically on a
+The [publication workflow](https://github.com/sjacek/shardpilot/blob/main/.github/workflows/publish.yml) publishes Gradle automatically on a
 release-tag push. Its later manual run from that same tag publishes the parent POM, shared core
 and Maven adapter together. Each destination uses its own job, credentials and complete release gate.
 
@@ -112,10 +112,10 @@ Follow the [version-tag procedure](releases.md#publish-from-a-version-tag) to pu
 When Central credentials are ready, start **Publish ShardPilot** manually from the existing tag:
 
 ```shell
-gh workflow run publish.yml --repo sjacek/shardpilot --ref v0.5.0
+gh workflow run publish.yml --repo sjacek/shardpilot --ref v0.6.0
 ```
 
-After the maintainer creates the tested release tag, the CLI selects `v0.5.0` rather than `main`; no separate tag input is used. Branch refs are
+After the maintainer creates the tested release tag, the CLI selects the prepared `v0.6.0` rather than `main`; no separate tag input is used. Branch refs are
 rejected. The workflow must be present on the default branch and in that release tag. The manual
 run uses the tag's commit SHA, reruns eight Gradle/JDK cells, three Maven/JDK jobs and the signed-bundle
 check, then publishes only Maven. See the [manual publication procedure](releases.md#publish-maven-later-from-the-same-tag).

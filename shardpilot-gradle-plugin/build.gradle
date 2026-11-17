@@ -159,7 +159,25 @@ test {
     inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/test-selection') {
         include 'build.gradle', 'settings.gradle', 'selection.yaml', 'durations.tsv', 'src/**'
     }).withPropertyName('selectionConsumerExample')
+    inputs.file(rootProject.file('shardpilot-core/src/test/resources/git-fixture/GitFixture.java')).withPropertyName('syntheticGitFixture')
+    inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-profiles')).withPropertyName('profileSelectionConsumer')
+    inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-impact')).withPropertyName('impactSelectionConsumer')
+    inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-workflow'),
+            rootProject.fileTree('examples/maven/selection-workflow'),
+            rootProject.file('scripts/compare_selectors.py'), rootProject.file('scripts/test_compare_selectors.py'),
+            rootProject.file('scripts/run_selection_workflow.py')).withPropertyName('selectorMigrationAndWorkflow')
+    inputs.files(rootProject.file('scripts/collect_ci_baseline.py'),
+            rootProject.file('scripts/test_collect_ci_baseline.py'),
+            rootProject.file('scripts/verify_consumer_policy.py'),
+            rootProject.file('scripts/test_verify_consumer_policy.py')).withPropertyName('consumerCiBaselineAcceptance')
+    inputs.files(rootProject.file('scripts/release_consumers.py'), rootProject.file('scripts/test_release_consumers.py'),
+            rootProject.file('docs/releases/0.6.0.md'), rootProject.file('CHANGELOG.md'),
+            rootProject.fileTree('examples/maven') { include '**/pom.xml'; exclude '**/target/**' })
+            .withPropertyName('releaseConsumerAcceptance')
+    inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-profiles-kotlin')).withPropertyName('profileSelectionKotlinConsumer')
     inputs.files(rootProject.fileTree('testing/execution-equivalence')).withPropertyName('nativeExecutionFixtures')
+    inputs.files(rootProject.fileTree('docs/examples/execution-evidence-testdata')).withPropertyName('executionEvidenceFixtures')
+    inputs.files(rootProject.fileTree('docs/examples/execution-selection-testdata')).withPropertyName('executionSelectionFixtures')
     // Check the actual publication model, including the marker, rather than only a composite classpath.
     def metadataTasks = tasks.matching { it.name in ['generatePomFileForPluginMavenPublication',
             'generatePomFileForShardpilotPluginMarkerMavenPublication', 'generateMetadataFileForPluginMavenPublication'] }
@@ -213,6 +231,13 @@ tasks.named('javadoc', Javadoc) { source sharedCoreSources.allJava }
 tasks.named('check') { dependsOn ':shardpilot-core:check' }
 
 publishing {
+    // Opt-in file publication for fresh-consumer acceptance; no publisher credentials or upload.
+    def acceptanceRepository = providers.gradleProperty('releaseAcceptanceRepository')
+    if (acceptanceRepository.isPresent()) {
+        repositories {
+            maven { name = 'releaseAcceptance'; url = uri(acceptanceRepository.get()) }
+        }
+    }
     publications.withType(MavenPublication).configureEach {
         if (name == 'pluginMaven') artifactId = 'shardpilot'
         pom { MavenPom pom ->

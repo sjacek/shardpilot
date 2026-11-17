@@ -28,7 +28,7 @@ metadata and its three JARs. Downloads retain original/final HTTPS URLs, sizes a
   [the publisher's GitHub public-key endpoint](https://github.com/sjacek.gpg). Record the actual
   signing/primary fingerprints; this is not independent, out-of-band identity authentication.
   The tag/artifact signer must also match the reviewed fingerprint in
-  [`security/published-artifact-audit.json`](../security/published-artifact-audit.json).
+  [`security/published-artifact-audit.json`](https://github.com/sjacek/shardpilot/blob/main/security/published-artifact-audit.json).
 
 Registry sidecars and module metadata share a distribution trust boundary with their artifacts.
 They detect mismatches but do not, by themselves, establish publisher identity or build provenance.
@@ -174,7 +174,7 @@ attempts applies only to the measured scenarios and is separate from dependency 
 
 ## Full audit in GitHub Actions
 
-The separate [Published artifact audit workflow](../.github/workflows/published-artifact-audit.yml)
+The separate [Published artifact audit workflow](https://github.com/sjacek/shardpilot/blob/main/.github/workflows/published-artifact-audit.yml)
 supports `workflow_dispatch` and `workflow_call`; it does not run on every ordinary branch push.
 The fast audit guard tests remain in the normal compatibility workflow.
 
@@ -195,7 +195,7 @@ inherited release secret or credentialed upload. Build-tool downloads and the re
 are pinned; each phase records its actual image and tool versions. On Linux, only disposable phase
 output/seed directories are made writable to UID 10001; registry inputs stay mounted read-only.
 
-Both publishers in [publish.yml](../.github/workflows/publish.yml) now require this reusable audit
+Both publishers in [publish.yml](https://github.com/sjacek/shardpilot/blob/main/.github/workflows/publish.yml) now require this reusable audit
 as well as tag validation and the entire compatibility workflow. Audit and compatibility can run
 in parallel after tag validation. Failed, cancelled or skipped prerequisites block publication.
 No new required branch-check context is necessary: the audit is a release-job dependency.

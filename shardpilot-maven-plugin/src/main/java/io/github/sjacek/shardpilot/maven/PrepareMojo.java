@@ -24,8 +24,8 @@ public final class PrepareMojo extends AbstractShardMojo {
         if (skipAggregator()) return;
         try {
             var selection = new RunnerConfiguration(this).scan();
-            var explicit = explicitSelection(selection.eligible());
             String history = history();
+            var explicit = configuredSelection(selection.eligible(), history, true);
             if (explicit == null) {
                 ShardManifests.prepare(planDirectory(), selection.eligible(), history, shardCount);
                 Files.deleteIfExists(planDirectory().resolve("selection.id"));

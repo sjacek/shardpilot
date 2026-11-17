@@ -1,0 +1,6 @@
+schemaVersion: 1
+classes:
+  - example.AlphaIT
+  - example.AlphaIT$Nested
+  - example.BetaIT
+  - example.UnrelatedIT

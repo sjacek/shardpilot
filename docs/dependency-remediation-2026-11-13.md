@@ -172,7 +172,7 @@ Medium Jetty matches with an aggregate passing gate. These were local results, b
 
 References: [CycloneDX core validation advisory](https://github.com/advisories/GHSA-6fhj-vr9j-g45r),
 [Bouncy Castle advisory](https://github.com/advisories/GHSA-9pwp-9qqc-pr26),
-[Maven plugin dependency configuration](https://maven.apache.org/guides/mini/guide-configuring-plugins.html#using-the-dependencies-tag),
+[Maven plugin dependency configuration](https://maven.apache.org/guides/mini/guide-configuring-plugins.html#Using_the_.3Cdependencies.3E_Tag),
 [Jetty request-smuggling advisory](https://github.com/advisories/GHSA-355h-qmc2-wpwf),
 [Jetty authentication advisory](https://github.com/advisories/GHSA-2fvj-hgj9-j2gr),
 [Jetty security reports](https://jetty.org/security.html),

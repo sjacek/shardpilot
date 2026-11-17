@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-17",
+  "benchmark": "deferred",
+  "productionMigration": false,
+  "consumers": [
+    {
+      "consumer": "tichodroma-svc",
+      "project": 84579714,
+      "pipeline": 3076935763,
+      "revision": "6f403eeea4c291b0c7986685d37a1cef6244a541",
+      "baseline": {
+        "classes": 285,
+        "baselineSha256": "f0439b2d85371a25b54d62aaaee1dcdea0e512d5ebc8dd42ea512d9145852d4d",
+        "historySha256": "e2bb9ee31666d63f1801b93cac43657a4b472097eba48bb1fffbd9fc0436e6cd",
+        "shards": [
+          {
+            "index": 1,
+            "classes": 95,
+            "job": 18090664773,
+            "tests": 990,
+            "skipped": 0,
+            "failures": 0,
+            "errors": 0,
+            "reports": 95
+          },
+          {
+            "index": 2,
+            "classes": 94,
+            "job": 18090664774,
+            "tests": 1024,
+            "skipped": 0,
+            "failures": 0,
+            "errors": 0,
+            "reports": 94
+          },
+          {
+            "index": 3,
+            "classes": 96,
+            "job": 18090664775,
+            "tests": 1094,
+            "skipped": 3,
+            "failures": 0,
+            "errors": 0,
+            "reports": 96
+          }
+        ]
+      },
+      "nativeObservations": {
+        "rootXmlOccurrences": 3108,
+        "rootApiDisplayIdentities": 3088,
+        "rootDuplicateDisplayOccurrences": 20
+      },
+      "compilation": {
+        "compiledFiles": 14368,
+        "compiledBytes": 218772588,
+        "legacySealVerified": true,
+        "archiveSha256": "72bd3f5fc9dcb8b3dbf8980fa0569d005a2b085013b4199717984a6d4c229ccf",
+        "manifestSha256": "614c6b1d147c148da0d106eee2e2b877cd352bf71b70d80d2c4faa43aff81854",
+        "sealScope": "post-download retention",
+        "rejectWrongRevision": true,
+        "rejectChangedBytes": true
+      },
+      "policy": {
+        "policySha256": "87e0c067b74c955203ecf4a64c40c0d14f01c4f2898d499b4650bbcb07567f7c",
+        "trackedPaths": 4684,
+        "changedTestSources": 285,
+        "cases": 4693,
+        "subsetPaths": 4677,
+        "fullFallbackPaths": 7,
+        "caseMatrixSha256": "194d83175e7cd9a3d4e55bccabf91b94ff27f7f271143e8feef00ef109c893dc",
+        "decisionsSha256": "a0036c2d03cbe0712f7b3c0ff35ac2b1e573dbc6e38694f520926cc7e357ddee",
+        "runtime": [
+          {
+            "name": "acceptance-probe.jar",
+            "sha256": "77d6ff3a457875163e385800948d41e3bb046d3abfc3fc1d5c8766d687cf44fa"
+          },
+          {
+            "name": "shardpilot-core.jar",
+            "sha256": "96288e636dfa8a44fb9eca511a82ca62e25053c8f3751c7cd2196f2f302bf983"
+          },
+          {
+            "name": "snakeyaml-engine.jar",
+            "sha256": "88d816316a19c6e7c48b04dc7374522ad436fa51ab105407e95b991f86d21167"
+          }
+        ]
+      }
+    },
+    {
+      "consumer": "ops-svc",
+      "project": 84956515,
+      "pipeline": 3077064952,
+      "revision": "f8172c679a62b66eaec4e3cf840dc518c2f9dff6",
+      "baseline": {
+        "classes": 103,
+        "baselineSha256": "a79b2e4bee39ff635570da211c185bd20fa4c8dcf4165c7ce8000097ce863c7d",
+        "historySha256": "8a0ce9622ff7537619d64d6ad66a20e2ac070e87a7dd3f4f3bd83eb7de6751d2",
+        "shards": [
+          {
+            "index": 1,
+            "classes": 53,
+            "job": 18091558508,
+            "tests": 1125,
+            "skipped": 0,
+            "failures": 0,
+            "errors": 0,
+            "reports": 53
+          },
+          {
+            "index": 2,
+            "classes": 50,
+            "job": 18091558509,
+            "tests": 657,
+            "skipped": 0,
+            "failures": 0,
+            "errors": 0,
+            "reports": 50
+          }
+        ]
+      },
+      "nativeObservations": {
+        "rootXmlOccurrences": 1782,
+        "rootApiDisplayIdentities": 1752,
+        "rootDuplicateDisplayOccurrences": 30
+      },
+      "compilation": {
+        "compiledFiles": 2851,
+        "compiledBytes": 15638051,
+        "legacySealVerified": false,
+        "archiveSha256": "da8a49d0a379a9b979f14247f140c7f92dade6f745678e96eed86d8f8ecce805",
+        "manifestSha256": "0720311e3736bbbc4f5a73bc6a56c7b5a7c84ace8d51e0bb72b64e2b87224f5a",
+        "sealScope": "post-download retention",
+        "rejectWrongRevision": true,
+        "rejectChangedBytes": true
+      },
+      "policy": {
+        "policySha256": "9bde708dba61d00ddcc3b9c06886ad78d41191d07650c244319bcffafdfe7984",
+        "trackedPaths": 1036,
+        "changedTestSources": 103,
+        "cases": 1045,
+        "subsetPaths": 1015,
+        "fullFallbackPaths": 21,
+        "caseMatrixSha256": "9d0fbfd698c10b5f5395f59e16afd5e1455f8eb20eebddcc1b47d8393e0e5e92",
+        "decisionsSha256": "6510a6031cb3f268f4b1fe421b9c6dd921ba6c73cc0136d61136a98c02020dd3",
+        "runtime": [
+          {
+            "name": "acceptance-probe.jar",
+            "sha256": "77d6ff3a457875163e385800948d41e3bb046d3abfc3fc1d5c8766d687cf44fa"
+          },
+          {
+            "name": "shardpilot-core.jar",
+            "sha256": "96288e636dfa8a44fb9eca511a82ca62e25053c8f3751c7cd2196f2f302bf983"
+          },
+          {
+            "name": "snakeyaml-engine.jar",
+            "sha256": "88d816316a19c6e7c48b04dc7374522ad436fa51ab105407e95b991f86d21167"
+          }
+        ]
+      }
+    }
+  ]
+}

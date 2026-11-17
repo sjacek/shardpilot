@@ -1,8 +1,8 @@
 # TestNG with PostgreSQL and RabbitMQ
 
-[Documentation index](README.md) · [Runnable example](../examples/gradle/testng/testcontainers/README.md)
+[Documentation index](README.md) · [Runnable example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/testng/testcontainers/README.md)
 
-The [TestNG example](../examples/gradle/testng/testcontainers/build.gradle) is an independent Java consumer
+The [TestNG example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/testng/testcontainers/build.gradle) is an independent Java consumer
 build with four classes against real PostgreSQL and RabbitMQ containers. It mirrors the scenarios
 in the [JUnit Jupiter](testcontainers-example.md) and [Spock](spock-testcontainers-example.md)
 examples, using TestNG's inherited `@BeforeClass`, assertions and a two-row `@DataProvider`.
@@ -17,11 +17,11 @@ is involved. Dependencies include Testcontainers 2.0.5, PostgreSQL JDBC 42.7.14,
 
 | File or class | Responsibility |
 | --- | --- |
-| [build.gradle](../examples/gradle/testng/testcontainers/build.gradle) | TestNG selection, source set/task registration, sharding, sequential execution and live-test cache policy. |
-| [AbstractInfrastructureIT](../examples/gradle/testng/testcontainers/src/integrationTest/java/example/shardpilot/AbstractInfrastructureIT.java) | Inherited `@BeforeClass` database allocation, method-owned clients and bounded message polling. |
-| [TestInfrastructure](../examples/gradle/testng/testcontainers/src/integrationTest/java/example/shardpilot/TestInfrastructure.java) | Lazy worker-local PostgreSQL/RabbitMQ startup and generated databases. |
-| [IntegrationTestImages](../examples/gradle/testng/testcontainers/src/integrationTest/java/example/shardpilot/IntegrationTestImages.java) | Public image defaults and explicit test-JVM overrides. |
-| [Timing history](../examples/gradle/testng/testcontainers/integration-test-durations.tsv) | Illustrative class-level weights, not measured performance. |
+| [build.gradle](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/testng/testcontainers/build.gradle) | TestNG selection, source set/task registration, sharding, sequential execution and live-test cache policy. |
+| [AbstractInfrastructureIT](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/testng/testcontainers/src/integrationTest/java/example/shardpilot/AbstractInfrastructureIT.java) | Inherited `@BeforeClass` database allocation, method-owned clients and bounded message polling. |
+| [TestInfrastructure](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/testng/testcontainers/src/integrationTest/java/example/shardpilot/TestInfrastructure.java) | Lazy worker-local PostgreSQL/RabbitMQ startup and generated databases. |
+| [IntegrationTestImages](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/testng/testcontainers/src/integrationTest/java/example/shardpilot/IntegrationTestImages.java) | Public image defaults and explicit test-JVM overrides. |
+| [Timing history](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/testng/testcontainers/integration-test-durations.tsv) | Illustrative class-level weights, not measured performance. |
 
 Only outer `*IT.class` candidates are selected, and the abstract fixture is explicitly excluded.
 The base stays on the runtime classpath for inheritance; a shard with no concrete tests does not
@@ -87,7 +87,7 @@ PowerShell:
 
 Quote dotted `-P` arguments with the batch launcher. Use `integrationTestClasses` to compile without
 Docker. The parent plugin's `check` remains Docker-independent. For IDE source roots and dependencies,
-[import the example build](../examples/gradle/README.md#import-into-intellij-idea), not just the parent.
+[import the example build](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/README.md#import-into-intellij-idea), not just the parent.
 Local SQL inspection suppressions cover only absent IDE datasources and runtime-created tables in
 the three SQL test classes; other SQL inspections remain enabled.
 
