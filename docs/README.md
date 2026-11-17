@@ -57,6 +57,9 @@ distinguishes registry evidence, source CI checks and remaining assurance work.
 
 ## Boundaries
 
+For service adoption, see [full CI baseline and policy acceptance](consumer-ci-baseline.md)
+and the [17 November evidence report](reports/consumer-ci-baseline-2026-11-17.md).
+
 ShardPilot owns class assignment and candidate exclusion, and can optionally configure Gradle's
 test-process heap, parallelism and replacement limits. Opt-in manifest tasks prepare and verify
 class-selection artifacts collected by CI and render their assignments in standalone HTML.

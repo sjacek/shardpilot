@@ -10,6 +10,8 @@ For build, CI and publication details, see the [maintainer documentation](docs/R
 
 ### Added
 
+- Check a service's selection policy against its full CI test baseline and compiled files before migration.
+  [Guide](docs/consumer-ci-baseline.md).
 - Follow complete Gradle and Maven examples from choosing tests to checking parallel results.
   [Guide](docs/selection-migration.md).
 - Check that test results belong to the chosen selection policy and, optionally, the expected compiled files.

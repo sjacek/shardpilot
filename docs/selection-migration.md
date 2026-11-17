@@ -30,6 +30,12 @@ bytecode may be stale or include abstract/disabled classes. Before production mi
 the full native eligible baseline from a trusted compile/planning job for the exact revision.
 An inventory of filenames or a partial set of successful XML files cannot replace that baseline.
 
+The [full CI baseline acceptance](consumer-ci-baseline.md) now captures that boundary for
+exact successful scheduled revisions, validates transferred compilation bytes and exercises
+complete service-owned policies. Its [17 November report](reports/consumer-ci-baseline-2026-11-17.md)
+supersedes the local-name inventory for native eligibility; the original frozen comparison
+remains a separate diagnostic record.
+
 From the repository root, prepare a reviewed policy and a JSON scenario list such as:
 
 ```json

@@ -158,9 +158,12 @@ parameters and frozen worker cohorts are now implemented in the development adap
 module dependencies and semantic JSON/YAML contract rules through that same configuration.
 It does not infer arbitrary source/package layouts or application dependencies. Working-tree
 impact remains separate work. The [frozen service comparison and complete workflow examples](selection-migration.md)
-now cover the daily selectors on bounded retained inputs; native service eligibility and production migration
-remain separate acceptance gates. Automatic-selection provenance
-binding is now implemented for both adapters. C2's offline execution validator and both adapter entry points are implemented in the
+now cover the daily selectors on bounded retained inputs. The separate
+[full CI baseline acceptance](consumer-ci-baseline.md) now supplies
+exact scheduled pipelines, original native XML, full transferred compilation inventories and
+complete consumer policies tested against every tracked path. This closes the retained-input
+gap without claiming a production migration or a benchmark. Automatic-selection provenance
+binding is implemented for both adapters. C2's offline execution validator and both adapter entry points are implemented in the
 development checkout; retain native CI gates alongside the new aggregate gate.
 
 The development checkout also implements [C3 compiled-artifact integrity](compiled-artifacts.md)

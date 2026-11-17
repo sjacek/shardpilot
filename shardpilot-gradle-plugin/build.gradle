@@ -166,6 +166,10 @@ test {
             rootProject.fileTree('examples/maven/selection-workflow'),
             rootProject.file('scripts/compare_selectors.py'), rootProject.file('scripts/test_compare_selectors.py'),
             rootProject.file('scripts/run_selection_workflow.py')).withPropertyName('selectorMigrationAndWorkflow')
+    inputs.files(rootProject.file('scripts/collect_ci_baseline.py'),
+            rootProject.file('scripts/test_collect_ci_baseline.py'),
+            rootProject.file('scripts/verify_consumer_policy.py'),
+            rootProject.file('scripts/test_verify_consumer_policy.py')).withPropertyName('consumerCiBaselineAcceptance')
     inputs.files(rootProject.fileTree('examples/gradle/junit-jupiter/selection-profiles-kotlin')).withPropertyName('profileSelectionKotlinConsumer')
     inputs.files(rootProject.fileTree('testing/execution-equivalence')).withPropertyName('nativeExecutionFixtures')
     inputs.files(rootProject.fileTree('docs/examples/execution-evidence-testdata')).withPropertyName('executionEvidenceFixtures')
