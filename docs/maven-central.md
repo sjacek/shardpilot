@@ -115,7 +115,7 @@ When Central credentials are ready, start **Publish ShardPilot** manually from t
 gh workflow run publish.yml --repo sjacek/shardpilot --ref v0.6.0
 ```
 
-After the maintainer creates the tested release tag, the CLI selects the prepared `v0.6.0` rather than `main`; no separate tag input is used. Branch refs are
+After the maintainer creates the tested release tag, the CLI selects the matching tag (for example `v0.6.0`) rather than `main`; no separate tag input is used. Branch refs are
 rejected. The workflow must be present on the default branch and in that release tag. The manual
 run uses the tag's commit SHA, reruns eight Gradle/JDK cells, three Maven/JDK jobs and the signed-bundle
 check, then publishes only Maven. See the [manual publication procedure](releases.md#publish-maven-later-from-the-same-tag).

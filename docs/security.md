@@ -53,18 +53,19 @@ download distributions/dependencies or contact other services.
 A dynamic check must separate dependency warm-up from an isolated execution phase, document
 allowed destinations, record attempted connections and test the actual distributed artifacts.
 Do not attribute every build connection to ShardPilot or infer absence of all network activity
-from a source search. The [published 0.5.0 artifact audit](published-artifact-audit.md#published-050-baseline-13-november-2026) records
-bounded Linux-container observations for the authored Gradle/Jupiter and Maven Surefire/Failsafe
-consumers, including a blocked positive control. It does not cover every code path or consumer.
+from a source search. The [published 0.6.0 artifact audit](published-artifact-audit.md#published-060-baseline-18-november-2026)
+records bounded Linux-container observations for Gradle/Jupiter, Spock, TestNG and Maven/Jupiter
+through Surefire/Failsafe, including a blocked positive control. It does not cover every code path or consumer.
 
-Development profile selection adds a separate, explicit Git boundary. `affected` invokes local Git
+Profile selection adds a separate, explicit Git boundary. `affected` invokes local Git
 reads; full/smoke/explicit modes do not require Git. Default acquisition never fetches. Setting
 `gitFetch=true` authorizes a bounded fetch through the consumer's configured remote and ordinary
 Git transport/credentials; Gradle/Maven offline mode disables it. Refs are validated and commands
 use argument arrays, bounded output/time and discarded stderr. Git acquisition evidence retains
 sanitized outcome codes, revisions and changed paths. A frozen worker performs local checkout
 validation only, and aggregation runs no Git command. See the [parameter contract](selection-policy.md).
-These development paths are not covered by the historical published-0.5.0 dynamic audit.
+Optional Git/profile, C2/C3 and diagnostic paths retain their source and package-consumer regression
+evidence; the published audit does not exercise every configuration of those paths.
 
 ## Publication boundaries
 
@@ -97,7 +98,7 @@ before compatibility/publication. It binds local
 candidate JAR hashes and records scanner/database identities. The separate
 [build dependency integrity gate](dependency-verification.md) pins Actions commits and verifies
 Gradle/TestKit and Maven dependency bytes, including restored caches. Verification of actual
-previously published registry bytes has separate [0.5.0 integrity/signature evidence](published-artifact-audit.md#published-050-baseline-13-november-2026).
+published registry bytes has separate [0.6.0 integrity/signature evidence](published-artifact-audit.md#published-060-baseline-18-november-2026).
 That check does not retroactively scan all published versions or prove reproducible binary builds.
 
 ## Maintainer setup for private reports

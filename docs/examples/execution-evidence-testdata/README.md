@@ -1,7 +1,8 @@
 # Synthetic two-node C2 example
 
-This authored synthetic cohort is now checked against the implemented development C2 validator.
-`future-c2` distinguishes its illustrative producer from the released 0.5.0 adapter.
+This authored synthetic cohort is checked against the C2 validator published in 0.6.0.
+Its historical `future-c2` label identifies an illustrative producer; native adapter configuration
+is described in the [execution-evidence guide](../../execution-evidence-contract.md).
 All revision/run/job identities are illustrative. No application test payloads are used.
 
 - `expected.json` is supplied independently by the aggregating CI job.

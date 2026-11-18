@@ -1,6 +1,6 @@
 # Complete selection and execution example
 
-Prepared for **ShardPilot 0.6.0**; publication is pending. Smoke selects two of three
+Uses published **ShardPilot 0.6.0**. Smoke selects two of three
 native JUnit tests, full selects all three, and `acceptance-affected-testdata` uses a
 committed Git diff to protect a boundary probe. Each flow freezes its decision, runs
 two workers and verifies native results together with compiled-file integrity.

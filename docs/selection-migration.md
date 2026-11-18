@@ -2,11 +2,11 @@
 
 [Documentation index](README.md)
 
-**Prepared for [0.6.0](releases/0.6.0.md); publication is pending.** The profiles,
-execution-selection v2 and compiled-artifact guards below require the candidate. Source-mode
-examples use an explicit included build/local Maven installation; the
-[fresh-consumer release gate](release-consumers.md) instead resolves packaged artifacts.
-Published 0.5.0 remains the historical audited baseline.
+**Available in published [0.6.0](releases/0.6.0.md).** The profiles, execution-selection v2
+and compiled-artifact guards below are opt-in. Source-mode examples use an explicit included
+build/local Maven installation; the [fresh-consumer release gate](release-consumers.md) resolves
+packaged artifacts. Dated comparison reports retain their original versions and inputs.
+The current [published audit baseline](published-artifact-audit.md#published-060-baseline-18-november-2026) is 0.6.0.
 
 Before replacing an existing selector, compare it with a reviewed declarative policy on the
 same changes, complete eligibility and history. Matching plans establish selection compatibility;

@@ -1,17 +1,16 @@
 # Configurable test selection: target design
 
-**Product direction confirmed on 14 November 2026. Core engine implemented in the development
-checkout, together with Git acquisition and Gradle/Maven profile parameters; none of these
-additions is available in published 0.5.0.**
+**Design recorded on 14 November 2026; implemented in published [0.6.0](releases/0.6.0.md).**
+See the [current policy contract](selection-policy.md) for runnable Gradle/Maven parameters.
 
-ShardPilot will own the complete selection mechanism: discover eligible tests, obtain the
+ShardPilot owns the complete selection mechanism: discover eligible tests, obtain the
 change set, evaluate configured rules, apply mandatory tests and budgets, produce an immutable
 selection, assign shards and explain the decision. A consumer configures the Gradle/Maven
 plugin and keeps no selection algorithm in a Python, shell or custom build-script function.
 
 The [0.5.0 selection feature](test-selection.md) already validates and executes a supplied
 class manifest. Generating that selection from configuration is the extension implemented first
-in the [shared core policy contract](selection-policy.md). The development adapters expose equivalent profile parameters.
+in the [shared core policy contract](selection-policy.md). Both adapters expose equivalent profile parameters.
 The existing manifest remains a supported explicit-input mode and a useful interchange
 format. Automatic modes generate their manifest internally.
 
@@ -40,8 +39,8 @@ contract and prioritization settings are optional. Publish equivalent Gradle Gro
 DSL and Maven POM/property examples. A shared declarative policy file may hold larger rule
 sets; it is plugin configuration, not a user-maintained executable selector.
 
-Exact DSL/property names and policy schema must be specified and tested before implementation
-is released. This design does not introduce runnable configuration examples for 0.5.0.
+The [policy reference](selection-policy.md) specifies the released DSL/property names and schema.
+The older 0.5.0 explicit-manifest mode remains compatible.
 
 ## One engine, build-tool adapters
 
@@ -164,14 +163,14 @@ exact scheduled pipelines, original native XML, full transferred compilation inv
 complete consumer policies tested against every tracked path. This closes the retained-input
 gap without claiming a production migration or a benchmark. Automatic-selection provenance
 binding is implemented for both adapters. C2's offline execution validator and both adapter entry points are implemented in the
-development checkout; retain native CI gates alongside the new aggregate gate.
+published 0.6.0 release; retain native CI gates alongside the aggregate gate.
 
-The development checkout also implements [C3 compiled-artifact integrity](compiled-artifacts.md)
+Published 0.6.0 also implements [C3 compiled-artifact integrity](compiled-artifacts.md)
 in the shared core and both adapters. It binds a complete file inventory to independently supplied
 revision/suite and checks transferred bytes before workers. The execution-selection bridge optionally binds
 that manifest and rechecks actual trees during aggregation. Consumer migration remains separate work.
 
-[Optional C4 execution diagnostics](execution-diagnostics.md) are also implemented in development:
+[Optional C4 execution diagnostics](execution-diagnostics.md) are also available in 0.6.0:
 an external JDK supervisor, bounded scoped memory sampling, native timeout/interruption evidence
 and independent read-only checks on an explicitly dedicated Docker daemon. These are separate
 from selection provenance and do not imply consumer migration or automatic container cleanup.

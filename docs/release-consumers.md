@@ -1,6 +1,6 @@
 # Fresh Gradle and Maven release consumers
 
-[Documentation index](README.md) · [0.6.0 candidate](releases/0.6.0.md)
+[Documentation index](README.md) · [0.6.0 release](releases/0.6.0.md)
 
 This acceptance check exercises packaged bytes rather than a composite build or cached local
 plugin. It is maintainers' release tooling; application users configure the Gradle/Maven plugin
@@ -88,7 +88,11 @@ The importer re-reads the existing signature, tag/source, registry-byte and isol
 checks; a success flag alone is insufficient. It rejects a different audited version, stages
 only the authenticated registry files and uses them for every consumer. The result identifies
 `audited-registries` rather than `candidate-publication`. This path can be prepared and regression
-tested before a version is published; its real registry execution remains pending until release.
+tested before a version is published. Registry-mode acceptance for 0.6.0 is now possible with
+the [verified audit evidence](published-artifact-audit.md#published-060-baseline-18-november-2026);
+record that run separately from candidate-mode acceptance.
 
-The default published/audited baseline remains 0.5.0 until 0.6.0 publication and its full audit
-are confirmed. Benchmarking is separate and remains deferred.
+The default published/audited baseline is [0.6.0](published-artifact-audit.md#published-060-baseline-18-november-2026),
+following publication and the successful full audit. The separate registry-mode profile/C2/C3
+acceptance remains a follow-up; the retained 0.6.0 audit covers its documented four-framework
+execution fixtures. Benchmarking remains deferred.

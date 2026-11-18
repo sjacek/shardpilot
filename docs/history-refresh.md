@@ -1,6 +1,6 @@
 # Refresh duration history
 
-Installation snippets target the prepared [0.6.0 candidate](releases/0.6.0.md); registry publication is pending.
+Installation snippets target published [0.6.0](releases/0.6.0.md).
 
 [Documentation index](README.md) · [CI collection](ci.md#refresh-history-from-collected-reports) ·
 [Gradle example](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/duration-history/README.md) ·

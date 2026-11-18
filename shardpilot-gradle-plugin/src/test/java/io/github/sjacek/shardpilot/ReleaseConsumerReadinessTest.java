@@ -2,6 +2,9 @@ package io.github.sjacek.shardpilot;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -76,13 +79,23 @@ class ReleaseConsumerReadinessTest {
     }
 
     @Test
-    void candidateNotesPreserveThePublishedBaselineAndUnassignedPublicationDate() throws Exception {
-        String version = System.getProperty("shardpilot.test.releaseVersion");
+    void publishedBaselineNotesMatchTheReviewedEvidenceAndPublicationDate() throws Exception {
+        var loader = new Load(LoadSettings.builder().setAllowDuplicateKeys(false).build());
+        Map<?, ?> policy = assertInstanceOf(Map.class, loader.loadFromString(
+                Files.readString(Path.of("security/published-artifact-audit.json"))));
+        Map<?, ?> evidence = assertInstanceOf(Map.class, loader.loadFromString(
+                Files.readString(Path.of("docs/evidence/published-0.6.0-2026-11-18.json"))));
+        String version = assertInstanceOf(String.class, policy.get("defaultPublishedVersion"));
+        String publishedOn = assertInstanceOf(String.class, evidence.get("publishedOn"));
+        assertEquals(version, evidence.get("version"));
+        assertEquals(policy.get("defaultSourceCommit"), evidence.get("sourceCommit"));
         String notes = Files.readString(Path.of("docs/releases", version + ".md"));
-        assertTrue(notes.contains("Publication is pending"));
+        String date = LocalDate.parse(publishedOn).format(DateTimeFormatter.ofPattern("d MMMM uuuu", Locale.ENGLISH));
+        assertTrue(notes.contains("Published on " + date));
+        assertFalse(notes.contains("Publication is pending"));
+        assertFalse(notes.contains("release-notes draft"));
         assertTrue(notes.contains("Benchmarking remains deferred"));
-        assertTrue(Files.readString(Path.of("CHANGELOG.md")).contains("## [" + version + "]"));
-        assertTrue(Files.readString(Path.of("security/published-artifact-audit.json"))
-                .contains("\"defaultPublishedVersion\": \"0.5.0\""));
+        assertTrue(Files.readString(Path.of("CHANGELOG.md"))
+                .contains("## [" + version + "](docs/releases/" + version + ".md) — " + publishedOn));
     }
 }

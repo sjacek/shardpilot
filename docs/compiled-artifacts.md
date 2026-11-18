@@ -1,9 +1,8 @@
 # C3: compiled artifact integrity
 
-Prepared for [0.6.0](releases/0.6.0.md); publication and registry acceptance are pending.
+**Available in [ShardPilot 0.6.0](releases/0.6.0.md).**
 
-**Development feature. Not included in the published 0.5.0 release.** Build/install the current
-development source using the [local development setup](https://github.com/sjacek/shardpilot/blob/main/README.md#local-plugin-development).
+Enable these optional checks in the published Gradle or Maven adapter as described below.
 
 C3 seals the exact files produced by a compilation job and rejects missing, changed or unexpected
 files before a native test worker starts. It is independent of sharding and selection. The same

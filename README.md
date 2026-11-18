@@ -10,11 +10,11 @@ configure per-task worker heap limits, parallel forks and process recycling.
 Works with existing JUnit Jupiter, Spock and TestNG tasks, with no coordinator, CI vendor lock-in,
 test-runner replacement or telemetry. YAML manifests use SnakeYAML Engine in the plugin classloader.
 
-Development checkout adds [configurable profiles and Git acquisition](https://github.com/sjacek/shardpilot/blob/main/docs/selection-policy.md)
-through both adapters; those additions are not in published 0.5.0.
+Version **0.6.0** provides [configurable profiles and Git acquisition](https://github.com/sjacek/shardpilot/blob/main/docs/selection-policy.md)
+through both adapters.
 It also supports [changed tests, module dependencies and JSON/YAML contract rules](docs/selection-impact.md)
 through one shared configuration file.
-The development [selection-to-evidence bridge](docs/execution-selection.md) binds those decisions and
+The optional [selection-to-evidence bridge](docs/execution-selection.md) binds those decisions and
 optional compiled inputs to native test results, retaining existing manifest and node-evidence formats.
 
 Optional [explicit selection](docs/test-selection.md) runs a consumer-owned YAML class subset with
@@ -82,12 +82,14 @@ collects the results. It does not create CI jobs or coordinate their completion.
 
 ## Status
 
-**[0.5.0](docs/releases/0.5.0.md)** is published in Gradle Plugin Portal and Maven Central, with opt-in
-[explicit test selection](docs/test-selection.md) for Gradle and Maven. Installation snippets
-target the prepared [0.6.0 candidate](docs/releases/0.6.0.md); 0.5.0 remains the public release. The [local development setup](#local-plugin-development) supports source changes.
-The default [published-artifact audit](docs/published-artifact-audit.md#published-050-baseline-13-november-2026)
-now uses **0.5.0**, bound to its signed tag and retained registry/isolation evidence.
-The [audit follow-up](docs/security-review-2026-11-12.md#current-status-13-november-2026)
+**[0.6.0](docs/releases/0.6.0.md)** was published in Gradle Plugin Portal and Maven Central on
+**18 November 2026**. Installation snippets target this release, including profiles, execution
+evidence, compiled-input checks and optional diagnostics. The [local development setup](#local-plugin-development)
+supports source changes.
+The default [published-artifact audit](docs/published-artifact-audit.md#published-060-baseline-18-november-2026)
+uses **0.6.0**, bound to signed tag `v0.6.0`, source `55c44e8d85f0b75c83807c62211bbac71797f83e`
+and retained registry/isolation evidence.
+The [audit follow-up](docs/security-review-2026-11-12.md#current-status-18-november-2026)
 separates published-artifact evidence, the green source CI cohort and remaining assurance work.
 Candidate [SBOMs and vulnerability scans](docs/dependency-security.md) distinguish Gradle and Maven,
 with separate runtime, build, test and provided reports. Runtime, supported build tooling, test and provided scopes gate CI/publication under the
@@ -228,8 +230,8 @@ The `shardPilot` extension belongs to each `Test` task, not to the root project.
 
 ### Optional test-process settings
 
-Version **0.5.0** retains the explicit `testProcesses` block for Gradle's existing worker JVMs.
-Use the prepared `0.6.0` candidate in the installation examples above, or use the
+The `testProcesses` block configures Gradle's existing worker JVMs.
+Use published `0.6.0` in the installation examples above, or use the
 [local development override](#local-plugin-development) to verify this checkout:
 
 ```groovy
@@ -338,20 +340,23 @@ Only classes are distributed. Methods stay together, and framework parallelism i
 enabled or disabled. Startup, container reuse, Spring context locality and unknown classes can
 affect wall-clock balance; recorded seconds are not a promise of a particular speedup.
 
-## Compiled artifact integrity (development)
+<a id="compiled-artifact-integrity-development"></a>
 
-The development checkout also provides an opt-in [C3 compiled-artifact gate](docs/compiled-artifacts.md):
+## Compiled artifact integrity
+
+Version 0.6.0 provides an opt-in [C3 compiled-artifact gate](docs/compiled-artifacts.md):
 seal an exact SHA-256 inventory after compilation, then verify the independent revision/suite and
 all transferred bytes before test workers start. Both Gradle and Maven use the same offline core.
-This capability is not included in the published 0.5.0 release.
 
-## Execution diagnostics (development)
+<a id="execution-diagnostics-development"></a>
+
+## Execution diagnostics
 
 Opt in to [execution diagnostics](docs/execution-diagnostics.md) for native timeouts, interrupted
 builds and scoped memory measurements. An external JDK runner and separate Gradle/Maven checks
 retain JSON/HTML reports even when the observed build dies. Optional checks detect containers
-left on an explicitly dedicated Docker daemon without removing them. This capability is not
-included in 0.5.0 and does not replace native build results or execution-evidence checks.
+left on an explicitly dedicated Docker daemon without removing them. Keep native build results
+and execution-evidence checks as independent gates.
 
 ## Refresh duration history (since 0.4.0)
 
@@ -381,7 +386,7 @@ See the [policy and option reference](docs/history-refresh.md),
 
 ## Optional class-manifest verification
 
-Version **0.5.0** can prepare a common plan, record the real candidate
+ShardPilot can prepare a common plan, record the real candidate
 selection before each test task and verify the artifacts collected from every CI shard. Configure
 it once on the owning `Test` task; existing builds gain no verification tasks or task dependencies until they opt in.
 

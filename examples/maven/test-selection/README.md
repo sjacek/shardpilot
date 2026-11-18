@@ -2,9 +2,9 @@
 
 [Maven examples](../README.md) · [Selection guide](../../../docs/test-selection.md)
 
-Uses the prepared **0.6.0** candidate; registry publication is pending. Java 17+ is required; Docker is not.
-From the repository root, install the checkout with `./mvnw -B -ntp install -DskipITs` first.
-The POM pins 0.6.0; the local installation above exercises changes from this checkout.
+Uses published **0.6.0**. Java 17+ is required; Docker is not.
+The POM resolves 0.6.0 from Central. To exercise source changes, install the checkout first
+with the verified producer command `python3 -B scripts/maven_verification.py run -- -B -ntp install -DskipITs`.
 Three classes are eligible; `selection.yaml` selects only
 Alpha and Beta. A one-node run is:
 

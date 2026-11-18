@@ -2,17 +2,16 @@
 
 [Documentation index](README.md)
 
-**Next candidate: [0.6.0](releases/0.6.0.md), publication pending.** Its
-[fresh packaged-consumer gate](release-consumers.md) covers profiles and C2/C3 before
-upload; registry acceptance follows publication. The historical baseline below remains 0.5.0.
+Version **[0.6.0](releases/0.6.0.md)** was published in Gradle Plugin Portal and Maven Central
+on **18 November 2026**. Its [published audit](published-artifact-audit.md#published-060-baseline-18-november-2026)
+passed for source `55c44e8d85f0b75c83807c62211bbac71797f83e`; the reviewed default now uses
+that version and commit. The separate [fresh packaged-consumer gate](release-consumers.md)
+covers profiles and C2/C3, with source-publication and registry-import modes identified in receipts.
 
-Version **[0.5.0](releases/0.5.0.md)** was published to Gradle Plugin Portal and Maven Central on **13 November 2026**.
-It adds explicit YAML test selection for Gradle and Maven, with isolated suite evidence and
-strict selection validation. Existing configuration remains compatible when selection is absent.
-See the [upgrade and release evidence](releases/0.5.0.md). The default published/audited baseline
-is now [0.5.0](published-artifact-audit.md#published-050-baseline-13-november-2026), after a successful
-post-publication audit of both registries. The procedure below applies to future releases;
-do not recreate `v0.5.0` or upload its immutable artifacts again.
+The [0.5.0 release and its original evidence](releases/0.5.0.md) remain historical records.
+The procedure below applies to future releases. Its `v0.6.0` commands illustrate the completed
+release; use a new reviewed version/tag for a new publication. Do not recreate `v0.6.0` or
+upload its immutable artifacts again.
 The build uses `com.gradle.plugin-publish` 2.2.1 and produces plugin, source and Javadoc JARs,
 Maven publication metadata and the `publishPlugins` task. Project/SCM URLs, tags and the tested
 configuration-cache feature are configured in `shardpilot-gradle-plugin/build.gradle`.

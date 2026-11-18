@@ -108,10 +108,15 @@ connect(7, {sa_family=AF_UNIX, sun_path="/tmp/local"}, 16) = 0'''
 
 class SignatureBindingTest(unittest.TestCase):
     def test_signed_payload_must_bind_the_expected_tag_and_commit(self):
-        tag_binding('object abc\ntype commit\ntag v0.5.0\ntagger test\n', 'abc')
-        for payload in ('object changed\ntype commit\ntag v0.5.0\n', 'object abc\ntype commit\ntag v0.4.0\n'):
+        version = audit_runner.VERSION
+        another_version = '0.5.0' if version != '0.5.0' else '0.4.0'
+        tag_binding(f'object abc\ntype commit\ntag v{version}\ntagger test\n', 'abc')
+        for payload in (f'object changed\ntype commit\ntag v{version}\n', f'object abc\ntype commit\ntag v{another_version}\n'):
             with self.assertRaises(ValueError):
                 tag_binding(payload, 'abc')
+
+    def test_previous_published_tag_remains_valid_when_explicitly_selected(self):
+        tag_binding('object abc\ntype commit\ntag v0.5.0\n', 'abc', '0.5.0')
 
     def test_missing_duplicate_or_different_signer_cannot_complete_a_cohort(self):
         rows = [{'file': 'source-tag' if index == 0 else f'artifact-{index}', 'primaryFingerprint': 'publisher'} for index in range(10)]
@@ -176,29 +181,44 @@ class ReleaseInputTest(unittest.TestCase):
 
     def test_reviewed_policy_binds_a_published_version_commit_and_signer(self):
         policy = artifacts.audit_policy()
-        self.assertEqual('0.5.0', policy['defaultPublishedVersion'])
-        self.assertEqual('dacbfbdb07e61f37ffa524fb286a97483c6c93e9', policy['defaultSourceCommit'])
+        self.assertEqual('0.6.0', policy['defaultPublishedVersion'])
+        self.assertEqual('55c44e8d85f0b75c83807c62211bbac71797f83e', policy['defaultSourceCommit'])
         self.assertEqual('0AE0A30C093FDE0EA02E7502ADF2B8E6FA34B930', policy['publisherPrimaryFingerprint'])
 
     def test_reviewed_baseline_has_matching_retained_published_audit_evidence(self):
         policy = artifacts.audit_policy()
-        evidence = json.loads((artifacts.ROOT / 'docs/evidence/published-0.5.0-2026-11-13.json').read_text(encoding='utf-8'))
+        evidence = json.loads((artifacts.ROOT / 'docs/evidence/published-0.6.0-2026-11-18.json').read_text(encoding='utf-8'))
         self.assertEqual(policy['defaultPublishedVersion'], evidence['version'])
         self.assertEqual(policy['defaultSourceCommit'], evidence['sourceCommit'])
         self.assertEqual(policy['publisherPrimaryFingerprint'], evidence['primaryFingerprint'])
         self.assertTrue(evidence['ciReport']['passed'])
         self.assertEqual(evidence['sourceCommit'], evidence['ciReport']['sourceCommit'])
+        self.assertEqual(evidence['sourceCommit'], evidence['ciReport']['toolingCommit'])
+        self.assertEqual('v' + policy['defaultPublishedVersion'], evidence['sourceTag'])
+        self.assertEqual('0.5.0', evidence['auditRequest']['defaultPublishedVersion'])
+        self.assertEqual('0.6.0', evidence['auditRequest']['version'])
+        self.assertEqual(44388856211, evidence['workflow']['runId'])
+        for name in ('artifactSha256', 'reportArchiveSha256'):
+            self.assertRegex(evidence['workflow'][name], r'^[a-f0-9]{64}$')
         self.assertEqual(15, len({row['file'] for row in evidence['artifacts']}))
         self.assertTrue(evidence['tagSignatureVerified'])
         self.assertEqual(9, evidence['mavenArtifactSignaturesVerified'])
         cases = evidence['isolation']['cases']
-        self.assertEqual(14, len(cases))
+        self.assertEqual(28, len(cases))
         self.assertTrue(all(row['outboundAttempts'] == 0 for row in cases))
+        self.assertEqual({(item['tool'], item['framework'], cohort)
+                          for item in audit_runner.SCENARIOS for cohort, _, _, _ in audit_runner.cohorts()},
+                         {(row['tool'], row['framework'], row['cohort']) for row in cases})
         comparisons = evidence['isolation']['comparisons']
-        self.assertEqual({('gradle', 2), ('gradle', 4), ('maven', 2), ('maven', 4)},
-                         {(row['tool'], row['shards']) for row in comparisons if row['passed']})
+        self.assertEqual(8, len(comparisons))
+        self.assertEqual({(item['tool'], item['framework'], count)
+                          for item in audit_runner.SCENARIOS for count in (2, 4)},
+                         {(row['tool'], row['framework'], row['shards']) for row in comparisons if row['passed']})
         self.assertTrue(evidence['negativeControls']['passed'])
-        self.assertEqual(9, len(set(evidence['negativeControls']['rejectedMutations'])))
+        self.assertEqual(audit_runner.negative_control_names(), evidence['negativeControls']['rejectedMutations'])
+        self.assertEqual(24, len(evidence['negativeControls']['rejectedMutations']))
+        self.assertEqual(10, evidence['ciReport']['openPgpSignatures'])
+        self.assertEqual(1, evidence['workflow']['runAttempt'])
 
     def test_registry_cli_uses_policy_unless_a_stable_release_is_explicit(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -229,7 +249,7 @@ class ReleaseInputTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
             (output / 'registry-verification.json').write_text(json.dumps({
-                'version': '0.5.0', 'sourceCommit': 'a' * 40, 'artifacts': []}))
+                'version': '0.6.0', 'sourceCommit': 'a' * 40, 'artifacts': []}))
             with patch.object(launcher, 'run'), patch.object(artifacts, 'git', return_value=('a' * 40).encode()), \
                     patch.object(artifacts, 'download') as download, patch.object(launcher, 'container') as container, \
                     self.assertRaisesRegex(ValueError, 'reviewed source commit'):
@@ -238,9 +258,11 @@ class ReleaseInputTest(unittest.TestCase):
             container.assert_not_called()
 
     def test_launcher_accepts_reviewed_default_and_explicit_older_release(self):
-        for version, commit in ((None, 'dacbfbdb07e61f37ffa524fb286a97483c6c93e9'),
+        for version, commit in ((None, '55c44e8d85f0b75c83807c62211bbac71797f83e'),
+                                ('', '55c44e8d85f0b75c83807c62211bbac71797f83e'),
+                                ('0.5.0', 'dacbfbdb07e61f37ffa524fb286a97483c6c93e9'),
                                 ('0.4.0', '58daef5436a01295ce46feea56aa307c41bbd0a0')):
-            selected = version or '0.5.0'
+            selected = version or '0.6.0'
             with self.subTest(version=version), tempfile.TemporaryDirectory() as temporary:
                 output = Path(temporary)
                 (output / 'registry-verification.json').write_text(json.dumps({
@@ -255,6 +277,22 @@ class ReleaseInputTest(unittest.TestCase):
                 self.assertEqual(['--version', selected], run.call_args.args[0][-2:])
                 self.assertEqual(selected, json.loads((output / 'audit-request.json').read_text())['version'])
                 download.assert_not_called()
+
+    def test_default_release_rejects_a_retained_previous_release_before_tag_or_container_access(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            (output / 'registry-verification.json').write_text(json.dumps({
+                'version': '0.5.0', 'sourceCommit': 'dacbfbdb07e61f37ffa524fb286a97483c6c93e9', 'artifacts': []}))
+            with patch.object(launcher, 'run'), patch.object(artifacts, 'git') as git, \
+                    patch.object(artifacts, 'download') as download, patch.object(launcher, 'container') as container, \
+                    self.assertRaisesRegex(ValueError, 'Requested release differs'):
+                launcher.audit(output, 'unused-image', True, True, ['signatures'], '')
+            request = json.loads((output / 'audit-request.json').read_text())
+            self.assertEqual('0.6.0', request['version'])
+            self.assertEqual('0.6.0', request['defaultPublishedVersion'])
+            git.assert_not_called()
+            download.assert_not_called()
+            container.assert_not_called()
 
     def test_explicit_release_tag_binding_rejects_another_valid_release(self):
         tag_binding('object abc\ntype commit\ntag v1.2.3\n', 'abc', '1.2.3')

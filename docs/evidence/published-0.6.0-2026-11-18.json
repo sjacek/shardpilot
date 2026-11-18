@@ -1,0 +1,851 @@
+{
+  "schemaVersion": 1,
+  "version": "0.6.0",
+  "publishedOn": "2026-11-18",
+  "sourceTag": "v0.6.0",
+  "sourceCommit": "55c44e8d85f0b75c83807c62211bbac71797f83e",
+  "tagObject": "43909ae2518494944d1128abcc0ef978902ae3b8",
+  "registryCheckedAt": "2026-11-18T20:14:31.388650+00:00",
+  "verifiedAt": "2026-11-18T20:21:35.634729+00:00",
+  "workflow": {
+    "runId": 44388856211,
+    "runAttempt": 1,
+    "runUrl": "https://github.com/sjacek/shardpilot/actions/runs/44388856211",
+    "toolingCommit": "55c44e8d85f0b75c83807c62211bbac71797f83e",
+    "artifactId": 14468860191,
+    "artifactName": "published-artifact-audit-44388856211-1",
+    "retentionDays": 30,
+    "artifactSha256": "aacee0af7bbf96eb96ce5f511b86dd1401f4a3120c690bdb7ea64f55ffc9225e",
+    "reportArchiveSha256": "dab05def994ede384b8540bd1b2e69f1524a7c2b00a567096d649d4ebc5dcd5e"
+  },
+  "publication": {
+    "gradlePluginPortal": {
+      "runId": 44361061145,
+      "runUrl": "https://github.com/sjacek/shardpilot/actions/runs/44361061145",
+      "conclusion": "success"
+    },
+    "mavenCentral": {
+      "runId": 44381113420,
+      "runUrl": "https://github.com/sjacek/shardpilot/actions/runs/44381113420",
+      "conclusion": "success",
+      "status": "PUBLISHED"
+    }
+  },
+  "ciReport": {
+    "schemaVersion": 1,
+    "outcome": "success",
+    "passed": true,
+    "completedAt": "2026-11-18T20:21:35.595443+00:00",
+    "toolingCommit": "55c44e8d85f0b75c83807c62211bbac71797f83e",
+    "runUrl": "https://github.com/sjacek/shardpilot/actions/runs/44388856211",
+    "scope": "Published registry bytes; not unpublished release candidates.",
+    "version": "0.6.0",
+    "executionSchemaVersion": 2,
+    "scenarios": [
+      "gradle/junit",
+      "gradle/spock",
+      "gradle/testng",
+      "maven/junit"
+    ],
+    "sourceCommit": "55c44e8d85f0b75c83807c62211bbac71797f83e",
+    "registryArtifacts": 15,
+    "openPgpSignatures": 10,
+    "measuredRuns": 28,
+    "comparisons": 8,
+    "outboundAttempts": 0,
+    "rejectedMutations": 24
+  },
+  "auditRequest": {
+    "version": "0.6.0",
+    "sourceTag": "v0.6.0",
+    "startedAt": "2026-11-18T20:14:15.922116+00:00",
+    "executionSchemaVersion": 2,
+    "publisherPrimaryFingerprint": "0AE0A30C093FDE0EA02E7502ADF2B8E6FA34B930",
+    "defaultPublishedVersion": "0.5.0",
+    "scope": "Already published registry bytes; not unpublished release candidates."
+  },
+  "publicKeySource": "https://github.com/sjacek.gpg",
+  "primaryFingerprint": "0AE0A30C093FDE0EA02E7502ADF2B8E6FA34B930",
+  "tagSignatureVerified": true,
+  "mavenArtifactSignaturesVerified": 9,
+  "artifacts": [
+    {
+      "registry": "central",
+      "file": "central/shardpilot-parent-0.6.0.pom",
+      "url": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-parent/0.6.0/shardpilot-parent-0.6.0.pom",
+      "resolvedUrl": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-parent/0.6.0/shardpilot-parent-0.6.0.pom",
+      "size": 18418,
+      "sha256": "3ba418ecd166a32ad23b1c10deac2cba74b796001318249cf7a6c385b499909a",
+      "checksums": {
+        "sha256": "3ba418ecd166a32ad23b1c10deac2cba74b796001318249cf7a6c385b499909a",
+        "sha512": "64b6b1e7bf8e31620014d854767449986a8d81fc0db6a352c96b7dedacd4be2c862164ce063bb876e95cd50281be062cb567a873fac7c8a7f925be0951fbabc5"
+      },
+      "signatureAvailable": true
+    },
+    {
+      "registry": "central",
+      "file": "central/shardpilot-core-0.6.0.pom",
+      "url": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-core/0.6.0/shardpilot-core-0.6.0.pom",
+      "resolvedUrl": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-core/0.6.0/shardpilot-core-0.6.0.pom",
+      "size": 2308,
+      "sha256": "5054583a86d1a51d9f0546ba7ab971d410758861aba1c9d5d82a8ed6f21b1bdd",
+      "checksums": {
+        "sha256": "5054583a86d1a51d9f0546ba7ab971d410758861aba1c9d5d82a8ed6f21b1bdd",
+        "sha512": "1a6514def4533ed91f52ececf688299187ca367b97fe4db110f285c1c0eae0ad2cb312d433847b0d81fa5f229b95aa04b9a0c2cb5e7118bc451098c88c7d46bb"
+      },
+      "signatureAvailable": true
+    },
+    {
+      "registry": "central",
+      "file": "central/shardpilot-core-0.6.0.jar",
+      "url": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-core/0.6.0/shardpilot-core-0.6.0.jar",
+      "resolvedUrl": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-core/0.6.0/shardpilot-core-0.6.0.jar",
+      "size": 296138,
+      "sha256": "a4fa7e649483a36681c4f6c34fd085537a4c3c9d917e5f07b6122c70093786cc",
+      "checksums": {
+        "sha256": "a4fa7e649483a36681c4f6c34fd085537a4c3c9d917e5f07b6122c70093786cc",
+        "sha512": "ed2ff8ef79be24e2e92ef223ce6af2bd74908f9eb065769cdad4b93b9321c84b9df36a7a6199956dda479886c9cf9b6d9d2d7430f45970cd4b2ca5770be22235"
+      },
+      "signatureAvailable": true,
+      "classes": 115,
+      "classMajorVersions": [
+        61
+      ]
+    },
+    {
+      "registry": "central",
+      "file": "central/shardpilot-core-0.6.0-sources.jar",
+      "url": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-core/0.6.0/shardpilot-core-0.6.0-sources.jar",
+      "resolvedUrl": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-core/0.6.0/shardpilot-core-0.6.0-sources.jar",
+      "size": 122427,
+      "sha256": "9ba1270b212267efff061f5e74b865f86f1fb1dd7c9fd8862aac252dbb494aa6",
+      "checksums": {
+        "sha256": "9ba1270b212267efff061f5e74b865f86f1fb1dd7c9fd8862aac252dbb494aa6",
+        "sha512": "8d5555d25147991908b09ea0907d8eacdf2f40dea58ca1d281583eb7982c88ee9dd15b118da7e4eb4e3af3a81451d48579940d935977421e66e362a5578fbb5e"
+      },
+      "signatureAvailable": true,
+      "sourceComparison": {
+        "javaSources": 34,
+        "comparison": "exact bytes after CRLF normalization"
+      },
+      "classes": 0,
+      "classMajorVersions": []
+    },
+    {
+      "registry": "central",
+      "file": "central/shardpilot-core-0.6.0-javadoc.jar",
+      "url": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-core/0.6.0/shardpilot-core-0.6.0-javadoc.jar",
+      "resolvedUrl": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-core/0.6.0/shardpilot-core-0.6.0-javadoc.jar",
+      "size": 607946,
+      "sha256": "9917ad159cc6d9d3a1eb61964f3f559d26f2ebdb8f6d7a9e6067c28f35d8085d",
+      "checksums": {
+        "sha256": "9917ad159cc6d9d3a1eb61964f3f559d26f2ebdb8f6d7a9e6067c28f35d8085d",
+        "sha512": "f41924866f5746e7cae231e343ec3a103b834e6a541465dba1ffdbd5f567b0a5502e97f2e3f61b93364ba7cdee1bdc881d20742ecef2a4b5e62da84f364b8c12"
+      },
+      "signatureAvailable": true,
+      "classes": 0,
+      "classMajorVersions": []
+    },
+    {
+      "registry": "central",
+      "file": "central/shardpilot-maven-plugin-0.6.0.pom",
+      "url": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-maven-plugin/0.6.0/shardpilot-maven-plugin-0.6.0.pom",
+      "resolvedUrl": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-maven-plugin/0.6.0/shardpilot-maven-plugin-0.6.0.pom",
+      "size": 5345,
+      "sha256": "761cd5f03986295499d2b24d441ec435b6c0b0b55237f27aaabaf2ba4eefe2a2",
+      "checksums": {
+        "sha256": "761cd5f03986295499d2b24d441ec435b6c0b0b55237f27aaabaf2ba4eefe2a2",
+        "sha512": "57a81958e2c5a2edec3aa34521086224191a64a6e40962c6f57e09a192c6652f6e905bba0c61a6604f0673bca4bf1db6f4bd8f8e248aa9df8d4d896186a70b76"
+      },
+      "signatureAvailable": true
+    },
+    {
+      "registry": "central",
+      "file": "central/shardpilot-maven-plugin-0.6.0.jar",
+      "url": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-maven-plugin/0.6.0/shardpilot-maven-plugin-0.6.0.jar",
+      "resolvedUrl": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-maven-plugin/0.6.0/shardpilot-maven-plugin-0.6.0.jar",
+      "size": 68731,
+      "sha256": "1ea74e648a0ff7485d508e2b2c959f525e0ba9ef99c14f1854cf3f3f41091f02",
+      "checksums": {
+        "sha256": "1ea74e648a0ff7485d508e2b2c959f525e0ba9ef99c14f1854cf3f3f41091f02",
+        "sha512": "48469eee850e79d843ff76e443e3a42b6ea84e5f2767bc5de358ad86a9043e63c8ccd2d2c12c4a14b4abd0cd273d4e30f59a0a363c84804eb03d9ee94dbc7694"
+      },
+      "signatureAvailable": true,
+      "classes": 19,
+      "classMajorVersions": [
+        61
+      ]
+    },
+    {
+      "registry": "central",
+      "file": "central/shardpilot-maven-plugin-0.6.0-sources.jar",
+      "url": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-maven-plugin/0.6.0/shardpilot-maven-plugin-0.6.0-sources.jar",
+      "resolvedUrl": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-maven-plugin/0.6.0/shardpilot-maven-plugin-0.6.0-sources.jar",
+      "size": 33504,
+      "sha256": "60e4fbdde942c76cd81ecc714c95e6deb9308efb17915ded6a6109bf4adf54c3",
+      "checksums": {
+        "sha256": "60e4fbdde942c76cd81ecc714c95e6deb9308efb17915ded6a6109bf4adf54c3",
+        "sha512": "b7fe06394dc80903c7ef01e2eca6615c551706acda239f5a1ab1e9e273f109a7cd19d85c7e2def5a9faafce887bb8782dccc9706c6e841333d44ff8236ac234a"
+      },
+      "signatureAvailable": true,
+      "sourceComparison": {
+        "javaSources": 17,
+        "comparison": "exact bytes after CRLF normalization"
+      },
+      "classes": 0,
+      "classMajorVersions": []
+    },
+    {
+      "registry": "central",
+      "file": "central/shardpilot-maven-plugin-0.6.0-javadoc.jar",
+      "url": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-maven-plugin/0.6.0/shardpilot-maven-plugin-0.6.0-javadoc.jar",
+      "resolvedUrl": "https://repo.maven.apache.org/maven2/io/github/sjacek/shardpilot-maven-plugin/0.6.0/shardpilot-maven-plugin-0.6.0-javadoc.jar",
+      "size": 193325,
+      "sha256": "8f8898d895b264ac0059f3239a28d1a6d438ad5d30182b8328f823fff88b1f81",
+      "checksums": {
+        "sha256": "8f8898d895b264ac0059f3239a28d1a6d438ad5d30182b8328f823fff88b1f81",
+        "sha512": "e57a2b07c5051dae911b2783eb061ee063751bd6e6ab66d4cad3357f91f6cf0a9624747d35885593664f271ecb7d98bf4f9693fd3dd6f4137a498f9753bf5085"
+      },
+      "signatureAvailable": true,
+      "classes": 0,
+      "classMajorVersions": []
+    },
+    {
+      "registry": "portal",
+      "file": "portal/io.github.sjacek.shardpilot.gradle.plugin-0.6.0.pom",
+      "url": "https://plugins.gradle.org/m2/io/github/sjacek/shardpilot/io.github.sjacek.shardpilot.gradle.plugin/0.6.0/io.github.sjacek.shardpilot.gradle.plugin-0.6.0.pom",
+      "resolvedUrl": "https://plugins.gradle.org/m2/io/github/sjacek/shardpilot/io.github.sjacek.shardpilot.gradle.plugin/0.6.0/io.github.sjacek.shardpilot.gradle.plugin-0.6.0.pom",
+      "size": 663,
+      "sha256": "725833517d307c62aeecb26a8b4a0b6699ddc93cd14d575254cc6210d1f71222",
+      "checksums": {},
+      "signatureAvailable": false
+    },
+    {
+      "registry": "portal",
+      "file": "portal/shardpilot-0.6.0.pom",
+      "url": "https://plugins.gradle.org/m2/io/github/sjacek/shardpilot/0.6.0/shardpilot-0.6.0.pom",
+      "resolvedUrl": "https://plugins-artifacts.gradle.org/io.github.sjacek/shardpilot/0.6.0/244dfeaf3de389af97f983f9d38f5aeb088ddc70db83f794e1bdbc5a7cdf914a/shardpilot-0.6.0.pom",
+      "size": 3188,
+      "sha256": "244dfeaf3de389af97f983f9d38f5aeb088ddc70db83f794e1bdbc5a7cdf914a",
+      "checksums": {},
+      "signatureAvailable": false
+    },
+    {
+      "registry": "portal",
+      "file": "portal/shardpilot-0.6.0.module",
+      "url": "https://plugins.gradle.org/m2/io/github/sjacek/shardpilot/0.6.0/shardpilot-0.6.0.module",
+      "resolvedUrl": "https://plugins-artifacts.gradle.org/io.github.sjacek/shardpilot/0.6.0/fa7dc839236b7f94271be8d01b3737aeef4460f2d15900a43038fccdd9ff36b0/shardpilot-0.6.0.module",
+      "size": 3665,
+      "sha256": "fa7dc839236b7f94271be8d01b3737aeef4460f2d15900a43038fccdd9ff36b0",
+      "checksums": {},
+      "signatureAvailable": false
+    },
+    {
+      "registry": "portal",
+      "file": "portal/shardpilot-0.6.0.jar",
+      "url": "https://plugins.gradle.org/m2/io/github/sjacek/shardpilot/0.6.0/shardpilot-0.6.0.jar",
+      "resolvedUrl": "https://plugins-artifacts.gradle.org/io.github.sjacek/shardpilot/0.6.0/f4aed6987d08e3fd32743748f3b6de67e9f2dbe161802d2846047ad59385de18/shardpilot-0.6.0.jar",
+      "size": 363593,
+      "sha256": "f4aed6987d08e3fd32743748f3b6de67e9f2dbe161802d2846047ad59385de18",
+      "checksums": {},
+      "signatureAvailable": false,
+      "classes": 146,
+      "classMajorVersions": [
+        61
+      ]
+    },
+    {
+      "registry": "portal",
+      "file": "portal/shardpilot-0.6.0-sources.jar",
+      "url": "https://plugins.gradle.org/m2/io/github/sjacek/shardpilot/0.6.0/shardpilot-0.6.0-sources.jar",
+      "resolvedUrl": "https://plugins-artifacts.gradle.org/io.github.sjacek/shardpilot/0.6.0/37955a82248c0e40d3e56c85ca38a0cd6d00e577ec0730b45d0758adea7027f2/shardpilot-0.6.0-sources.jar",
+      "size": 165056,
+      "sha256": "37955a82248c0e40d3e56c85ca38a0cd6d00e577ec0730b45d0758adea7027f2",
+      "checksums": {},
+      "signatureAvailable": false,
+      "sourceComparison": {
+        "javaSources": 63,
+        "comparison": "exact bytes after CRLF normalization"
+      },
+      "classes": 0,
+      "classMajorVersions": []
+    },
+    {
+      "registry": "portal",
+      "file": "portal/shardpilot-0.6.0-javadoc.jar",
+      "url": "https://plugins.gradle.org/m2/io/github/sjacek/shardpilot/0.6.0/shardpilot-0.6.0-javadoc.jar",
+      "resolvedUrl": "https://plugins-artifacts.gradle.org/io.github.sjacek/shardpilot/0.6.0/a5ef1e55610267943cf8ebff54ec90b8871fb154d0a9f03788723c94f6d31bf0/shardpilot-0.6.0-javadoc.jar",
+      "size": 4619698,
+      "sha256": "a5ef1e55610267943cf8ebff54ec90b8871fb154d0a9f03788723c94f6d31bf0",
+      "checksums": {},
+      "signatureAvailable": false,
+      "classes": 0,
+      "classMajorVersions": []
+    }
+  ],
+  "isolation": {
+    "schemaVersion": 1,
+    "executionSchemaVersion": 2,
+    "version": "0.6.0",
+    "sourceCommit": "55c44e8d85f0b75c83807c62211bbac71797f83e",
+    "verifiedAt": "2026-11-18T20:21:35.634729+00:00",
+    "registryArtifacts": 15,
+    "openPgpSignatures": 10,
+    "primaryFingerprint": "0AE0A30C093FDE0EA02E7502ADF2B8E6FA34B930",
+    "imageId": "sha256:678f04d4aa3d322d2f3b31f847431dac7ae8d973b841c780790090478f8c085e",
+    "cases": [
+      {
+        "tool": "gradle",
+        "framework": "junit",
+        "cohort": "baseline",
+        "nativeTests": 8,
+        "outboundAttempts": 0,
+        "eventSha256": "caee590d9c88ecf5f999e0493ae5f6ecc206a800c65828736c7977190c059499",
+        "traceSha256": "17479e5bbb9b5b2160110b2d273d1b87d6c919757a8adcab9d6ed72c529c92a3"
+      },
+      {
+        "tool": "gradle",
+        "framework": "junit",
+        "cohort": "2-1",
+        "nativeTests": 4,
+        "outboundAttempts": 0,
+        "eventSha256": "5208875dd0a165530c9287508450eb308cb16ed6cd8e67a9804787938b097678",
+        "traceSha256": "8c05cde6f362e6727d5ce4d1221d4f680c3c30c83d5a86fc05d989c451e877f1"
+      },
+      {
+        "tool": "gradle",
+        "framework": "junit",
+        "cohort": "2-2",
+        "nativeTests": 4,
+        "outboundAttempts": 0,
+        "eventSha256": "7d8b36a7b5513dad9ffee331a25f07141e8c401b518b2c9ce286274c18657d7d",
+        "traceSha256": "d287c39a5592244896caaa34dab94742c8ac62a5c58258c8f227d7c44d58dd88"
+      },
+      {
+        "tool": "gradle",
+        "framework": "junit",
+        "cohort": "4-1",
+        "nativeTests": 2,
+        "outboundAttempts": 0,
+        "eventSha256": "ea4ad30f8036d3492b4750de64255613753a58fd22fdd8e4bcd2cd25b59660d4",
+        "traceSha256": "b7623f0af7026a7a5f050b0aa49cf74ed906bf83ca12a2bb388dd339febbc826"
+      },
+      {
+        "tool": "gradle",
+        "framework": "junit",
+        "cohort": "4-2",
+        "nativeTests": 2,
+        "outboundAttempts": 0,
+        "eventSha256": "55d0afa91ff8f53482cf3b1c6380907985a413fbc6597d2aa2134e8d1a566d16",
+        "traceSha256": "40f99d4c50ebb17605c4e6d7a7a704f833abde29dc7fa15dba8f467c2f6d702b"
+      },
+      {
+        "tool": "gradle",
+        "framework": "junit",
+        "cohort": "4-3",
+        "nativeTests": 2,
+        "outboundAttempts": 0,
+        "eventSha256": "6e403e86a5d3a213cbf9a68153bdc874360090bcbe961fdf8a41507b5420d089",
+        "traceSha256": "5cd42c2a70c2143aa057fe0b137e8141e37ba251572cdba392c0b8c755fc3a9c"
+      },
+      {
+        "tool": "gradle",
+        "framework": "junit",
+        "cohort": "4-4",
+        "nativeTests": 2,
+        "outboundAttempts": 0,
+        "eventSha256": "88ee384d98995900da06695d49366c188f765486f75ef366caef47b61dfa6004",
+        "traceSha256": "27d8f0a3cd9f1f4bff5aece1e5242a7f2702c6f1e56a6a802dedc68e05500bed"
+      },
+      {
+        "tool": "gradle",
+        "framework": "spock",
+        "cohort": "baseline",
+        "nativeTests": 8,
+        "outboundAttempts": 0,
+        "eventSha256": "8cf9b7fc9906245cdd217943428d1935275ff7f3ae7ac9a947af0f2b9dc9442b",
+        "traceSha256": "b32cde134f66731835ca0c49c8d3d7d09614c3b9553c87d7964232f1496d5388"
+      },
+      {
+        "tool": "gradle",
+        "framework": "spock",
+        "cohort": "2-1",
+        "nativeTests": 4,
+        "outboundAttempts": 0,
+        "eventSha256": "21a6f7fd063304b1448d9c5dc65a35a5a1aa39d0ac4acb0ab2e6466e6cc60eea",
+        "traceSha256": "8292f9f5b4e7e4a08f709a4ebf0f3666828b6ccd7654c48f6c2b1049caede512"
+      },
+      {
+        "tool": "gradle",
+        "framework": "spock",
+        "cohort": "2-2",
+        "nativeTests": 4,
+        "outboundAttempts": 0,
+        "eventSha256": "0ea64335926eb5136e116497747a692bb59e7d599ae1ace9790586e5cd0e93d2",
+        "traceSha256": "d2817f2d6c064e8a9fff36ceffcf66b0692ba28f3290c8275bd9ce61999d1cd2"
+      },
+      {
+        "tool": "gradle",
+        "framework": "spock",
+        "cohort": "4-1",
+        "nativeTests": 2,
+        "outboundAttempts": 0,
+        "eventSha256": "4ae126c47fb2f578a1bc6dd2adbb018b544c337a6ce80e6e24bf5156eb6ad334",
+        "traceSha256": "338c3510e6176e0ec2ac89c4642cee0b4b8faed9c29f355bd60fd9bb0dff4c04"
+      },
+      {
+        "tool": "gradle",
+        "framework": "spock",
+        "cohort": "4-2",
+        "nativeTests": 2,
+        "outboundAttempts": 0,
+        "eventSha256": "d2debf3c90b1a59fd474abe89c85f9ebfe5df63ce7dc5f0efa992c683e4ea98b",
+        "traceSha256": "033fccef66f52fffbdc1d89a160942658433b69fa860446d325c78e80ae906d1"
+      },
+      {
+        "tool": "gradle",
+        "framework": "spock",
+        "cohort": "4-3",
+        "nativeTests": 2,
+        "outboundAttempts": 0,
+        "eventSha256": "d7678e9a7b9de1a3a086d221805097f6ac2756f68e79c55f69526a41c52ec15d",
+        "traceSha256": "07704ed6eb6e089cd99f50081974375f0865aeab8c0fca6f4d91f05f2d484615"
+      },
+      {
+        "tool": "gradle",
+        "framework": "spock",
+        "cohort": "4-4",
+        "nativeTests": 2,
+        "outboundAttempts": 0,
+        "eventSha256": "c469f279eb94db9581da79120befb3072bb56090dda4d4acb306c2cc2725de7d",
+        "traceSha256": "260455e22b6be37e6f11f410bde5ae33141e8565dd71b38be8bec987cb3d63da"
+      },
+      {
+        "tool": "gradle",
+        "framework": "testng",
+        "cohort": "baseline",
+        "nativeTests": 8,
+        "outboundAttempts": 0,
+        "eventSha256": "9564c2bf5429fc394634da33dcc24e94ad0add34fd81b80aa33091ba666f3422",
+        "traceSha256": "64563c65e3bb48c3d3b755dd1450134f3dfff03e09df6e435bc7e17e113a201d"
+      },
+      {
+        "tool": "gradle",
+        "framework": "testng",
+        "cohort": "2-1",
+        "nativeTests": 4,
+        "outboundAttempts": 0,
+        "eventSha256": "b1334c8b4c7678af24a46dffbb2a7b086cb771b3af36d1e4cdc04e4fce026f5d",
+        "traceSha256": "9ce766405039c336d9dd293477af691765e1c6bbfa8846acef0984c5dac170ed"
+      },
+      {
+        "tool": "gradle",
+        "framework": "testng",
+        "cohort": "2-2",
+        "nativeTests": 4,
+        "outboundAttempts": 0,
+        "eventSha256": "03172a5bcba0abf8f5280ac4c59c6e1d8f3a5e14d89f982a24a3b06b7ab733ac",
+        "traceSha256": "35074f90a7b33a8b1f4f361683cf23d6d3339d0a87c5b43fb61b9819e0564bd6"
+      },
+      {
+        "tool": "gradle",
+        "framework": "testng",
+        "cohort": "4-1",
+        "nativeTests": 2,
+        "outboundAttempts": 0,
+        "eventSha256": "5af5c54301a30845a566e21e03667565903ab008a9fc9eaa0956643873876c33",
+        "traceSha256": "4cb005924f1e95eed69aee6bcada6f71d3b78fc4476e41e6afdb43a6f52d057e"
+      },
+      {
+        "tool": "gradle",
+        "framework": "testng",
+        "cohort": "4-2",
+        "nativeTests": 2,
+        "outboundAttempts": 0,
+        "eventSha256": "edef7f131a87dff23be598da6b757ac483ebda3217e36c93c9b83bb4344a35cd",
+        "traceSha256": "e463e44476c63da460601a4887aa9746a843420de70e5e880cdba67d0334b3f6"
+      },
+      {
+        "tool": "gradle",
+        "framework": "testng",
+        "cohort": "4-3",
+        "nativeTests": 2,
+        "outboundAttempts": 0,
+        "eventSha256": "c36d470d257e5f1c71a0095c4ee0a8fd155436a003835c18f5d68ae9e106cf70",
+        "traceSha256": "028b5dba4935a54e3e4922fa8d6c5ea58c2289dd70a20422aa0d1767f99f70bd"
+      },
+      {
+        "tool": "gradle",
+        "framework": "testng",
+        "cohort": "4-4",
+        "nativeTests": 2,
+        "outboundAttempts": 0,
+        "eventSha256": "cf2f0ba270fd07016b0b78b2aae1db6f3e2ab924967171e0b5934e0d85b7c89d",
+        "traceSha256": "6ea2af779afd71f3f40950b10cddfedc0be6ad69c8c5d6f638c107b162451a50"
+      },
+      {
+        "tool": "maven",
+        "framework": "junit",
+        "cohort": "baseline",
+        "nativeTests": 16,
+        "outboundAttempts": 0,
+        "eventSha256": "d632235a52bb4155db75ee761e3edfad7cb63877c946e3e9e335e48cad15f18a",
+        "traceSha256": "2a25f9e2f2831026a10aa1339df04f292b1aac61427a48116868e74b8c393d71"
+      },
+      {
+        "tool": "maven",
+        "framework": "junit",
+        "cohort": "2-1",
+        "nativeTests": 8,
+        "outboundAttempts": 0,
+        "eventSha256": "258c315ad3f2040a6cd5f28ba53c21da69f410e9b99100294b50b3851ca0bea2",
+        "traceSha256": "e058630f3527b4b103151be92e28da4d56595716c559aa2cc85c3c8539e63be8"
+      },
+      {
+        "tool": "maven",
+        "framework": "junit",
+        "cohort": "2-2",
+        "nativeTests": 8,
+        "outboundAttempts": 0,
+        "eventSha256": "e763fd7fce87a8c051cbf98ff25f605c9ad35f9f2c5da6b8484bb03018a3d974",
+        "traceSha256": "4e0b858ff4ccb02f9b596a232fdcd802946b53a852006de36eadf4223e32ff4c"
+      },
+      {
+        "tool": "maven",
+        "framework": "junit",
+        "cohort": "4-1",
+        "nativeTests": 4,
+        "outboundAttempts": 0,
+        "eventSha256": "8a2248ba81b444058b63b6947c816674dd1c28dd4c2bec82f8c3b85f2ea21aaa",
+        "traceSha256": "0e75877973c0cd97c5c0fc14bd9b2153d2d2c4bd6ad9b2f030b3a8f034a4b639"
+      },
+      {
+        "tool": "maven",
+        "framework": "junit",
+        "cohort": "4-2",
+        "nativeTests": 4,
+        "outboundAttempts": 0,
+        "eventSha256": "1028cd8e9dc648a151dd61371c59b17857ac2b5b0cc22ea782dfb82613521413",
+        "traceSha256": "76308104e9882ebdfa71ccd91bc1c06639c542133f6496b9f73ee7e73bec335c"
+      },
+      {
+        "tool": "maven",
+        "framework": "junit",
+        "cohort": "4-3",
+        "nativeTests": 4,
+        "outboundAttempts": 0,
+        "eventSha256": "fab76145932e23439d3e9501d527a89e0db77dfe26a64583df3fbefaee22417d",
+        "traceSha256": "83a58b2ae30bb228fc9102a78c2591afbe27dd8a2cc61bc0510b8a6d67ac250a"
+      },
+      {
+        "tool": "maven",
+        "framework": "junit",
+        "cohort": "4-4",
+        "nativeTests": 4,
+        "outboundAttempts": 0,
+        "eventSha256": "8fe771fc3d8e433ce6853bf23c00e50d09f6c6facbc6518a01f788106bf3a47e",
+        "traceSha256": "dfc81715645abe3d81734e20953e8a22b5d147ca85c63366824ca4a2ba40d74e"
+      }
+    ],
+    "comparisons": [
+      {
+        "tool": "gradle",
+        "framework": "junit",
+        "shards": 2,
+        "nativeTests": 8,
+        "passed": true
+      },
+      {
+        "tool": "gradle",
+        "framework": "junit",
+        "shards": 4,
+        "nativeTests": 8,
+        "passed": true
+      },
+      {
+        "tool": "gradle",
+        "framework": "spock",
+        "shards": 2,
+        "nativeTests": 8,
+        "passed": true
+      },
+      {
+        "tool": "gradle",
+        "framework": "spock",
+        "shards": 4,
+        "nativeTests": 8,
+        "passed": true
+      },
+      {
+        "tool": "gradle",
+        "framework": "testng",
+        "shards": 2,
+        "nativeTests": 8,
+        "passed": true
+      },
+      {
+        "tool": "gradle",
+        "framework": "testng",
+        "shards": 4,
+        "nativeTests": 8,
+        "passed": true
+      },
+      {
+        "tool": "maven",
+        "framework": "junit",
+        "shards": 2,
+        "nativeTests": 16,
+        "passed": true
+      },
+      {
+        "tool": "maven",
+        "framework": "junit",
+        "shards": 4,
+        "nativeTests": 16,
+        "passed": true
+      }
+    ],
+    "positiveControlAttempts": 1,
+    "passed": true
+  },
+  "containerPolicies": {
+    "signatures": {
+      "imageId": "sha256:678f04d4aa3d322d2f3b31f847431dac7ae8d973b841c780790090478f8c085e",
+      "user": "10001:10001",
+      "environmentNames": [
+        "PYTHONDONTWRITEBYTECODE",
+        "JAVA_TOOL_OPTIONS",
+        "SHARDPILOT_AUDIT_VERSION",
+        "SHARDPILOT_AUDIT_FINGERPRINT",
+        "PATH",
+        "JAVA_HOME",
+        "LANG",
+        "LANGUAGE",
+        "LC_ALL",
+        "JAVA_VERSION",
+        "HOME",
+        "GRADLE_USER_HOME",
+        "MAVEN_USER_HOME"
+      ],
+      "network": "none",
+      "readOnlyRoot": true,
+      "capDrop": [
+        "ALL"
+      ],
+      "securityOptions": [
+        "no-new-privileges"
+      ],
+      "memoryBytes": 3221225472,
+      "nanoCpus": 2000000000,
+      "pidsLimit": 512,
+      "mounts": [
+        {
+          "destination": "/runner",
+          "writable": false
+        },
+        {
+          "destination": "/fixtures",
+          "writable": false
+        },
+        {
+          "destination": "/registry",
+          "writable": false
+        },
+        {
+          "destination": "/seed",
+          "writable": false
+        },
+        {
+          "destination": "/evidence",
+          "writable": true
+        }
+      ]
+    },
+    "warm": {
+      "imageId": "sha256:678f04d4aa3d322d2f3b31f847431dac7ae8d973b841c780790090478f8c085e",
+      "user": "10001:10001",
+      "environmentNames": [
+        "SHARDPILOT_AUDIT_VERSION",
+        "SHARDPILOT_AUDIT_FINGERPRINT",
+        "PYTHONDONTWRITEBYTECODE",
+        "JAVA_TOOL_OPTIONS",
+        "PATH",
+        "JAVA_HOME",
+        "LANG",
+        "LANGUAGE",
+        "LC_ALL",
+        "JAVA_VERSION",
+        "HOME",
+        "GRADLE_USER_HOME",
+        "MAVEN_USER_HOME"
+      ],
+      "network": "bridge",
+      "readOnlyRoot": true,
+      "capDrop": [
+        "ALL"
+      ],
+      "securityOptions": [
+        "no-new-privileges"
+      ],
+      "memoryBytes": 3221225472,
+      "nanoCpus": 2000000000,
+      "pidsLimit": 512,
+      "mounts": [
+        {
+          "destination": "/seed",
+          "writable": true
+        },
+        {
+          "destination": "/evidence",
+          "writable": true
+        },
+        {
+          "destination": "/runner",
+          "writable": false
+        },
+        {
+          "destination": "/fixtures",
+          "writable": false
+        },
+        {
+          "destination": "/registry",
+          "writable": false
+        }
+      ]
+    },
+    "isolated": {
+      "imageId": "sha256:678f04d4aa3d322d2f3b31f847431dac7ae8d973b841c780790090478f8c085e",
+      "user": "10001:10001",
+      "environmentNames": [
+        "PYTHONDONTWRITEBYTECODE",
+        "JAVA_TOOL_OPTIONS",
+        "SHARDPILOT_AUDIT_VERSION",
+        "SHARDPILOT_AUDIT_FINGERPRINT",
+        "PATH",
+        "JAVA_HOME",
+        "LANG",
+        "LANGUAGE",
+        "LC_ALL",
+        "JAVA_VERSION",
+        "HOME",
+        "GRADLE_USER_HOME",
+        "MAVEN_USER_HOME"
+      ],
+      "network": "none",
+      "readOnlyRoot": true,
+      "capDrop": [
+        "ALL"
+      ],
+      "securityOptions": [
+        "no-new-privileges"
+      ],
+      "memoryBytes": 3221225472,
+      "nanoCpus": 2000000000,
+      "pidsLimit": 512,
+      "mounts": [
+        {
+          "destination": "/runner",
+          "writable": false
+        },
+        {
+          "destination": "/fixtures",
+          "writable": false
+        },
+        {
+          "destination": "/registry",
+          "writable": false
+        },
+        {
+          "destination": "/seed",
+          "writable": false
+        },
+        {
+          "destination": "/evidence",
+          "writable": true
+        }
+      ]
+    }
+  },
+  "negativeControls": {
+    "executionSchemaVersion": 2,
+    "validCohortPassed": true,
+    "rejectedMutations": [
+      "gradle/junit: lost invocation",
+      "gradle/junit: changed outcome",
+      "gradle/junit: cross-node duplicate with unchanged totals",
+      "gradle/junit: blocked outbound attempt",
+      "gradle/junit: native XML disagrees",
+      "gradle/spock: lost invocation",
+      "gradle/spock: changed outcome",
+      "gradle/spock: cross-node duplicate with unchanged totals",
+      "gradle/spock: blocked outbound attempt",
+      "gradle/spock: native XML disagrees",
+      "gradle/testng: lost invocation",
+      "gradle/testng: changed outcome",
+      "gradle/testng: cross-node duplicate with unchanged totals",
+      "gradle/testng: blocked outbound attempt",
+      "gradle/testng: native XML disagrees",
+      "maven/junit: lost invocation",
+      "maven/junit: changed outcome",
+      "maven/junit: cross-node duplicate with unchanged totals",
+      "maven/junit: blocked outbound attempt",
+      "maven/junit: native XML disagrees",
+      "changed registry JAR",
+      "missing signature",
+      "different signing identity",
+      "signed tag payload differs"
+    ],
+    "passed": true
+  },
+  "limits": [
+    "GitHub public keys/tag and registry TLS are the observed identity anchors, not an out-of-band identity check.",
+    "Plugin Portal lacks detached signatures/sidecar SHA-256/SHA-512 for these files; module digests and source comparison are separate evidence.",
+    "No reproducible binary-build claim. No claim about every plugin path or arbitrary consumers.",
+    "Syscall traces cover these Linux JVM processes and descendants; baseline comparisons do not prove Java-level attribution."
+  ],
+  "toolVersions": {
+    "signatures": {
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "python": "Python 3.14.4",
+      "strace": "strace -- version 6.19",
+      "gpg": "gpg (GnuPG) 2.4.8"
+    },
+    "warm": {
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "python": "Python 3.14.4",
+      "strace": "strace -- version 6.19",
+      "gpg": "gpg (GnuPG) 2.4.8"
+    },
+    "isolated": {
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "python": "Python 3.14.4",
+      "strace": "strace -- version 6.19",
+      "gpg": "gpg (GnuPG) 2.4.8"
+    }
+  },
+  "toolingSha256": {
+    ".github/workflows/published-artifact-audit.yml": "bdcc2322e1a34222affc2320d2021278ff0b7dd60a961eb9bf8ab5c97a93b478",
+    "scripts/published_artifacts.py": "12b721c466e043ee91d5743eaecc337dc314ff1219e200473e2ea00f902a739b",
+    "scripts/published_audit_report.py": "7032953dd2124de9bccfd96e821e08a29e825f896c61688e08f84be2e86f01cb",
+    "scripts/run_published_artifact_audit.py": "18b014106228ac5fb132dd86364d4489a6e4fb65d1e74e8e2c82f244bda901b6",
+    "security/published-artifact-audit.json": "1ff23f35b23e693e9e42471971b946b5a23468b462dd0627e259248101fbb0c6",
+    "testing/execution-equivalence/junit/src/example/equivalence/JunitExecutionListener.java": "f7f1985e78f747b6a76800d53de26d2e12a19c163ae87652d54c950ab66b53d2",
+    "testing/execution-equivalence/testng/src/example/equivalence/TestNgExecutionListener.java": "ba8e277808bf3fd9ffd2a9cd74ad1051f2320948a8362ab8d2a54ad02516d2e0",
+    "testing/published-artifacts/audit_runner.py": "371de23a36521a0b6eb5bdae6117e4796468d5420d2e564a5398d44b08d01135",
+    "testing/published-artifacts/check_evidence.py": "ae598aeca4d2b81aefca8c2ab873a53c50215162238b9cdab9f02be8f486432f",
+    "testing/published-artifacts/Dockerfile": "2e76680aae0238cbb619d741b5583addab86d96c41d5f1f6876f1bf8a2d65c71",
+    "testing/published-artifacts/NetworkProbe.java": "aee1776293da0914ba83d6a1ae7e2b2daee3f68c60ff4a1ebc119143296e52dc",
+    "testing/published-artifacts/test_audit.py": "455064ac31005f90c3b9c8ca1f9ec3a095278f15b29b01380c5918faacea4c43",
+    "testing/published-artifacts/test_evidence.py": "dcf546205bb8cdc329e82e04d42129c486fca87bd38bf937af963dc95095782a"
+  },
+  "localRecheck": {
+    "passed": true,
+    "toolingFilesMatchedToCommit": 13,
+    "registryArtifacts": 15,
+    "isolatedRuns": 28,
+    "comparisons": 8,
+    "outboundAttempts": 0,
+    "positiveTracerControlAttempts": 1,
+    "negativeControlNamesMatched": 24
+  }
+}
