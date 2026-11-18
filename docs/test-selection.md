@@ -1,24 +1,24 @@
 # Explicit test selection
 
-Development checkout: [configurable profiles and Git acquisition](selection-policy.md#gradle-and-maven-parameters-development-checkout)
-are now available through both adapters. Published 0.5.0 supports the explicit-manifest feature below.
+Published 0.6.0 provides [configurable profiles and Git acquisition](selection-policy.md#gradle-and-maven-parameters)
+through both adapters, alongside the explicit-manifest feature below.
 
 
 [Documentation index](README.md)
 
 An optional consumer-owned YAML manifest selects a class subset **before** shard assignment.
-It applies with one node as well as multiple nodes. ShardPilot does not inspect source diffs,
-choose smoke tests, infer impacted classes or decide whether a short suite is sufficient.
-Keep those decisions and the independent native test-result gate in the consumer/CI.
-This feature is available in **0.5.0**. Try the Docker-free
+It applies with one node as well as multiple nodes. This mode uses the supplied class selection;
+[profiles](selection-policy.md) provide full, smoke and affected selection from configuration.
+The consumer decides when a short suite is sufficient and retains the native test-result gate.
+Explicit manifests were introduced in **0.5.0** and remain supported in **0.6.0**. Try the Docker-free
 [Gradle](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/test-selection/README.md) and
 [Maven](https://github.com/sjacek/shardpilot/blob/main/examples/maven/test-selection/README.md) consumers against this checkout.
 
 The target product direction extends this with a
 [complete configurable selection engine](configurable-selection-design.md): profiles,
-Git changes, impact rules, mandatory tests and budgets will be evaluated by ShardPilot.
-The [core policy engine](selection-policy.md) is implemented in the development checkout;
-The development adapters also expose Git acquisition and profile parameters. The 0.5.0 behavior documented
+Git changes, impact rules, mandatory tests and budgets are evaluated by ShardPilot.
+The [core policy engine](selection-policy.md), Git acquisition and adapter profile parameters
+are available in published 0.6.0. The 0.5.0 behavior documented
 below remains explicit-manifest selection.
 
 ![Selection validation and native execution](diagrams/test-selection.svg)

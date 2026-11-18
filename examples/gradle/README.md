@@ -1,9 +1,9 @@
 # Gradle examples
 
-Development checkout adds [configurable profiles and Git acquisition](https://github.com/sjacek/shardpilot/blob/main/docs/selection-policy.md).
+Published 0.6.0 provides [configurable profiles and Git acquisition](https://github.com/sjacek/shardpilot/blob/main/docs/selection-policy.md).
 Runnable consumers: [Gradle Groovy](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/selection-profiles/README.md),
 [Gradle Kotlin](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/selection-profiles-kotlin/README.md),
-[Maven](https://github.com/sjacek/shardpilot/blob/main/examples/maven/selection-profiles/README.md). These features are not in published 0.5.0.
+[Maven](https://github.com/sjacek/shardpilot/blob/main/examples/maven/selection-profiles/README.md). These features are available in 0.6.0.
 
 
 Runnable examples are grouped by test framework, then by scenario: `examples/gradle/<framework>/<scenario>/`.
@@ -13,9 +13,9 @@ Each scenario is an independent Gradle consumer build, not a subproject of the p
 | --- | --- | --- |
 | JUnit Jupiter | [PostgreSQL and RabbitMQ with Testcontainers](junit-jupiter/testcontainers/README.md) | Available |
 | JUnit Jupiter | [Duration-history refresh without Docker](junit-jupiter/duration-history/README.md) | Available |
-| JUnit Jupiter | [Explicit selection without Docker](junit-jupiter/test-selection/README.md) | Prepared for 0.6.0 |
-| JUnit Jupiter | [Changed tests, modules and contracts](junit-jupiter/selection-impact/README.md) | Development checkout, policy v2 |
-| JUnit Jupiter | [Complete selection and execution workflow](junit-jupiter/selection-workflow/README.md) | Development checkout, C2/C3 evidence |
+| JUnit Jupiter | [Explicit selection without Docker](junit-jupiter/test-selection/README.md) | Published 0.6.0 |
+| JUnit Jupiter | [Changed tests, modules and contracts](junit-jupiter/selection-impact/README.md) | Published 0.6.0, policy v2 |
+| JUnit Jupiter | [Complete selection and execution workflow](junit-jupiter/selection-workflow/README.md) | Published 0.6.0, C2/C3 evidence |
 | Spock | [PostgreSQL and RabbitMQ with Testcontainers](spock/testcontainers/README.md) | Available |
 | TestNG | [PostgreSQL and RabbitMQ with Testcontainers](testng/testcontainers/README.md) | Available |
 

@@ -8,7 +8,31 @@ remaining work. It is not an independent penetration test, a dependency vulnerab
 production-security approval. The report's recommendations are inputs to this review, not
 instructions that authorize changes to GitHub settings, publication or consumer infrastructure.
 
+## Current status: 18 November 2026
+
+Published **0.6.0** is the reviewed audit baseline, bound to signed tag `v0.6.0` and source
+`55c44e8d85f0b75c83807c62211bbac71797f83e`. The
+[compact evidence](evidence/published-0.6.0-2026-11-18.json) preserves the original successful
+run, including its then-current 0.5.0 default policy. Historical checkpoints below retain
+their original versions, sources and findings.
+
+| Area | Confirmed evidence | Boundary / next step |
+| --- | --- | --- |
+| Publication | [Gradle run 44361061145](https://github.com/sjacek/shardpilot/actions/runs/44361061145) and [Maven run 44381113420](https://github.com/sjacek/shardpilot/actions/runs/44381113420) passed from the same signed tag; Central confirmed `PUBLISHED`. | Immutable 0.6.0 artifacts and tag remain unchanged. |
+| Published bytes and identity | [Audit 44388856211](https://github.com/sjacek/shardpilot/actions/runs/44388856211) checked fifteen registry files, tagged Java sources and ten OpenPGP signatures: nine Maven files plus the tag. | The reviewed publisher fingerprint is unchanged. Registry TLS/GitHub keys are not an out-of-band identity check or reproducible-build proof. |
+| Isolated execution | Gradle/Jupiter, Spock, TestNG and Maven/Jupiter: 28 offline runs, eight full-versus-2/4-shard comparisons, zero observed outbound attempts, 24 rejected evidence mutations. | Bounded authored fixtures. [Audit record and limits](published-artifact-audit.md#published-060-baseline-18-november-2026). |
+| Source compatibility and package consumers | [Main run 44108092831](https://github.com/sjacek/shardpilot/actions/runs/44108092831) and both publication gates passed the matrices, signing and fresh file-publication profile/C2/C3 consumers. | Registry-mode profile/C2/C3 acceptance has its own receipt and remains a follow-up; source/candidate checks are not that receipt. |
+| Dependency checks | Both distribution security jobs passed in the release workflows under the reviewed scope/severity policy; full Maven tooling diagnostics remain separate. | No zero-vulnerability claim. Dated findings and triage below retain their original database/scope. |
+| Performance and external assurance | Real-suite benchmark remains deferred. | No measured speedup, independent penetration test or production-security certification is claimed. |
+
+The default launcher/registry CLI now selects 0.6.0 and rejects a different source commit for
+that default. Explicit older published releases remain supported. Optional Git/profile,
+execution-evidence, compiled-input and diagnostic paths keep their dedicated regression gates;
+the published audit does not establish every combination of those paths or every consumer.
+
 ## Current status: 13 November 2026
+
+**Historical checkpoint. The 18 November section above records the current baseline.**
 
 This section supersedes the outstanding-work wording in the dated implementation stages below.
 Those stages retain what was known at the time; they are not the current release verdict.
@@ -235,5 +259,5 @@ The earlier hosted `bb712b0` run stopped in cache warmup on a missing local-cand
 before SCA or matrix execution. The helper then added a five-file invocation-bound candidate
 baseline to that offline-resolution step. At that stage, the all-realms Maven gate still blocked
 on Site/Jetty. The later explicit producer tooling boundary and green hosted confirmation are
-recorded in the [current status](#current-status-13-november-2026) above. Findings remain visible,
+recorded in the [current status](#current-status-18-november-2026) above. Findings remain visible,
 the blocking threshold is unchanged, and real-suite performance measurement remains deferred.

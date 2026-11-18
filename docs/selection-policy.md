@@ -1,12 +1,11 @@
 # Configurable selection: shared policy contract
 
-Prepared for [0.6.0](releases/0.6.0.md); publication and registry acceptance are pending.
+**Available in [ShardPilot 0.6.0](releases/0.6.0.md).**
 
 [Documentation index](README.md)
 
-**Development checkout, 14 November 2026.** The shared Java engine is implemented in
-`shardpilot-core`. The development adapters now expose profile parameters and shared Git acquisition;
-these additions are not present in published **0.5.0**. Existing
+The shared Java engine is implemented in `shardpilot-core`. Both published adapters expose
+profile parameters and shared Git acquisition. Existing
 [explicit-manifest selection](test-selection.md) keeps its current behavior.
 
 The core takes immutable inputs, evaluates configured application knowledge and returns a
@@ -199,12 +198,14 @@ When present, frozen contract pointers, formats, raw blob hashes and failure cod
 This is a new planning identity, separate from the 0.5.0 raw-manifest hash and `selection.id`.
 It proves repeatable planning, not execution. The
 [C2 execution-evidence validator](execution-evidence-contract.md) is implemented separately in the
-development checkout. Its legacy selection digest identifies the selected family set. A complete
+published 0.6.0 release. Its legacy selection digest identifies the selected family set. A complete
 automatic-selection policy/Git provenance envelope is now available through the opt-in
 [selection-to-evidence bridge](execution-selection.md), including exact node plans and optional C3 binding.
 
 
-## Gradle and Maven parameters (development checkout)
+<a id="gradle-and-maven-parameters-development-checkout"></a>
+
+## Gradle and Maven parameters
 
 Configure independent native eligibility once. No executable selector callback or external shell
 script is needed. Gradle still requires explicit opt-in for each owning `Test` task; supplying
@@ -369,4 +370,4 @@ Aggregation (`verifyTestShards` / `shardpilot:verify`) remains artifact-only: no
 planning or test rerun. Matching class/selection identities prove a consistent cohort, not that
 all native invocations executed successfully. Native failures/skips retain their existing gates;
 the separate [C2 execution-evidence validator](execution-evidence-contract.md) is now available in
-the development checkout through explicit Gradle/Maven opt-in.
+published 0.6.0 through explicit Gradle/Maven opt-in.

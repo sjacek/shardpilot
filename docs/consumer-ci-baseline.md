@@ -2,10 +2,10 @@
 
 [Documentation index](README.md) · [Selection migration](selection-migration.md)
 
-**Development tooling, 17 November 2026.** These offline acceptance helpers are maintained
-with ShardPilot's tests. They are not additional scripts required by the Gradle or Maven
-plugin at runtime. Published 0.5.0 does not contain the development selection profiles,
-C2 bridge or C3 guards.
+**Maintainer tooling, recorded on 17 November 2026.** These offline acceptance helpers are
+maintained with ShardPilot's tests. Consumers configure the published
+[0.6.0](releases/0.6.0.md) profiles, C2 bridge and C3 guards through Gradle/Maven parameters;
+these helpers are separate acceptance tooling.
 
 Before replacing a service's selector, retain a successful **full** pipeline for one exact
 commit. A local directory of class files, a short pipeline and the GitLab test counter are

@@ -3,7 +3,7 @@
 [Security boundaries](security.md) | [Review follow-up](security-review-2026-11-12.md) |
 [Dependency integrity](dependency-verification.md)
 
-This maintainer check defaults to public **0.5.0** distribution bytes, separately from the development
+This maintainer check defaults to public **0.6.0** distribution bytes, separately from the development
 checkout and locally built release candidates. It is bounded execution evidence, not an independent
 security certification, a reproducible-binary-build proof or a guarantee about every consumer.
 
@@ -15,10 +15,10 @@ metadata and its three JARs. Downloads retain original/final HTTPS URLs, sizes a
 
 - Maven Central SHA-256/SHA-512 sidecars are compared with the downloaded bytes. Its nine detached
   OpenPGP signatures are checked separately using a fresh public-only GnuPG home.
-- The Gradle marker must point to `io.github.sjacek:shardpilot:0.5.0`. Module metadata's artifact
+- The Gradle marker must point to the requested implementation version, currently `io.github.sjacek:shardpilot:0.6.0`. Module metadata's artifact
   SHA-256s must match the actual binary/source/Javadoc JARs. Absent Portal sidecars/signatures are
   recorded as absent, rather than presented as independently verified signatures.
-- Java sources in each source JAR must match the appropriate modules of `v0.5.0`; only CRLF/LF
+- Java sources in each source JAR must match the appropriate modules of the selected signed tag, currently `v0.6.0`; only CRLF/LF
   differences are normalized. Missing/extra/changed Java sources fail verification. ZIP entries
   are checked for duplicates, traversal, absolute paths, symlinks and excessive expansion.
 - Published class-file versions must not exceed Java 17. Source comparisons do not prove that
@@ -119,12 +119,12 @@ credentials, repository writes, workflow dispatch, commit or push are required.
 ```shell
 python3 -B scripts/run_published_artifact_audit.py
 # Explicitly select an already published stable release:
-python3 -B scripts/run_published_artifact_audit.py --version 0.5.0
+python3 -B scripts/run_published_artifact_audit.py --version 0.6.0
 ```
 
 The launcher, registry-download CLI and host-side fixture runner all take their default from
 `security/published-artifact-audit.json`. The launcher passes the selected version explicitly to
-each sandbox; the repository policy is not mounted there. An explicit `--version 0.4.0` still
+each sandbox; the repository policy is not mounted there. An explicit `--version 0.5.0` still
 audits that older release against its own signed tag without changing the default policy.
 
 On Windows use an installed Python executable. A different output directory can preserve an earlier
@@ -184,7 +184,9 @@ The workflow must first be present on the default branch for manual dispatch to 
 The equivalent manual command is:
 
 ```shell
-gh workflow run published-artifact-audit.yml --repo sjacek/shardpilot --ref main -f version=0.5.0
+gh workflow run published-artifact-audit.yml --repo sjacek/shardpilot --ref main -f version=0.6.0
+# Omit version to use the reviewed default (0.6.0 after this policy update):
+gh workflow run published-artifact-audit.yml --repo sjacek/shardpilot --ref main
 ```
 
 The workflow checks out the triggering tooling SHA with complete tag history, downloads public
@@ -202,8 +204,8 @@ No new required branch-check context is necessary: the audit is a release-job de
 
 **Pre-publication scope:** a new candidate cannot be downloaded from both registries before it has
 been published. The pre-release gate therefore audits the last complete **published baseline**, not
-the candidate. The policy currently binds `0.5.0` to commit
-`dacbfbdb07e61f37ffa524fb286a97483c6c93e9` and the reviewed publisher fingerprint. Candidate behavior
+the candidate. The policy currently binds `0.6.0` to commit
+`55c44e8d85f0b75c83807c62211bbac71797f83e` and the reviewed publisher fingerprint. Candidate behavior
 is checked by the compatibility matrix and signed-bundle verification. After both registries expose
 a new release, run the audit explicitly for that version before updating the baseline policy in a
 reviewed change. Do not advance the baseline to an unpublished candidate or move an existing tag.
@@ -230,6 +232,9 @@ do not acquire new workflows; this gate applies to future tags containing these 
 
 ## Local Gradle framework extension: 13 November 2026
 
+Historical local checkpoint; the [hosted 0.6.0 result](#published-060-baseline-18-november-2026)
+below confirms the expanded framework scope for the current baseline.
+
 The expanded harness passed against public **0.5.0** bytes in local Linux Docker containers.
 This was a working-tree validation based on main commit
 `bbb0dd0d04fcebde0ece85aa20bdea6395cd9ae5`, not a GitHub Actions run. The published source remains
@@ -251,6 +256,44 @@ hashes and the report archive checksum. The archive remains under
 After pushing these changes, run the existing full audit workflow to establish hosted evidence
 for the expanded scope. This validation is not a performance benchmark; that remains deferred
 until dev is ready.
+
+## Published 0.6.0 baseline: 18 November 2026
+
+[Run 44388856211](https://github.com/sjacek/shardpilot/actions/runs/44388856211) passed after
+[Gradle publication](https://github.com/sjacek/shardpilot/actions/runs/44361061145) and
+[Maven publication](https://github.com/sjacek/shardpilot/actions/runs/44381113420) exposed **0.6.0**.
+The audited source and tooling commit are `55c44e8d85f0b75c83807c62211bbac71797f83e`;
+signed tag `v0.6.0` has object ID `43909ae2518494944d1128abcc0ef978902ae3b8`.
+The [compact evidence](evidence/published-0.6.0-2026-11-18.json) preserves the original request,
+registry URLs and hashes, signer, image/policies, native event/trace hashes and negative controls.
+
+| Check | Observed result |
+| --- | --- |
+| Registry/source integrity | All 15 files from Central and Portal passed byte, metadata, Java-target and source-JAR checks. |
+| OpenPGP | Nine Maven artifact signatures and the signed source tag verified against the unchanged reviewed publisher fingerprint. |
+| Frameworks | Gradle/Jupiter, Gradle/Spock, Gradle/TestNG and Maven/Jupiter through Surefire/Failsafe. |
+| Execution | 28 offline runs; all eight full-versus-2/4-shard identity, multiplicity and outcome comparisons passed. |
+| Network | Zero outbound IP/DNS attempts in those isolated runs; the deliberate blocked tracer control was observed. |
+| Negative evidence controls | All 24 modified/missing/duplicated evidence variants were rejected. |
+| Local recheck | Both archive checksums and all 13 archived tooling files matched their reviewed source; original registry bytes, XML, event identities and raw traces were re-read successfully. |
+
+The run artifact is `published-artifact-audit-44388856211-1`, ID `14468860191`, with SHA-256
+`aacee0af7bbf96eb96ce5f511b86dd1401f4a3120c690bdb7ea64f55ffc9225e`.
+The inner report archive has SHA-256
+`dab05def994ede384b8540bd1b2e69f1524a7c2b00a567096d649d4ebc5dcd5e`.
+Raw reports are retained for 30 days by Actions. The committed record preserves their identity
+and compact results; it contains no registry JARs or complete raw traces.
+
+The successful run explicitly requested 0.6.0 while its tooling still defaulted to 0.5.0.
+That original request and tooling-policy hash remain unchanged in the evidence record. New
+tooling revisions use 0.6.0 when the input is absent or empty, and reject another commit for
+that default. Explicit older releases remain selectable. Existing immutable tags keep their
+original policy.
+
+This is bounded evidence for the authored fixtures and release bytes. Profiles, Git acquisition,
+C2/C3 and diagnostics are published features; this audit does not exercise every optional path
+or replace the separate [fresh-consumer profile/C2/C3 acceptance](release-consumers.md).
+It makes no performance or universal no-network claim. Benchmarking remains deferred.
 
 ## Published 0.5.0 baseline: 13 November 2026
 

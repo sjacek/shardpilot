@@ -1,11 +1,10 @@
 # Changed tests, modules and structured contracts
 
-Prepared for [0.6.0](releases/0.6.0.md); publication and registry acceptance are pending.
+**Available in [ShardPilot 0.6.0](releases/0.6.0.md).**
 
 [Documentation index](README.md) · [Profiles and plugin parameters](selection-policy.md)
 
-**Development checkout, 14 November 2026.** These additions are not in published 0.5.0.
-Use the candidate built from this checkout. Existing policy v1 and explicit class manifests
+Existing policy v1 and explicit class manifests
 keep their behavior. Set `schemaVersion: 2` to opt into the shared impact rules below;
 Gradle and Maven read the same file, without a consumer selector script or callback.
 
@@ -139,7 +138,7 @@ the configured format. Only regular Git blobs are read, never symlink targets or
 ## Use the same parameters in both plugins
 
 Keep the normal native framework/filters and independent eligibility configured as shown in
-the [Gradle/Maven profile guide](selection-policy.md#gradle-and-maven-parameters-development-checkout).
+the [Gradle/Maven profile guide](selection-policy.md#gradle-and-maven-parameters).
 Choose v2 through that same `selectionPolicyFile`; there is no second set of adapter-specific
 module or contract settings.
 

@@ -1,11 +1,9 @@
 # Optional execution diagnostics
 
-Prepared for [0.6.0](releases/0.6.0.md); publication and registry acceptance are pending.
+**Available in [ShardPilot 0.6.0](releases/0.6.0.md).**
 
 Diagnose test timeouts, interrupted builds, memory pressure and containers left on a dedicated
-Docker daemon. This is a **development feature**, absent from the published 0.5.0 release. Use
-the [local development setup](https://github.com/sjacek/shardpilot/blob/main/README.md#local-plugin-development)
-for both adapters and a matching, verified ShardPilot core or Gradle plugin JAR.
+Docker daemon. Both published adapters provide these opt-in checks.
 
 Diagnostics are disabled until configured. They do not change test selection, heap settings,
 test engines, retries or container lifecycle. Keep the native build result and

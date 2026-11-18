@@ -1,7 +1,7 @@
 # ShardPilot documentation
 
-Prepared release: **[0.6.0 candidate](releases/0.6.0.md)**, with
-[fresh Gradle/Maven consumer acceptance](release-consumers.md). Publication is pending.
+Current release: **[0.6.0](releases/0.6.0.md)**, published in both registries on 18 November 2026.
+See [fresh Gradle/Maven consumer acceptance](release-consumers.md) for the separate package-consumer checks.
 
 [![ShardPilot avatar: three parallel green shard towers and a mint fan-out arrow.](assets/branding/shardpilot-avatar-256.png)](assets/branding/README.md)
 
@@ -9,12 +9,12 @@ ShardPilot splits the classes of an opted-in Gradle `Test` task between independ
 Each execution calculates ownership locally from the same inputs. The Maven adapter applies that
 same core to Surefire/Failsafe. There is no coordinator service or replacement test engine.
 
-[0.5.0](releases/0.5.0.md) is published in Gradle Plugin Portal and Maven Central,
-including explicit selection of a test subset for either adapter. Current snippets target this
+[0.6.0](releases/0.6.0.md) provides profiles, explicit selection and execution/input checks
+for either adapter. Current snippets target this
 release; use the [local development setup](https://github.com/sjacek/shardpilot/blob/main/README.md#local-plugin-development) for source changes.
 
-The default [published/audited baseline is 0.5.0](published-artifact-audit.md#published-050-baseline-13-november-2026).
-[Current audit status](security-review-2026-11-12.md#current-status-13-november-2026)
+The default [published/audited baseline is 0.6.0](published-artifact-audit.md#published-060-baseline-18-november-2026).
+[Current audit status](security-review-2026-11-12.md#current-status-18-november-2026)
 distinguishes registry evidence, source CI checks and remaining assurance work.
 
 ![Coding agents choose relevant tests from a growing suite and distribute classes across three balanced parallel CI shards. The screen reads: Too many tests? Choose relevant tests. Run balanced shards.](assets/illustrations/shardpilot-agent-team.png)

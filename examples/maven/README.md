@@ -1,9 +1,9 @@
 # Maven examples
 
-Development checkout adds [configurable profiles and Git acquisition](https://github.com/sjacek/shardpilot/blob/main/docs/selection-policy.md).
+Published 0.6.0 provides [configurable profiles and Git acquisition](https://github.com/sjacek/shardpilot/blob/main/docs/selection-policy.md).
 Runnable consumers: [Gradle Groovy](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/selection-profiles/README.md),
 [Gradle Kotlin](https://github.com/sjacek/shardpilot/blob/main/examples/gradle/junit-jupiter/selection-profiles-kotlin/README.md),
-[Maven](https://github.com/sjacek/shardpilot/blob/main/examples/maven/selection-profiles/README.md). These features are not in published 0.5.0.
+[Maven](https://github.com/sjacek/shardpilot/blob/main/examples/maven/selection-profiles/README.md). These features are available in 0.6.0.
 
 
 [All examples](../README.md) · [Maven plugin guide](../../docs/maven.md)
@@ -11,7 +11,7 @@ Runnable consumers: [Gradle Groovy](https://github.com/sjacek/shardpilot/blob/ma
 | Example | Exercises |
 | --- | --- |
 | [JUnit Jupiter](junit-jupiter/pom.xml) | Surefire and Failsafe, nested tests, custom `Spec` suffix, consumer exclusions, separate suite manifests/reports. |
-| [Explicit selection](test-selection/README.md) | A two-class smoke suite, separate native reports and verified two-node execution; prepared for 0.6.0. |
+| [Explicit selection](test-selection/README.md) | A two-class smoke suite, separate native reports and verified two-node execution; published in 0.6.0. |
 | [Changed tests, modules and contracts](selection-impact/README.md) | Shared policy v2 source roots, transitive module consumers and JSON/YAML pointer rules; development checkout. |
 | [Complete selection workflow](selection-workflow/README.md) | Native two-shard execution with frozen decisions, compiled-artifact guards and result verification; development checkout. |
 | [Multi-module reactor](reactor/pom.xml) | Independent per-module plans and native test execution with `-T2`. POM-only aggregator modules are skipped. |

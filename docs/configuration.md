@@ -1,14 +1,14 @@
 # Configuration
 
-Installation snippets target the prepared [0.6.0 candidate](releases/0.6.0.md); registry publication is pending.
+Installation snippets target published [0.6.0](releases/0.6.0.md).
 
-Development checkout: [configurable profiles and Git acquisition](selection-policy.md#gradle-and-maven-parameters-development-checkout)
-are now available through both adapters. Published 0.5.0 supports the explicit-manifest feature below.
+Published 0.6.0 provides [configurable profiles and Git acquisition](selection-policy.md#gradle-and-maven-parameters)
+through both adapters, alongside the explicit-manifest feature below.
 
-Development policy v2 adds [changed tests, module dependencies and JSON/YAML contracts](selection-impact.md)
+Policy v2 adds [changed tests, module dependencies and JSON/YAML contracts](selection-impact.md)
 using the same `selectionPolicyFile` and `selectionProfile` parameters.
 
-Development also provides [optional execution diagnostics](execution-diagnostics.md), configured
+Published 0.6.0 also provides [optional execution diagnostics](execution-diagnostics.md), configured
 through `shardPilot.diagnostics { }` for each observed task, independently of sharding opt-in.
 
 For a consumer-supplied subset, see [explicit test selection](test-selection.md). The optional

@@ -1,8 +1,7 @@
 # C2: execution evidence contract
 
-Prepared for [0.6.0](releases/0.6.0.md); publication and registry acceptance are pending.
+**Available in [ShardPilot 0.6.0](releases/0.6.0.md).**
 
-**Implemented in the development checkout, 14 November 2026. Not available in published ShardPilot 0.5.0.**
 The shared core validator powers the opt-in Gradle task and Maven goal described below. It does not change the existing
 `verify`/manifest or history-refresh contracts. The [C1 comparison](history-migration.md)
 shows why matching duration histories cannot establish that a test cohort completed.
@@ -13,7 +12,7 @@ documents remain v1; aggregate report v2 adds validated provenance. Legacy v1 se
 
 ## Three documents and a trust boundary
 
-The proposed wire format is UTF-8 JSON, schema version 1. Unknown fields and duplicate
+The wire format is UTF-8 JSON, schema version 1. Unknown fields and duplicate
 JSON keys are rejected; incompatible changes require a new version. JSON Schema Draft
 2020-12 describes shape, not semantic acceptance:
 
@@ -175,7 +174,7 @@ allowed empty nodes and legitimate repeated invocations. Verify that every failu
 keeps native CI gates blocking and that output contains no private payloads.
 
 The shared validator, JSON/HTML rendering and both adapter entry points are implemented
-in the development checkout. Native execution-equivalence tests remain a separate gate.
+in published 0.6.0. Native execution-equivalence tests remain a separate gate.
 
 ## Native invocation ledger
 

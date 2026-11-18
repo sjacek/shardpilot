@@ -5,7 +5,7 @@
 Run checks from the ShardPilot repository, not a consuming application's build. The Wrapper pins
 the Gradle version; use a JDK supported by that Gradle runtime.
 
-## Development profile-selection regression
+## Profile-selection regression
 
 - `GitChangesTest` uses isolated synthetic Git objects to check multi-commit diffs, rename paths,
   whitespace/Unicode parsing, missing/shallow history, opt-in local fetching, CI inference and
@@ -22,7 +22,34 @@ the Gradle version; use a JDK supported by that Gradle runtime.
 These checks complement the existing full-versus-2/4-shards execution-equivalence fixtures.
 Local validation does not establish the hosted Gradle/JDK and Maven/JDK compatibility matrices.
 
+## 0.6.0 release and baseline verification
+
+[0.6.0](releases/0.6.0.md) is published in both registries. The default audit policy pins
+it to source `55c44e8d85f0b75c83807c62211bbac71797f83e`, preserving the publisher fingerprint.
+[Hosted audit 44388856211](https://github.com/sjacek/shardpilot/actions/runs/44388856211) and
+its [compact record](evidence/published-0.6.0-2026-11-18.json) contain fifteen registry files,
+ten signatures, 28 offline runs, eight comparisons and 24 rejected evidence mutations.
+
+The fast policy regressions require no Docker or network:
+
+```shell
+python3 -B -m unittest discover -s testing/published-artifacts -p 'test_*.py' -v
+```
+
+They check the exact reviewed version/commit/key and retained evidence, selection of the default
+for absent/empty launcher inputs, rejection of stale downloads or another source commit, and
+explicit older-version overrides. The Gradle release-readiness regression also binds the release
+notes/changelog date to this evidence. These input files are declared as Gradle test inputs.
+
+The [published-artifact workflow](published-artifact-audit.md#full-audit-in-github-actions) can
+use an empty version after the policy update reaches its selected tooling revision. Its original
+0.6.0 audit explicitly supplied that version while the tooling default was still 0.5.0.
+Registry-mode profile/C2/C3 [fresh-consumer acceptance](release-consumers.md) is a separate gate.
+Historical results below retain their original toolchains and scope.
+
 ## 0.5.0 release verification
+
+**Historical checkpoint: 13 November 2026.**
 
 **[0.5.0](releases/0.5.0.md)** is published in both registries. Gradle and the Maven
 reactor/example pins share this version. `verifyReleaseTag -PreleaseTag=v0.5.0` checks equality
