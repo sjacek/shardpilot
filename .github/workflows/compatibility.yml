@@ -190,7 +190,7 @@ jobs:
         with:
           cache-disabled: true
       - name: Download warmed dependencies
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         # action.yml at v7 defines name/path; retain validation elsewhere in this workflow.
         with:
           # noinspection UndefinedParamsPresent
@@ -213,7 +213,7 @@ jobs:
           python3 -B scripts/run_selection_workflow.py --tool gradle --output build/selection-workflow-gradle-invalid --command-json '["bash", "./gradlew"]' --corrupt bytes
       - name: Download Maven dependencies for packaged release consumers
         if: matrix.gradle == '9.9.1' && matrix.java == '17'
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: maven-dependencies
           path: build
@@ -309,7 +309,7 @@ jobs:
           distribution: temurin
           java-version: ${{ matrix.java }}
       - name: Download warmed dependencies
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         # action.yml at v7 defines name/path; retain validation elsewhere in this workflow.
         with:
           # noinspection UndefinedParamsPresent
